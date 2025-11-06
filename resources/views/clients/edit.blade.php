@@ -1,0 +1,249 @@
+@extends('layouts.dashboard')
+
+@section('title', 'تعديل بيانات العميل - المنار')
+@section('page-title', 'تعديل بيانات العميل')
+
+@push('styles')
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+</style>
+@endpush
+
+@section('content')
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl md:text-3xl font-bold text-white">تعديل بيانات العميل</h1>
+    <div class="flex items-center gap-3">
+        <a href="{{ route('clients.show', $id) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
+            <i class="fas fa-eye ml-2"></i>
+            عرض
+        </a>
+        <a href="{{ route('clients.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
+            <i class="fas fa-arrow-right ml-2"></i>
+            رجوع
+        </a>
+    </div>
+</div>
+
+<!-- Form -->
+<form method="POST" action="{{ route('clients.update', $id) }}" enctype="multipart/form-data" x-data="clientForm()">
+    @csrf
+    @method('PUT')
+
+    <!-- Basic Information -->
+    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
+        <h2 class="text-xl font-bold text-white mb-6">البيانات الأساسية</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div class="md:col-span-2">
+                <label class="block text-gray-300 text-sm mb-2">الاسم الكامل <span class="text-red-400">*</span></label>
+                <input 
+                    type="text" 
+                    name="name" 
+                    required
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    placeholder="مثال: أحمد محمد العلي"
+                >
+                @error('name')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block text-gray-300 text-sm mb-2">نوع العميل <span class="text-red-400">*</span></label>
+                <select name="type" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
+                    <option value="">اختر النوع</option>
+                    <option value="individual">فرد</option>
+                    <option value="company">شركة</option>
+                    <option value="government">جهة حكومية</option>
+                </select>
+                @error('type')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block text-gray-300 text-sm mb-2">رقم الهوية / السجل التجاري</label>
+                <input 
+                    type="text" 
+                    name="id_number" 
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    placeholder="رقم الهوية أو السجل التجاري"
+                >
+            </div>
+
+            <div>
+                <label class="block text-gray-300 text-sm mb-2">رقم الجوال <span class="text-red-400">*</span></label>
+                <input 
+                    type="tel" 
+                    name="phone" 
+                    required
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    placeholder="05XXXXXXXX"
+                >
+                @error('phone')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block text-gray-300 text-sm mb-2">البريد الإلكتروني</label>
+                <input 
+                    type="email" 
+                    name="email" 
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    placeholder="example@email.com"
+                >
+                @error('email')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block text-gray-300 text-sm mb-2">المدينة <span class="text-red-400">*</span></label>
+                <select name="city" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
+                    <option value="">اختر المدينة</option>
+                    <option value="الرياض">الرياض</option>
+                    <option value="جدة">جدة</option>
+                    <option value="الدمام">الدمام</option>
+                    <option value="مكة">مكة</option>
+                    <option value="المدينة">المدينة</option>
+                </select>
+                @error('city')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block text-gray-300 text-sm mb-2">الحي</label>
+                <input 
+                    type="text" 
+                    name="district" 
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    placeholder="اسم الحي"
+                >
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-gray-300 text-sm mb-2">العنوان الكامل</label>
+                <textarea 
+                    name="address" 
+                    rows="3"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    placeholder="العنوان التفصيلي..."
+                ></textarea>
+            </div>
+
+            <div>
+                <label class="block text-gray-300 text-sm mb-2">الحالة</label>
+                <select name="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
+                    <option value="active" selected>نشط</option>
+                    <option value="inactive">غير نشط</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attachments -->
+    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
+        <h2 class="text-xl font-bold text-white mb-6">المرفقات</h2>
+        <div>
+            <label class="block text-gray-300 text-sm mb-2">رفع المرفقات (اختياري)</label>
+            <div class="flex items-center gap-4">
+                <input 
+                    type="file" 
+                    name="attachments[]"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    class="hidden"
+                    id="attachmentsInput"
+                    @change="handleFilesSelect($event)"
+                >
+                <label for="attachmentsInput" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg cursor-pointer transition-all duration-200">
+                    <i class="fas fa-upload ml-2"></i>
+                    اختر الملفات
+                </label>
+                <span x-show="selectedFiles.length > 0" class="text-gray-300 text-sm" x-text="selectedFiles.length + ' ملف محدد'"></span>
+            </div>
+            <p class="text-gray-400 text-xs mt-1">يمكن رفع عدة ملفات (PDF, JPG, PNG)</p>
+        </div>
+
+        <!-- Selected Files List -->
+        <div x-show="selectedFiles.length > 0" class="mt-4 space-y-2">
+            <template x-for="(file, index) in selectedFiles" :key="index">
+                <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-file text-primary-400"></i>
+                        <span class="text-white text-sm" x-text="file.name"></span>
+                        <span class="text-gray-400 text-xs" x-text="formatFileSize(file.size)"></span>
+                    </div>
+                    <button type="button" @click="removeFile(index)" class="text-red-400 hover:text-red-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Internal Notes -->
+    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
+        <h2 class="text-xl font-bold text-white mb-6">ملاحظات داخلية</h2>
+        <div>
+            <textarea 
+                name="notes" 
+                rows="4"
+                class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                placeholder="أي ملاحظات داخلية حول العميل..."
+            ></textarea>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center justify-end gap-3">
+        <a href="{{ route('clients.index') }}" class="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
+            إلغاء
+        </a>
+        <button type="submit" class="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200">
+            <i class="fas fa-save ml-2"></i>
+            حفظ
+        </button>
+    </div>
+</form>
+
+@push('scripts')
+<script>
+function clientForm() {
+    return {
+        selectedFiles: [],
+        handleFilesSelect(event) {
+            const files = Array.from(event.target.files);
+            this.selectedFiles = files.map(file => ({
+                name: file.name,
+                size: file.size
+            }));
+        },
+        removeFile(index) {
+            this.selectedFiles.splice(index, 1);
+            const input = document.getElementById('attachmentsInput');
+            if (input) {
+                input.value = '';
+            }
+        },
+        formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+    }
+}
+</script>
+@endpush
+
+@endsection
+
