@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'تفاصيل المشروع - المنار')
-@section('page-title', 'تفاصيل المشروع')
+@section('title', __('Project Details') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('Project Details'))
 
 @push('styles')
 <style>
@@ -15,21 +15,64 @@
 @endpush
 
 @section('content')
+<!-- Toast Notifications -->
+@if(session('success'))
+<div class="fixed top-20 left-4 right-4 sm:right-auto sm:left-4 z-[70] p-4 rounded-lg shadow-lg max-w-md bg-green-500 text-white animate-slide-in mx-auto sm:mx-0" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition>
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 flex-1">
+            <i class="fas fa-check-circle"></i>
+            <span class="text-sm sm:text-base">{{ session('success') }}</span>
+        </div>
+        <button @click="show = false" class="mr-2 flex-shrink-0">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+@endif
+
+@if(session('error'))
+<div class="fixed top-20 left-4 right-4 sm:right-auto sm:left-4 z-[70] p-4 rounded-lg shadow-lg max-w-md bg-red-500 text-white animate-slide-in mx-auto sm:mx-0" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 7000)" x-transition>
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 flex-1">
+            <i class="fas fa-exclamation-circle"></i>
+            <span class="text-sm sm:text-base">{{ session('error') }}</span>
+        </div>
+        <button @click="show = false" class="mr-2 flex-shrink-0">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+@endif
+
+@if(session('warning'))
+<div class="fixed top-20 left-4 right-4 sm:right-auto sm:left-4 z-[70] p-4 rounded-lg shadow-lg max-w-md bg-yellow-500 text-white animate-slide-in mx-auto sm:mx-0" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition>
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 flex-1">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span class="text-sm sm:text-base">{{ session('warning') }}</span>
+        </div>
+        <button @click="show = false" class="mr-2 flex-shrink-0">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+@endif
+
 <div x-data="projectTabs()">
     <!-- Header Actions -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
         <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">فيلا سكنية - العليا</h1>
-            <p class="text-gray-400 text-sm">PRJ-2025-001</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">{{ $project->name }}</h1>
+            <p class="text-gray-400 text-sm">{{ $project->project_number ?? 'غير محدد' }}</p>
         </div>
         <div class="flex items-center gap-3">
-            <a href="{{ route('projects.edit', $id) }}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200">
-                <i class="fas fa-edit ml-2"></i>
-                تحرير
+            <a href="{{ route('projects.edit', $project->id) }}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200">
+                <i class="fas fa-edit {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Edit') }}
             </a>
             <a href="{{ route('projects.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-                <i class="fas fa-arrow-right ml-2"></i>
-                رجوع
+                <i class="fas fa-arrow-right {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Back') }}
             </a>
         </div>
     </div>
@@ -43,7 +86,7 @@
                 class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
             >
                 <i class="fas fa-gauge"></i>
-                نظرة عامة
+                {{ __('Overview') }}
             </button>
             <button 
                 @click="activeTab = 'stages'"
@@ -51,8 +94,10 @@
                 class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
             >
                 <i class="fas fa-diagram-project"></i>
-                المراحل
-                <span class="bg-primary-500/20 text-primary-400 px-2 py-0.5 rounded text-xs">5</span>
+                {{ __('Stages') }}
+                @if($stagesCount > 0)
+                <span class="bg-primary-400/20 text-primary-400 px-2 py-0.5 rounded text-xs">{{ $stagesCount }}</span>
+                @endif
             </button>
             <button 
                 @click="activeTab = 'tasks'"
@@ -60,8 +105,10 @@
                 class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
             >
                 <i class="fas fa-list-check"></i>
-                المهام
-                <span class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-xs">12</span>
+                {{ __('Tasks') }}
+                @if($tasksCount > 0)
+                <span class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-xs">{{ $tasksCount }}</span>
+                @endif
             </button>
             <button 
                 @click="activeTab = 'attachments'"
@@ -69,9 +116,12 @@
                 class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
             >
                 <i class="fas fa-paperclip"></i>
-                المرفقات
-                <span class="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs">8</span>
+                {{ __('Attachments') }}
+                @if($attachmentsCount > 0)
+                <span class="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs">{{ $attachmentsCount }}</span>
+                @endif
             </button>
+            @if(\App\Helpers\PermissionHelper::hasPermission('financials.view') || \App\Helpers\PermissionHelper::hasPermission('financials.manage'))
             <button 
                 @click="activeTab = 'financials'"
                 :class="activeTab === 'financials' ? 'border-b-2 border-primary-400 text-primary-400' : 'text-gray-400 hover:text-white'"
@@ -80,6 +130,7 @@
                 <i class="fas fa-file-invoice-dollar"></i>
                 المالية
             </button>
+            @endif
             <button 
                 @click="activeTab = 'thirdparty'"
                 :class="activeTab === 'thirdparty' ? 'border-b-2 border-primary-400 text-primary-400' : 'text-gray-400 hover:text-white'"
@@ -121,9 +172,11 @@
     </div>
 
     <!-- Financials Tab -->
+    @if(\App\Helpers\PermissionHelper::hasPermission('financials.view') || \App\Helpers\PermissionHelper::hasPermission('financials.manage'))
     <div x-show="activeTab === 'financials'" class="space-y-4 md:space-y-6">
         @include('projects.tabs.financials')
     </div>
+    @endif
 
     <!-- Third Party Tab -->
     <div x-show="activeTab === 'thirdparty'" class="space-y-4 md:space-y-6">

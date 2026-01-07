@@ -86,7 +86,7 @@
                 <p class="text-gray-400 text-xs md:text-sm">إجمالي المستخدمين</p>
                 <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">24</h3>
             </div>
-            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-400/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-users text-primary-400 text-xl md:text-2xl"></i>
             </div>
         </div>
@@ -192,7 +192,7 @@
                         </td>
                         <td class="py-3 md:py-4 px-2 md:px-4">
                             <div class="flex items-center gap-1 md:gap-2">
-                                <button onclick="viewUser(1)" class="p-1.5 md:p-2 text-primary-400 hover:bg-primary-500/20 rounded-lg transition-all duration-200" title="عرض">
+                                <button onclick="viewUser(1)" class="p-1.5 md:p-2 text-primary-400 hover:bg-primary-400/20 rounded-lg transition-all duration-200" title="عرض">
                                     <i class="fas fa-eye text-xs md:text-sm"></i>
                                 </button>
                                 <button onclick="editUser(1)" class="p-1.5 md:p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-200" title="تعديل">
@@ -233,7 +233,7 @@
                         </td>
                         <td class="py-3 md:py-4 px-2 md:px-4">
                             <div class="flex items-center gap-1 md:gap-2">
-                                <button onclick="viewUser(2)" class="p-1.5 md:p-2 text-primary-400 hover:bg-primary-500/20 rounded-lg transition-all duration-200" title="عرض">
+                                <button onclick="viewUser(2)" class="p-1.5 md:p-2 text-primary-400 hover:bg-primary-400/20 rounded-lg transition-all duration-200" title="عرض">
                                     <i class="fas fa-eye text-xs md:text-sm"></i>
                                 </button>
                                 <button onclick="editUser(2)" class="p-1.5 md:p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-200" title="تعديل">
@@ -274,7 +274,7 @@
                         </td>
                         <td class="py-3 md:py-4 px-2 md:px-4">
                             <div class="flex items-center gap-1 md:gap-2">
-                                <button onclick="viewUser(3)" class="p-1.5 md:p-2 text-primary-400 hover:bg-primary-500/20 rounded-lg transition-all duration-200" title="عرض">
+                                <button onclick="viewUser(3)" class="p-1.5 md:p-2 text-primary-400 hover:bg-primary-400/20 rounded-lg transition-all duration-200" title="عرض">
                                     <i class="fas fa-eye text-xs md:text-sm"></i>
                                 </button>
                                 <button onclick="editUser(3)" class="p-1.5 md:p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-200" title="تعديل">
@@ -315,7 +315,7 @@
                         </td>
                         <td class="py-3 md:py-4 px-2 md:px-4">
                             <div class="flex items-center gap-1 md:gap-2">
-                                <button onclick="viewUser(4)" class="p-1.5 md:p-2 text-primary-400 hover:bg-primary-500/20 rounded-lg transition-all duration-200" title="عرض">
+                                <button onclick="viewUser(4)" class="p-1.5 md:p-2 text-primary-400 hover:bg-primary-400/20 rounded-lg transition-all duration-200" title="عرض">
                                     <i class="fas fa-eye text-xs md:text-sm"></i>
                                 </button>
                                 <button onclick="editUser(4)" class="p-1.5 md:p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-200" title="تعديل">

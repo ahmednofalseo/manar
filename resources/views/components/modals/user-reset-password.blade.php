@@ -60,7 +60,7 @@
             <div class="bg-white/5 rounded-lg p-4">
                 <div class="flex items-center justify-between mb-2">
                     <label class="text-gray-300 text-sm">توليد كلمة مرور قوية</label>
-                    <button type="button" @click="generatePassword()" class="px-3 py-1 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
+                    <button type="button" @click="generatePassword()" class="px-3 py-1 bg-primary-400/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
                         <i class="fas fa-key ml-1"></i>
                         توليد
                     </button>
@@ -75,7 +75,7 @@
                     <button type="button" @click="copyPassword()" class="px-3 py-2 bg-white/5 hover:bg-white/10 text-white rounded text-sm" title="نسخ">
                         <i class="fas fa-copy"></i>
                     </button>
-                    <button type="button" @click="useGeneratedPassword()" class="px-3 py-2 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
+                    <button type="button" @click="useGeneratedPassword()" class="px-3 py-2 bg-primary-400/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
                         استخدام
                     </button>
                 </div>

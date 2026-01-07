@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'تعديل المصروف - المنار')
-@section('page-title', 'تعديل المصروف')
+@section('title', __('Edit') . ' ' . __('Expenses') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('Edit') . ' ' . __('Expenses'))
 
 @push('styles')
 <style>
@@ -17,27 +17,27 @@
 @section('content')
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-white">تعديل المصروف</h1>
+    <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('Edit') }} {{ __('Expenses') }}</h1>
     <div class="flex items-center gap-3">
-        <a href="{{ route('expenses.show', $id) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-            <i class="fas fa-eye ml-2"></i>
-            عرض
+        <a href="{{ route('expenses.show', $expense->id) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
+            <i class="fas fa-eye {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('View') }}
         </a>
         <a href="{{ route('expenses.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-            <i class="fas fa-arrow-right ml-2"></i>
-            رجوع
+            <i class="fas fa-arrow-right {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Back') }}
         </a>
     </div>
 </div>
 
 <!-- Form -->
-<form method="POST" action="{{ route('expenses.update', $id) }}" enctype="multipart/form-data" x-data="expenseForm()">
+<form method="POST" action="{{ route('expenses.update', $expense->id) }}" enctype="multipart/form-data" x-data="expenseForm()">
     @csrf
     @method('PUT')
 
     <!-- Basic Information -->
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
-        <h2 class="text-xl font-bold text-white mb-6">البيانات الأساسية</h2>
+        <h2 class="text-xl font-bold text-white mb-6">{{ __('Basic Information') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
                 <label class="block text-gray-300 text-sm mb-2">رقم السند</label>
@@ -45,15 +45,15 @@
                     <input 
                         type="text" 
                         name="voucher_number" 
-                        value="EXP-{{ date('Y') }}-{{ str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT) }}"
+                        value="{{ old('voucher_number', $expense->voucher_number) }}"
                         class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                         readonly
                     >
-                    <button type="button" class="px-3 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
                 </div>
-                <p class="text-gray-400 text-xs mt-1">سيتم توليد الرقم تلقائياً</p>
+                <p class="text-gray-400 text-xs mt-1">رقم السند</p>
+                @error('voucher_number')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
@@ -62,7 +62,7 @@
                     type="date" 
                     name="date" 
                     required
-                    value="{{ date('Y-m-d') }}"
+                    value="{{ old('date', $expense->date->format('Y-m-d')) }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 >
                 @error('date')
@@ -74,11 +74,11 @@
                 <label class="block text-gray-300 text-sm mb-2">القسم <span class="text-red-400">*</span></label>
                 <select name="department" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                     <option value="">اختر القسم</option>
-                    <option value="إدارة">إدارة</option>
-                    <option value="مشاريع">مشاريع</option>
-                    <option value="مالية">مالية</option>
-                    <option value="مبيعات">مبيعات</option>
-                    <option value="تسويق">تسويق</option>
+                    <option value="إدارة" {{ old('department', $expense->department) == 'إدارة' ? 'selected' : '' }}>إدارة</option>
+                    <option value="مشاريع" {{ old('department', $expense->department) == 'مشاريع' ? 'selected' : '' }}>مشاريع</option>
+                    <option value="مالية" {{ old('department', $expense->department) == 'مالية' ? 'selected' : '' }}>مالية</option>
+                    <option value="مبيعات" {{ old('department', $expense->department) == 'مبيعات' ? 'selected' : '' }}>مبيعات</option>
+                    <option value="تسويق" {{ old('department', $expense->department) == 'تسويق' ? 'selected' : '' }}>تسويق</option>
                 </select>
                 @error('department')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -88,15 +88,15 @@
             <div>
                 <label class="block text-gray-300 text-sm mb-2">نوع المصروف <span class="text-red-400">*</span></label>
                 <select name="type" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="">اختر النوع</option>
-                    <option value="رواتب">رواتب</option>
-                    <option value="إيجار">إيجار</option>
-                    <option value="كهرباء">كهرباء</option>
-                    <option value="مياه">مياه</option>
-                    <option value="صيانة">صيانة</option>
-                    <option value="معدات">معدات</option>
-                    <option value="نقل">نقل</option>
-                    <option value="أخرى">أخرى</option>
+                    <option value="">{{ __('Select Type') }}</option>
+                    <option value="رواتب" {{ old('type', $expense->type) == 'رواتب' ? 'selected' : '' }}>رواتب</option>
+                    <option value="إيجار" {{ old('type', $expense->type) == 'إيجار' ? 'selected' : '' }}>إيجار</option>
+                    <option value="كهرباء" {{ old('type', $expense->type) == 'كهرباء' ? 'selected' : '' }}>كهرباء</option>
+                    <option value="مياه" {{ old('type', $expense->type) == 'مياه' ? 'selected' : '' }}>مياه</option>
+                    <option value="صيانة" {{ old('type', $expense->type) == 'صيانة' ? 'selected' : '' }}>صيانة</option>
+                    <option value="معدات" {{ old('type', $expense->type) == 'معدات' ? 'selected' : '' }}>معدات</option>
+                    <option value="نقل" {{ old('type', $expense->type) == 'نقل' ? 'selected' : '' }}>نقل</option>
+                    <option value="أخرى" {{ old('type', $expense->type) == 'أخرى' ? 'selected' : '' }}>أخرى</option>
                 </select>
                 @error('type')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -111,7 +111,7 @@
                     rows="3"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="وصف تفصيلي للمصروف..."
-                ></textarea>
+                >{{ old('description', $expense->description) }}</textarea>
                 @error('description')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
                 @enderror
@@ -125,6 +125,7 @@
                         name="amount" 
                         required
                         step="0.01"
+                        value="{{ old('amount', $expense->amount) }}"
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 pr-16 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                         placeholder="0.00"
                     >
@@ -139,10 +140,10 @@
                 <label class="block text-gray-300 text-sm mb-2">طريقة الدفع <span class="text-red-400">*</span></label>
                 <select name="payment_method" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                     <option value="">اختر طريقة الدفع</option>
-                    <option value="نقدي">نقدي</option>
-                    <option value="تحويل بنكي">تحويل بنكي</option>
-                    <option value="شيك">شيك</option>
-                    <option value="إلكتروني">إلكتروني</option>
+                    <option value="نقدي" {{ old('payment_method', $expense->payment_method) == 'نقدي' ? 'selected' : '' }}>نقدي</option>
+                    <option value="تحويل بنكي" {{ old('payment_method', $expense->payment_method) == 'تحويل بنكي' ? 'selected' : '' }}>تحويل بنكي</option>
+                    <option value="شيك" {{ old('payment_method', $expense->payment_method) == 'شيك' ? 'selected' : '' }}>شيك</option>
+                    <option value="إلكتروني" {{ old('payment_method', $expense->payment_method) == 'إلكتروني' ? 'selected' : '' }}>إلكتروني</option>
                 </select>
                 @error('payment_method')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -152,9 +153,9 @@
             <div>
                 <label class="block text-gray-300 text-sm mb-2">الحالة</label>
                 <select name="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="pending" selected>بانتظار الموافقة</option>
-                    <option value="approved">معتمد</option>
-                    <option value="rejected">مرفوض</option>
+                    <option value="pending" {{ old('status', $expense->status->value) == 'pending' ? 'selected' : '' }}>بانتظار الموافقة</option>
+                    <option value="approved" {{ old('status', $expense->status->value) == 'approved' ? 'selected' : '' }}>معتمد</option>
+                    <option value="rejected" {{ old('status', $expense->status->value) == 'rejected' ? 'selected' : '' }}>مرفوض</option>
                 </select>
             </div>
         </div>
@@ -163,9 +164,39 @@
     <!-- Attachments -->
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
         <h2 class="text-xl font-bold text-white mb-6">المرفقات</h2>
+        
+        <!-- Existing Attachments -->
+        @if($expense->attachments->count() > 0)
+        <div class="mb-4 space-y-2">
+            <p class="text-gray-300 text-sm mb-2">المرفقات الحالية:</p>
+            @foreach($expense->attachments as $attachment)
+            <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-file text-primary-400"></i>
+                    <span class="text-white text-sm">{{ $attachment->name }}</span>
+                    <span class="text-gray-400 text-xs">{{ $attachment->formatted_size }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('expenses.attachments.download', ['id' => $expense->id, 'attachmentId' => $attachment->id]) }}" class="text-primary-400 hover:text-primary-300" title="تحميل">
+                        <i class="fas fa-download"></i>
+                    </a>
+                    <form action="{{ route('expenses.attachments.delete', ['id' => $expense->id, 'attachmentId' => $attachment->id]) }}" method="POST" class="inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المرفق؟')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-red-400 hover:text-red-300" title="حذف">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            @endforeach
+        </div>
+        @endif
+
+        <!-- Upload New Attachments -->
         <div class="space-y-4">
             <div>
-                <label class="block text-gray-300 text-sm mb-2">رفع المرفقات (اختياري)</label>
+                <label class="block text-gray-300 text-sm mb-2">رفع مرفقات جديدة (اختياري)</label>
                 <div class="flex items-center gap-4">
                     <input 
                         type="file" 
@@ -212,7 +243,7 @@
                 rows="4"
                 class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 placeholder="أي ملاحظات إضافية حول المصروف..."
-            ></textarea>
+            >{{ old('notes', $expense->notes) }}</textarea>
         </div>
     </div>
 

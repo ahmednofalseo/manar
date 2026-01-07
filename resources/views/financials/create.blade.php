@@ -17,10 +17,10 @@
 @section('content')
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-white">إنشاء فاتورة جديدة</h1>
+    <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('New Invoice') }}</h1>
     <a href="{{ route('financials.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-        <i class="fas fa-arrow-right ml-2"></i>
-        رجوع
+        <i class="fas fa-arrow-right {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+        {{ __('Back') }}
     </a>
 </div>
 
@@ -30,15 +30,17 @@
 
     <!-- Basic Information -->
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
-        <h2 class="text-xl font-bold text-white mb-6">البيانات الأساسية</h2>
+        <h2 class="text-xl font-bold text-white mb-6">{{ __('Basic Information') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
-                <label class="block text-gray-300 text-sm mb-2">العميل <span class="text-red-400">*</span></label>
-                <select name="client_id" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="">اختر العميل</option>
-                    <option value="1">أحمد محمد</option>
-                    <option value="2">فاطمة سالم</option>
-                    <option value="3">خالد مطر</option>
+                <label class="block text-gray-300 text-sm mb-2">العميل</label>
+                <select name="client_id" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
+                    <option value="">اختر العميل (اختياري)</option>
+                    @foreach($clients as $client)
+                        <option value="{{ $client->id }}" {{ old('client_id') == $client->id ? 'selected' : '' }}>
+                            {{ $client->name }} - {{ $client->type_label }}
+                        </option>
+                    @endforeach
                 </select>
                 @error('client_id')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -48,10 +50,12 @@
             <div>
                 <label class="block text-gray-300 text-sm mb-2">المشروع <span class="text-red-400">*</span></label>
                 <select name="project_id" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="">اختر المشروع</option>
-                    <option value="1">مشروع فيلا رقم 1</option>
-                    <option value="2">مشروع مجمع سكني</option>
-                    <option value="3">مشروع مبنى تجاري</option>
+                    <option value="">{{ __('Select Project') }}</option>
+                    @foreach($projects as $project)
+                        <option value="{{ $project->id }}" {{ old('project_id') == $project->id ? 'selected' : '' }}>
+                            {{ $project->name }}
+                        </option>
+                    @endforeach
                 </select>
                 @error('project_id')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -63,15 +67,16 @@
                 <div class="flex items-center gap-2">
                     <input 
                         type="text" 
-                        name="invoice_number" 
-                        value="INV-2025-001"
+                        name="number" 
+                        value="{{ old('number') }}"
                         class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                        placeholder="سيتم توليد الرقم تلقائياً"
                     >
-                    <button type="button" class="px-3 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
                 </div>
                 <p class="text-gray-400 text-xs mt-1">سيتم توليد الرقم تلقائياً إذا تركت فارغاً</p>
+                @error('number')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
@@ -79,7 +84,8 @@
                 <div class="relative">
                     <input 
                         type="number" 
-                        name="amount" 
+                        name="total_amount" 
+                        value="{{ old('total_amount') }}"
                         required
                         step="0.01"
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 pr-16 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
@@ -87,7 +93,7 @@
                     >
                     <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">ر.س</span>
                 </div>
-                @error('amount')
+                @error('total_amount')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
                 @enderror
             </div>
@@ -96,11 +102,13 @@
                 <label class="block text-gray-300 text-sm mb-2">عدد الدفعات</label>
                 <input 
                     type="number" 
-                    name="installments" 
-                    value="1"
+                    name="installments_count" 
+                    value="{{ old('installments_count', 1) }}"
                     min="1"
+                    max="100"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 >
+                <p class="text-gray-400 text-xs mt-1">سيتم إنشاء دفعات تلقائياً بناءً على هذا العدد</p>
             </div>
 
             <div>
@@ -114,31 +122,31 @@
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">الحالة</label>
-                <select name="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="unpaid">غير مدفوعة</option>
-                    <option value="partial">جزئية</option>
-                    <option value="paid">مدفوعة</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-gray-300 text-sm mb-2">تاريخ الإصدار</label>
+                <label class="block text-gray-300 text-sm mb-2">تاريخ الإصدار <span class="text-red-400">*</span></label>
                 <input 
                     type="date" 
                     name="issue_date" 
-                    value="{{ date('Y-m-d') }}"
+                    value="{{ old('issue_date', date('Y-m-d')) }}"
+                    required
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 >
+                @error('issue_date')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">تاريخ الاستحقاق</label>
+                <label class="block text-gray-300 text-sm mb-2">تاريخ الاستحقاق <span class="text-red-400">*</span></label>
                 <input 
                     type="date" 
                     name="due_date" 
+                    value="{{ old('due_date') }}"
+                    required
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 >
+                @error('due_date')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
         </div>
     </div>
@@ -147,7 +155,7 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold text-white">طرف ثالث (اختياري)</h2>
-            <button type="button" @click="addThirdParty()" class="px-3 py-1 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded-lg text-sm">
+            <button type="button" @click="addThirdParty()" class="px-3 py-1 bg-primary-400/20 hover:bg-primary-500/30 text-primary-400 rounded-lg text-sm">
                 <i class="fas fa-plus ml-1"></i>
                 إضافة
             </button>

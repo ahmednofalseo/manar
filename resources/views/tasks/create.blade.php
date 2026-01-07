@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'إنشاء مهمة جديدة - المنار')
-@section('page-title', 'إنشاء مهمة جديدة')
+@section('title', __('New Task') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('New Task'))
 
 @push('styles')
 <style>
@@ -11,92 +11,145 @@
         -webkit-backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
     }
+    .input-error {
+        border-color: #ef4444 !important;
+        background-color: rgba(239, 68, 68, 0.1) !important;
+    }
+    .input-error:focus {
+        ring-color: #ef4444 !important;
+        border-color: #ef4444 !important;
+    }
 </style>
 @endpush
 
 @section('content')
+<!-- Validation Errors Alert -->
+@if($errors->any())
+<div class="mb-4 glass-card rounded-xl p-4 border border-red-500/30 bg-red-500/10">
+    <div class="flex items-start gap-3">
+        <div class="flex-shrink-0">
+            <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-red-400 font-semibold mb-2">{{ __('Please correct the following errors') }}:</h3>
+            <ul class="list-disc list-inside text-red-300 text-sm space-y-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-white">إنشاء مهمة جديدة</h1>
+    <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('New Task') }}</h1>
     <a href="{{ route('tasks.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-        <i class="fas fa-arrow-right ml-2"></i>
-        رجوع
+        <i class="fas fa-arrow-right {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+        {{ __('Back') }}
     </a>
 </div>
 
 <!-- Form -->
-<form method="POST" action="{{ route('tasks.store') }}" enctype="multipart/form-data" x-data="taskForm()">
+<form method="POST" action="{{ route('tasks.store') }}" enctype="multipart/form-data" x-data="taskForm()" x-init="init()">
     @csrf
 
     <!-- Basic Information -->
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
-        <h2 class="text-xl font-bold text-white mb-6">البيانات الأساسية</h2>
+        <h2 class="text-xl font-bold text-white mb-6">{{ __('Basic Information') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div class="md:col-span-2">
-                <label class="block text-gray-300 text-sm mb-2">اسم المهمة <span class="text-red-400">*</span></label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Task Title') }} <span class="text-red-400">*</span></label>
                 <input 
                     type="text" 
                     name="title" 
                     required
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    value="{{ old('title') }}"
+                    class="w-full bg-white/5 border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 @error('title') border-red-500 bg-red-500/10 focus:ring-red-500/40 @else border-white/10 focus:ring-primary-400/40 @enderror"
                     placeholder="مثال: مراجعة المخططات المعمارية"
                 >
                 @error('title')
-                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                    <p class="text-red-400 text-xs mt-1 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ $message }}
+                    </p>
                 @enderror
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">المشروع المرتبط <span class="text-red-400">*</span></label>
-                <select name="project_id" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="">اختر المشروع</option>
-                    <option value="1">مشروع فيلا رقم 1</option>
-                    <option value="2">مشروع مجمع سكني</option>
-                    <option value="3">مشروع مبنى تجاري</option>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Related Project') }} <span class="text-red-400">*</span></label>
+                <select 
+                    name="project_id" 
+                    required 
+                    x-model="selectedProjectId"
+                    @change="fetchProjectStages()"
+                    class="w-full bg-white/5 border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 @error('project_id') border-red-500 bg-red-500/10 focus:ring-red-500/40 @else border-white/10 focus:ring-primary-400/40 @enderror"
+                >
+                    <option value="">{{ __('Select Project') }}</option>
+                    @foreach($projects as $proj)
+                        <option value="{{ $proj->id }}" data-stages='@json($proj->projectStages)' {{ (old('project_id', $selectedProjectId ?? '') == $proj->id) ? 'selected' : '' }}>
+                            {{ $proj->name }} ({{ $proj->project_number ?? 'غير محدد' }})
+                        </option>
+                    @endforeach
                 </select>
                 @error('project_id')
-                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                    <p class="text-red-400 text-xs mt-1 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ $message }}
+                    </p>
                 @enderror
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">المرحلة <span class="text-red-400">*</span></label>
-                <select name="stage" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="">اختر المرحلة</option>
-                    <option value="معماري">معماري</option>
-                    <option value="إنشائي">إنشائي</option>
-                    <option value="كهربائي">كهربائي</option>
-                    <option value="ميكانيكي">ميكانيكي</option>
-                    <option value="تقديم للبلدية">تقديم للبلدية</option>
-                    <option value="إشراف">إشراف</option>
-                    <option value="تسليم">تسليم</option>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Stages') }}</label>
+                <select 
+                    name="project_stage_id" 
+                    x-model="selectedStageId"
+                    class="w-full bg-white/5 border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 @error('project_stage_id') border-red-500 bg-red-500/10 focus:ring-red-500/40 @else border-white/10 focus:ring-primary-400/40 @enderror"
+                >
+                    <option value="">{{ __('Select Stage') }} ({{ __('Optional') }})</option>
+                    <template x-for="stage in projectStages" :key="stage.id">
+                        <option :value="stage.id" x-text="stage.stage_name" :selected="stage.id == {{ old('project_stage_id', 'null') }}"></option>
+                    </template>
                 </select>
-                @error('stage')
-                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @error('project_stage_id')
+                    <p class="text-red-400 text-xs mt-1 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ $message }}
+                    </p>
                 @enderror
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">المهندس / الموظف <span class="text-red-400">*</span></label>
-                <select name="assignee_id" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="">اختر المهندس</option>
-                    <option value="1">محمد أحمد</option>
-                    <option value="2">فاطمة سالم</option>
-                    <option value="3">خالد مطر</option>
-                    <option value="4">سارة علي</option>
-                </select>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Assignee') }} <span class="text-red-400">*</span></label>
+                <x-users-dropdown 
+                    name="assignee_id" 
+                    :selected="old('assignee_id')"
+                    required 
+                    placeholder="{{ __('Select Assignee') }}"
+                />
                 @error('assignee_id')
-                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                    <p class="text-red-400 text-xs mt-1 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ $message }}
+                    </p>
                 @enderror
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">الأولوية</label>
-                <select name="priority" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="low">منخفضة</option>
-                    <option value="medium" selected>متوسطة</option>
-                    <option value="high">عالية</option>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Priority') }}</label>
+                <select name="priority" class="w-full bg-white/5 border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 @error('priority') border-red-500 bg-red-500/10 focus:ring-red-500/40 @else border-white/10 focus:ring-primary-400/40 @enderror">
+                    <option value="low" {{ old('priority', 'medium') == 'low' ? 'selected' : '' }}>{{ __('Low') }}</option>
+                    <option value="medium" {{ old('priority', 'medium') == 'medium' ? 'selected' : '' }}>{{ __('Medium') }}</option>
+                    <option value="high" {{ old('priority', 'medium') == 'high' ? 'selected' : '' }}>{{ __('High') }}</option>
                 </select>
+                @error('priority')
+                    <p class="text-red-400 text-xs mt-1 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ $message }}
+                    </p>
+                @enderror
             </div>
 
             <div>
@@ -104,9 +157,15 @@
                 <input 
                     type="date" 
                     name="start_date" 
-                    value="{{ date('Y-m-d') }}"
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    value="{{ old('start_date', date('Y-m-d')) }}"
+                    class="w-full bg-white/5 border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 @error('start_date') border-red-500 bg-red-500/10 focus:ring-red-500/40 @else border-white/10 focus:ring-primary-400/40 @enderror"
                 >
+                @error('start_date')
+                    <p class="text-red-400 text-xs mt-1 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ $message }}
+                    </p>
+                @enderror
             </div>
 
             <div>
@@ -114,21 +173,30 @@
                 <input 
                     type="date" 
                     name="due_date" 
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    value="{{ old('due_date') }}"
+                    class="w-full bg-white/5 border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 @error('due_date') border-red-500 bg-red-500/10 focus:ring-red-500/40 @else border-white/10 focus:ring-primary-400/40 @enderror"
                 >
+                @error('due_date')
+                    <p class="text-red-400 text-xs mt-1 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ $message }}
+                    </p>
+                @enderror
             </div>
 
             <div class="md:col-span-2">
-                <label class="block text-gray-300 text-sm mb-2">وصف المهمة <span class="text-red-400">*</span></label>
+                <label class="block text-gray-300 text-sm mb-2">وصف المهمة</label>
                 <textarea 
                     name="description" 
-                    required
                     rows="4"
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    class="w-full bg-white/5 border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 @error('description') border-red-500 bg-red-500/10 focus:ring-red-500/40 @else border-white/10 focus:ring-primary-400/40 @enderror"
                     placeholder="وصف تفصيلي للمهمة..."
-                ></textarea>
+                >{{ old('description') }}</textarea>
                 @error('description')
-                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                    <p class="text-red-400 text-xs mt-1 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ $message }}
+                    </p>
                 @enderror
             </div>
 
@@ -137,9 +205,15 @@
                 <textarea 
                     name="manager_notes" 
                     rows="3"
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    class="w-full bg-white/5 border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 @error('manager_notes') border-red-500 bg-red-500/10 focus:ring-red-500/40 @else border-white/10 focus:ring-primary-400/40 @enderror"
                     placeholder="ملاحظات إضافية من مدير المشروع..."
-                ></textarea>
+                >{{ old('manager_notes') }}</textarea>
+                @error('manager_notes')
+                    <p class="text-red-400 text-xs mt-1 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ $message }}
+                    </p>
+                @enderror
             </div>
 
             <div>
@@ -212,6 +286,47 @@
 function taskForm() {
     return {
         selectedFiles: [],
+        selectedProjectId: @if(old('project_id', $selectedProjectId)){{ old('project_id', $selectedProjectId) }}@else null @endif,
+        selectedStageId: @if(old('project_stage_id')){{ old('project_stage_id') }}@else null @endif,
+        projectStages: [],
+        init() {
+            // تحميل المراحل للمشروع المحدد مسبقاً
+            if (this.selectedProjectId) {
+                // تحديث قيمة الـ select
+                const projectSelect = document.querySelector('select[name="project_id"]');
+                if (projectSelect) {
+                    projectSelect.value = this.selectedProjectId;
+                    // تحميل المراحل
+                    this.$nextTick(() => {
+                        this.fetchProjectStages();
+                    });
+                }
+            }
+        },
+        fetchProjectStages() {
+            const projectSelect = document.querySelector('select[name="project_id"]');
+            if (!projectSelect) return;
+            
+            const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+            
+            if (selectedOption && selectedOption.value) {
+                const stagesData = selectedOption.getAttribute('data-stages');
+                if (stagesData) {
+                    try {
+                        this.projectStages = JSON.parse(stagesData);
+                        this.selectedStageId = null; // إعادة تعيين المرحلة المختارة
+                    } catch (e) {
+                        console.error('Error parsing stages data:', e);
+                        this.projectStages = [];
+                    }
+                } else {
+                    this.projectStages = [];
+                }
+            } else {
+                this.projectStages = [];
+                this.selectedStageId = null;
+            }
+        },
         handleFilesSelect(event) {
             const files = Array.from(event.target.files);
             this.selectedFiles = files.map(file => ({

@@ -83,6 +83,15 @@ class RolesAndPermissionsSeeder extends Seeder
             // Settings Permissions
             ['name' => 'settings.view', 'display_name' => 'عرض الإعدادات', 'group' => 'Settings'],
             ['name' => 'settings.manage', 'display_name' => 'إدارة كاملة للإعدادات', 'group' => 'Settings'],
+
+            // Approvals Permissions
+            ['name' => 'approvals.view', 'display_name' => 'عرض الموافقات', 'group' => 'Approvals'],
+            ['name' => 'approvals.create', 'display_name' => 'إنشاء طلب موافقة', 'group' => 'Approvals'],
+            ['name' => 'approvals.approve', 'display_name' => 'الموافقة على الطلبات', 'group' => 'Approvals'],
+            ['name' => 'approvals.manage', 'display_name' => 'إدارة كاملة للموافقات', 'group' => 'Approvals'],
+
+            // Roles & Permissions Management
+            ['name' => 'manage-roles-permissions', 'display_name' => 'إدارة الأدوار والصلاحيات', 'group' => 'Settings'],
         ];
 
         foreach ($permissions as $permission) {
@@ -104,6 +113,7 @@ class RolesAndPermissionsSeeder extends Seeder
         // Assign permissions to engineer
         $engineer->permissions()->attach(Permission::whereIn('name', [
             'projects.view',
+            'projects.create',
             'tasks.view',
             'tasks.edit',
             'tasks.create',

@@ -17,10 +17,10 @@
 @section('content')
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-white">إضافة عميل جديد</h1>
+    <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('New Client') }}</h1>
     <a href="{{ route('clients.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-        <i class="fas fa-arrow-right ml-2"></i>
-        رجوع
+        <i class="fas fa-arrow-right {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+        {{ __('Back') }}
     </a>
 </div>
 
@@ -30,14 +30,15 @@
 
     <!-- Basic Information -->
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
-        <h2 class="text-xl font-bold text-white mb-6">البيانات الأساسية</h2>
+        <h2 class="text-xl font-bold text-white mb-6">{{ __('Basic Information') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div class="md:col-span-2">
-                <label class="block text-gray-300 text-sm mb-2">الاسم الكامل <span class="text-red-400">*</span></label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Full Name') }} <span class="text-red-400">*</span></label>
                 <input 
                     type="text" 
                     name="name" 
                     required
+                    value="{{ old('name') }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="مثال: أحمد محمد العلي"
                 >
@@ -49,10 +50,10 @@
             <div>
                 <label class="block text-gray-300 text-sm mb-2">نوع العميل <span class="text-red-400">*</span></label>
                 <select name="type" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="">اختر النوع</option>
-                    <option value="individual">فرد</option>
-                    <option value="company">شركة</option>
-                    <option value="government">جهة حكومية</option>
+                    <option value="">{{ __('Select Type') }}</option>
+                    <option value="individual" {{ old('type') == 'individual' ? 'selected' : '' }}>{{ __('Individual') }}</option>
+                    <option value="company" {{ old('type') == 'company' ? 'selected' : '' }}>{{ __('Company') }}</option>
+                    <option value="government" {{ old('type') == 'government' ? 'selected' : '' }}>{{ __('Government Entity') }}</option>
                 </select>
                 @error('type')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -63,10 +64,14 @@
                 <label class="block text-gray-300 text-sm mb-2">رقم الهوية / السجل التجاري</label>
                 <input 
                     type="text" 
-                    name="id_number" 
+                    name="national_id_or_cr" 
+                    value="{{ old('national_id_or_cr') }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="رقم الهوية أو السجل التجاري"
                 >
+                @error('national_id_or_cr')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
@@ -187,11 +192,11 @@
         <h2 class="text-xl font-bold text-white mb-6">ملاحظات داخلية</h2>
         <div>
             <textarea 
-                name="notes" 
+                name="notes_internal" 
                 rows="4"
                 class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 placeholder="أي ملاحظات داخلية حول العميل..."
-            ></textarea>
+            >{{ old('notes_internal') }}</textarea>
         </div>
     </div>
 

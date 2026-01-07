@@ -69,10 +69,11 @@
                 </button>
                 <button 
                     type="submit"
-                    class="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200"
+                    :disabled="loading"
+                    class="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <i class="fas fa-save ml-2"></i>
-                    حفظ
+                    <i class="fas" :class="loading ? 'fa-spinner fa-spin' : 'fa-save'" class="ml-2"></i>
+                    <span x-text="loading ? 'جاري الرفع...' : 'حفظ'"></span>
                 </button>
             </div>
         </form>
@@ -124,14 +125,80 @@ function clientAttachmentModal() {
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         },
-        submit() {
-            // TODO: Submit via AJAX
-            console.log('Submitting attachments for client:', this.clientId, this.selectedFiles);
-            alert('تم رفع الملفات بنجاح');
-            this.close();
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+        loading: false,
+        errors: {},
+        async submit() {
+            if (this.selectedFiles.length === 0) {
+                this.showToast('error', 'يرجى اختيار ملف واحد على الأقل');
+                return;
+            }
+
+            this.loading = true;
+            this.errors = {};
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                const formData = new FormData();
+                
+                // إضافة الملفات
+                const fileInput = document.getElementById('attachmentsInput');
+                if (fileInput && fileInput.files) {
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        formData.append('attachments[]', fileInput.files[i]);
+                    }
+                }
+                
+                formData.append('_token', csrfToken);
+
+                const response = await fetch(`/clients/${this.clientId}/attachments`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success !== false) {
+                    this.close();
+                    this.showToast('success', result.message || 'تم رفع الملفات بنجاح');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    if (result.errors) {
+                        this.errors = result.errors;
+                    } else {
+                        this.showToast('error', result.message || 'حدث خطأ أثناء رفع الملفات');
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                this.showToast('error', 'حدث خطأ أثناء رفع الملفات');
+            } finally {
+                this.loading = false;
+            }
+        },
+        showToast(type, message) {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 left-4 z-50 p-4 rounded-lg shadow-lg max-w-md text-white animate-slide-in ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            toast.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="mr-2">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
         }
     }
 }

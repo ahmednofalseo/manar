@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'تفاصيل الفاتورة - المنار')
-@section('page-title', 'تفاصيل الفاتورة')
+@section('title', __('Details') . ' - ' . __('Financials') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('Details'))
 
 @push('styles')
 <style>
@@ -39,15 +39,15 @@
     <div class="flex items-center gap-3">
         <a href="{{ route('financials.edit', $id) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
             <i class="fas fa-edit ml-2"></i>
-            تعديل
+            {{ __('Edit') }}
         </a>
         <a href="{{ route('financials.pdf', $id) }}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-file-pdf ml-2"></i>
-            تحميل PDF
+            <i class="fas fa-file-pdf {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Download') }} PDF
         </a>
         <a href="{{ route('financials.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-arrow-right ml-2"></i>
-            رجوع
+            <i class="fas fa-arrow-right {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Back') }}
         </a>
     </div>
 </div>

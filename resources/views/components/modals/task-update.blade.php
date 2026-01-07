@@ -31,7 +31,7 @@
                     <option value="">اختر الحالة</option>
                     <option value="new">جديد</option>
                     <option value="in_progress">قيد التنفيذ</option>
-                    <option value="completed">منجز</option>
+                    <option value="done">منجز</option>
                     <option value="rejected">مرفوض</option>
                 </select>
             </div>
@@ -97,7 +97,7 @@ function taskStatusModal() {
             window.addEventListener('open-task-status-modal', (e) => {
                 this.form.taskId = e.detail.taskId;
                 if (e.detail.action) {
-                    this.form.status = e.detail.action === 'approve' ? 'completed' : 'rejected';
+                    this.form.status = e.detail.action === 'approve' ? 'done' : 'rejected';
                 }
                 this.open();
             });
@@ -114,30 +114,57 @@ function taskStatusModal() {
                 taskId: null
             };
         },
-        submit() {
+        async submit() {
             // Validate reject action
             if (this.form.status === 'rejected' && !this.form.notes.trim()) {
                 alert('يرجى إدخال سبب الرفض');
                 return;
             }
 
-            // TODO: Submit via AJAX
-            console.log('Submitting:', this.form);
-            
-            const statusMap = {
-                'new': 'جديد',
-                'in_progress': 'قيد التنفيذ',
-                'completed': 'منجز',
-                'rejected': 'مرفوض'
-            };
-            
-            alert('تم تحديث الحالة إلى "' + statusMap[this.form.status] + '" بنجاح');
-            this.close();
-            
-            // Reload page or update UI
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+            try {
+                const formData = new FormData();
+                formData.append('status', this.form.status);
+                formData.append('reason', this.form.status === 'rejected' ? this.form.notes : '');
+                formData.append('completion_notes', this.form.status === 'done' ? this.form.notes : '');
+                formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+
+                const response = await fetch(`/tasks/${this.form.taskId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    this.close();
+                    
+                    // إظهار رسالة نجاح
+                    const statusMap = {
+                        'new': 'جديد',
+                        'in_progress': 'قيد التنفيذ',
+                        'done': 'منجز',
+                        'rejected': 'مرفوض'
+                    };
+                    
+                    // إعادة تحميل الصفحة
+                    window.location.reload();
+                } else {
+                    let errorMessage = 'حدث خطأ أثناء تحديث الحالة';
+                    try {
+                        const error = await response.json();
+                        errorMessage = error.message || errorMessage;
+                    } catch (e) {
+                        // If response is not JSON, use default message
+                    }
+                    alert(errorMessage);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء تحديث الحالة');
+            }
         }
     }
 }

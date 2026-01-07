@@ -19,7 +19,7 @@
 <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl md:text-3xl font-bold text-white">تعديل بيانات الموظف</h1>
     <div class="flex items-center gap-3">
-        <a href="{{ route('admin.users.show', $id) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
+        <a href="{{ route('admin.users.show', $user->id) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
             <i class="fas fa-eye ml-2"></i>
             عرض
         </a>
@@ -31,7 +31,7 @@
 </div>
 
 <!-- Form -->
-<form method="POST" action="{{ route('admin.users.update', $id) }}" enctype="multipart/form-data" x-data="userForm()">
+<form method="POST" action="{{ route('admin.users.update', $user->id) }}" enctype="multipart/form-data" x-data="userForm()">
     @csrf
     @method('PUT')
 
@@ -45,6 +45,7 @@
                     type="text" 
                     name="name" 
                     required
+                    value="{{ old('name', $user->name) }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="مثال: محمد أحمد العلي"
                 >
@@ -59,6 +60,7 @@
                     type="email" 
                     name="email" 
                     required
+                    value="{{ old('email', $user->email) }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="example@manar.com"
                 >
@@ -72,6 +74,7 @@
                 <input 
                     type="tel" 
                     name="phone" 
+                    value="{{ old('phone', $user->phone) }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="05XXXXXXXX"
                 >
@@ -85,6 +88,7 @@
                 <input 
                     type="text" 
                     name="national_id" 
+                    value="{{ old('national_id', $user->national_id) }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="10 أرقام"
                 >
@@ -126,12 +130,12 @@
                 <label class="block text-gray-300 text-sm mb-2">الوظيفة</label>
                 <select name="job_title" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                     <option value="">اختر الوظيفة</option>
-                    <option value="مهندس معماري">مهندس معماري</option>
-                    <option value="مهندس إنشائي">مهندس إنشائي</option>
-                    <option value="مهندس كهرباء">مهندس كهرباء</option>
-                    <option value="مهندس ميكانيكي">مهندس ميكانيكي</option>
-                    <option value="مدير مشروع">مدير مشروع</option>
-                    <option value="إداري">إداري</option>
+                    <option value="مهندس معماري" {{ old('job_title', $user->job_title) == 'مهندس معماري' ? 'selected' : '' }}>مهندس معماري</option>
+                    <option value="مهندس إنشائي" {{ old('job_title', $user->job_title) == 'مهندس إنشائي' ? 'selected' : '' }}>مهندس إنشائي</option>
+                    <option value="مهندس كهرباء" {{ old('job_title', $user->job_title) == 'مهندس كهرباء' ? 'selected' : '' }}>مهندس كهرباء</option>
+                    <option value="مهندس ميكانيكي" {{ old('job_title', $user->job_title) == 'مهندس ميكانيكي' ? 'selected' : '' }}>مهندس ميكانيكي</option>
+                    <option value="مدير مشروع" {{ old('job_title', $user->job_title) == 'مدير مشروع' ? 'selected' : '' }}>مدير مشروع</option>
+                    <option value="إداري" {{ old('job_title', $user->job_title) == 'إداري' ? 'selected' : '' }}>إداري</option>
                 </select>
             </div>
 
@@ -141,6 +145,7 @@
                     <input 
                         type="text" 
                         name="practice_license_no" 
+                        value="{{ old('practice_license_no', $user->practice_license_no) }}"
                         class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                         placeholder="رقم الرخصة"
                     >
@@ -156,7 +161,18 @@
                         <i class="fas fa-upload"></i>
                     </label>
                 </div>
+                @if($user->practice_license_file)
+                <div class="mt-2">
+                    <a href="{{ asset('storage/' . $user->practice_license_file) }}" target="_blank" class="text-primary-400 hover:text-primary-300 text-sm flex items-center gap-2">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>عرض الملف الحالي</span>
+                    </a>
+                </div>
+                @endif
                 <p class="text-gray-400 text-xs mt-1" x-show="licenseFileName" x-text="licenseFileName"></p>
+                @error('practice_license_file')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
@@ -164,6 +180,7 @@
                 <input 
                     type="date" 
                     name="engineer_rank_expiry" 
+                    value="{{ old('engineer_rank_expiry', $user->engineer_rank_expiry ? $user->engineer_rank_expiry->format('Y-m-d') : '') }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 >
             </div>
@@ -171,8 +188,8 @@
             <div>
                 <label class="block text-gray-300 text-sm mb-2">الحالة</label>
                 <select name="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="active" selected>نشط</option>
-                    <option value="suspended">معلق</option>
+                    <option value="active" {{ old('status', $user->status) == 'active' ? 'selected' : '' }}>نشط</option>
+                    <option value="suspended" {{ old('status', $user->status) == 'suspended' ? 'selected' : '' }}>معلق</option>
                 </select>
             </div>
         </div>
@@ -185,10 +202,9 @@
             <div>
                 <label class="block text-gray-300 text-sm mb-2">الأدوار <span class="text-red-400">*</span></label>
                 <select name="roles[]" multiple required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 h-32">
-                    <option value="super_admin">الأدمن العام</option>
-                    <option value="project_manager">مدير المشروع</option>
-                    <option value="engineer">مهندس/فني</option>
-                    <option value="admin_staff">الإداري</option>
+                    @foreach($roles as $role)
+                        <option value="{{ $role->id }}" {{ $user->roles->contains('id', $role->id) ? 'selected' : '' }}>{{ $role->display_name }}</option>
+                    @endforeach
                 </select>
                 <p class="text-gray-400 text-xs mt-1">يمكن اختيار عدة أدوار (اضغط Ctrl/CMD للاختيار المتعدد)</p>
                 @error('roles')
@@ -199,7 +215,7 @@
             <div>
                 <label class="block text-gray-300 text-sm mb-2">الصورة الشخصية (Avatar)</label>
                 <div class="flex items-center gap-4">
-                    <div class="w-20 h-20 bg-primary-500/20 rounded-full flex items-center justify-center overflow-hidden">
+                    <div class="w-20 h-20 bg-primary-400/20 rounded-full flex items-center justify-center overflow-hidden">
                         <img x-show="avatarPreview" :src="avatarPreview" alt="Avatar" class="w-full h-full object-cover">
                         <i x-show="!avatarPreview" class="fas fa-user-circle text-primary-400 text-4xl"></i>
                     </div>
@@ -239,8 +255,14 @@
 <script>
 function userForm() {
     return {
-        avatarPreview: null,
+        avatarPreview: @if($user->avatar) '{{ asset("storage/" . $user->avatar) }}' @else null @endif,
         licenseFileName: null,
+        init() {
+            // Set initial avatar preview if exists
+            @if($user->avatar)
+            this.avatarPreview = '{{ asset("storage/" . $user->avatar) }}';
+            @endif
+        },
         handleAvatarSelect(event) {
             const file = event.target.files[0];
             if (file) {

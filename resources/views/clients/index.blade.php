@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'إدارة العملاء - المنار')
-@section('page-title', 'إدارة العملاء')
+@section('title', __('Client Management') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('Client Management'))
 
 @push('styles')
 <style>
@@ -46,19 +46,11 @@
 
 <!-- Header Actions -->
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-white">إدارة العملاء</h1>
+    <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('Client Management') }}</h1>
     <div class="flex items-center gap-3">
-        <button class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-gear ml-2"></i>
-            إعدادات العرض
-        </button>
-        <button class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-file-export ml-2"></i>
-            تصدير
-        </button>
         <a href="{{ route('clients.create') }}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-user-plus ml-2"></i>
-            عميل جديد
+            <i class="fas fa-user-plus {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('New Client') }}
         </a>
     </div>
 </div>
@@ -68,10 +60,10 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">إجمالي العملاء</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">245</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Total Clients') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2" style="color: #4787a7 !important;">{{ $totalClients }}</h3>
             </div>
-            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-400/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-users text-primary-400 text-xl md:text-2xl"></i>
             </div>
         </div>
@@ -80,8 +72,8 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">العملاء النشطون</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-green-400 mt-1 md:mt-2">198</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Active Clients') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-green-400 mt-1 md:mt-2">{{ $activeClients }}</h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-user-check text-green-400 text-xl md:text-2xl"></i>
@@ -92,8 +84,8 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">غير النشطين</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-gray-400 mt-1 md:mt-2">47</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Inactive Clients') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-gray-400 mt-1 md:mt-2">{{ $inactiveClients }}</h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-gray-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-user-slash text-gray-400 text-xl md:text-2xl"></i>
@@ -104,25 +96,53 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">ملاحظات قيد المراجعة</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-yellow-400 mt-1 md:mt-2">12</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Total Projects') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-yellow-400 mt-1 md:mt-2" style="color: #4787a7 !important;">{{ \App\Models\Project::whereHas('client')->count() }}</h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-yellow-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-comment-dots text-yellow-400 text-xl md:text-2xl"></i>
+                <i class="fas fa-project-diagram text-yellow-400 text-xl md:text-2xl"></i>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6" x-data="chartsData()" x-init="initCharts()">
+    <!-- New Clients Chart -->
+    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <h3 class="text-lg font-bold text-white mb-4">{{ __('New Clients Monthly') }}</h3>
+        <div class="relative" style="height: 250px;">
+            <canvas id="newClientsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Clients by Type Chart -->
+    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <h3 class="text-lg font-bold text-white mb-4">{{ __('Clients Distribution by Type') }}</h3>
+        <div class="relative" style="height: 250px;">
+            <canvas id="clientsByTypeChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Most Active Clients Chart -->
+    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <h3 class="text-lg font-bold text-white mb-4">{{ __('Most Active Clients') }}</h3>
+        <div class="relative" style="height: 250px;">
+            <canvas id="mostActiveClientsChart"></canvas>
+        </div>
+    </div>
+</div>
+
 <!-- Filters Bar -->
-<div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6" x-data="clientFilters()">
+<form method="GET" action="{{ route('clients.index') }}" class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
     <div class="space-y-4">
         <!-- Search Bar -->
         <div class="relative">
             <input 
                 type="text" 
-                x-model="search"
-                placeholder="بحث: الاسم، الهاتف، البريد الإلكتروني..." 
+                name="search"
+                value="{{ request('search') }}"
+                placeholder="{{ __('Search: name, phone, email...') }}" 
                 class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base"
             >
             <i class="fas fa-search absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -131,202 +151,403 @@
         <!-- Filters Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">المدينة</label>
-                <select x-model="city" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع المدن</option>
-                    <option value="الرياض">الرياض</option>
-                    <option value="جدة">جدة</option>
-                    <option value="الدمام">الدمام</option>
-                    <option value="مكة">مكة</option>
-                    <option value="المدينة">المدينة</option>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('City') }}</label>
+                <select name="city" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
+                    <option value="">{{ __('All Cities') }}</option>
+                    @foreach($cities as $city)
+                        <option value="{{ $city }}" {{ request('city') == $city ? 'selected' : '' }}>{{ $city }}</option>
+                    @endforeach
                 </select>
             </div>
 
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">الحالة</label>
-                <select x-model="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع الحالات</option>
-                    <option value="active">نشط</option>
-                    <option value="inactive">غير نشط</option>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Status') }}</label>
+                <select name="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
+                    <option value="">{{ __('All Statuses') }}</option>
+                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">نوع العميل</label>
-                <select x-model="type" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع الأنواع</option>
-                    <option value="individual">فرد</option>
-                    <option value="company">شركة</option>
-                    <option value="government">جهة حكومية</option>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Client Type') }}</label>
+                <select name="type" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
+                    <option value="">{{ __('All Types') }}</option>
+                    <option value="individual" {{ request('type') == 'individual' ? 'selected' : '' }}>{{ __('Individual') }}</option>
+                    <option value="company" {{ request('type') == 'company' ? 'selected' : '' }}>{{ __('Company') }}</option>
+                    <option value="government" {{ request('type') == 'government' ? 'selected' : '' }}>{{ __('Government Entity') }}</option>
                 </select>
             </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <button @click="applyFilters()" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-                <i class="fas fa-filter ml-2"></i>
-                تطبيق الفلاتر
+            <button type="submit" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
+                <i class="fas fa-filter {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Apply Filters') }}
             </button>
-            <button @click="clearFilters()" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-                <i class="fas fa-times ml-2"></i>
-                تفريغ
+            <a href="{{ route('clients.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base text-center">
+                <i class="fas fa-times {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Clear') }}
+            </a>
+        </div>
+    </div>
+</form>
+
+<!-- Clients Table -->
+<div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6" x-data="clientsTableData()">
+    @if($clients->count() > 0)
+    <!-- Bulk Actions Bar -->
+    <div x-show="selectedClients.length > 0" class="mb-4 p-3 bg-primary-500/20 border border-primary-400/30 rounded-lg flex items-center justify-between">
+        <span class="text-white text-sm">
+            {{ __('clients selected') }} <span x-text="selectedClients.length" class="font-bold"></span>
+        </span>
+        <div class="flex items-center gap-2">
+            @can('deleteAny', \App\Models\Client::class)
+            <button @click="bulkDelete()" class="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-sm">
+                <i class="fas fa-trash {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+                {{ __('Delete Selected') }}
+            </button>
+            @endcan
+            <button @click="clearSelection()" class="px-3 py-1 bg-white/5 hover:bg-white/10 text-white rounded text-sm">
+                {{ __('Cancel') }}
             </button>
         </div>
     </div>
-</div>
 
-<!-- Clients Table -->
-<div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6" x-data="clientsData()">
     <!-- Desktop Table -->
     <div class="hidden md:block overflow-x-auto">
         <table class="w-full">
             <thead>
                 <tr class="text-right border-b border-white/10">
-                    <th class="text-gray-400 text-sm font-normal pb-3">الاسم الكامل</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">نوع العميل</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الجوال</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">البريد الإلكتروني</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">المدينة / الحي</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">عدد المشاريع</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الحالة</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">تاريخ الإنشاء</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الإجراءات</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3 w-12">
+                        <input type="checkbox" @change="toggleAll($event)" class="rounded border-white/20">
+                    </th>
+                    <th x-show="isVisible('name')" class="text-gray-400 text-sm font-normal pb-3">{{ __('Full Name') }}</th>
+                    <th x-show="isVisible('type')" class="text-gray-400 text-sm font-normal pb-3">{{ __('Client Type') }}</th>
+                    <th x-show="isVisible('phone')" class="text-gray-400 text-sm font-normal pb-3">{{ __('Phone') }}</th>
+                    <th x-show="isVisible('email')" class="text-gray-400 text-sm font-normal pb-3">{{ __('Email') }}</th>
+                    <th x-show="isVisible('city')" class="text-gray-400 text-sm font-normal pb-3">{{ __('City / District') }}</th>
+                    <th x-show="isVisible('projects')" class="text-gray-400 text-sm font-normal pb-3">{{ __('Projects Count') }}</th>
+                    <th x-show="isVisible('status')" class="text-gray-400 text-sm font-normal pb-3">{{ __('Status') }}</th>
+                    <th x-show="isVisible('created_at')" class="text-gray-400 text-sm font-normal pb-3">{{ __('Created At') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
-                <template x-for="client in clients" :key="client.id">
-                    <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
-                        <td class="py-3 text-white text-sm font-semibold" x-text="client.name"></td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="getClientTypeText(client.type)"></td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="client.phone"></td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="client.email"></td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="client.city + ' / ' + client.district"></td>
-                        <td class="py-3 text-white font-semibold" x-text="client.projectsCount"></td>
+                @foreach($clients as $client)
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition-all" :class="selectedClients.includes({{ $client->id }}) ? 'bg-primary-500/10' : ''">
                         <td class="py-3">
-                            <span 
-                                class="px-2 py-1 rounded text-xs font-semibold"
-                                :class="client.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'"
-                                x-text="client.status === 'active' ? 'نشط' : 'غير نشط'"
-                            ></span>
+                            <input type="checkbox" :value="{{ $client->id }}" @change="toggleClient({{ $client->id }}, $event)" class="rounded border-white/20">
                         </td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="client.createdAt"></td>
+                        <td x-show="isVisible('name')" class="py-3 text-white text-sm font-semibold">{{ $client->name }}</td>
+                        <td x-show="isVisible('type')" class="py-3 text-gray-300 text-sm">{{ $client->type_label }}</td>
+                        <td x-show="isVisible('phone')" class="py-3 text-gray-300 text-sm">{{ $client->phone }}</td>
+                        <td x-show="isVisible('email')" class="py-3 text-gray-300 text-sm">{{ $client->email ?? '-' }}</td>
+                        <td x-show="isVisible('city')" class="py-3 text-gray-300 text-sm">{{ $client->city }}@if($client->district) / {{ $client->district }}@endif</td>
+                        <td x-show="isVisible('projects')" class="py-3 text-white font-semibold" style="color: #4787a7 !important;">{{ $client->projects_count }}</td>
+                        <td x-show="isVisible('status')" class="py-3">
+                            <span 
+                                class="px-2 py-1 rounded text-xs font-semibold {{ $client->status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400' }}"
+                            >
+                                {{ $client->status_label }}
+                            </span>
+                        </td>
+                        <td x-show="isVisible('created_at')" class="py-3 text-gray-300 text-sm">{{ $client->created_at->format('Y-m-d') }}</td>
                         <td class="py-3">
                             <div class="flex items-center gap-2">
-                                <a :href="'/clients/' + client.id" class="text-primary-400 hover:text-primary-300" title="عرض">
+                                <a href="{{ route('clients.show', $client->id) }}" class="text-primary-400 hover:text-primary-300" :title="'{{ __('View') }}'">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a :href="'/clients/' + client.id + '/edit'" class="text-blue-400 hover:text-blue-300" title="تعديل">
+                                @can('update', $client)
+                                <a href="{{ route('clients.edit', $client->id) }}" class="text-blue-400 hover:text-blue-300" :title="'{{ __('Edit') }}'">
                                     <i class="fas fa-pen"></i>
                                 </a>
-                                <button @click="openAttachmentModal(client.id)" class="text-purple-400 hover:text-purple-300" title="مرفقات">
+                                @endcan
+                                @can('viewAttachments', $client)
+                                <button onclick="openClientAttachmentModal({{ $client->id }})" class="text-purple-400 hover:text-purple-300" :title="'{{ __('Attachments') }}'">
                                     <i class="fas fa-paperclip"></i>
                                 </button>
-                                <button @click="openNotesModal(client.id)" class="text-yellow-400 hover:text-yellow-300" title="ملاحظات">
+                                @endcan
+                                @can('addNote', $client)
+                                <button onclick="openClientNotesModal({{ $client->id }})" class="text-yellow-400 hover:text-yellow-300" :title="'{{ __('Notes') }}'">
                                     <i class="fas fa-comments"></i>
                                 </button>
-                                <button @click="linkProject(client.id)" class="text-green-400 hover:text-green-300" title="ربط بمشروع">
-                                    <i class="fas fa-link"></i>
-                                </button>
-                                <button @click="deleteClient(client.id)" class="text-red-400 hover:text-red-300" title="حذف">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                @endcan
+                                @can('delete', $client)
+                                <form action="{{ route('clients.destroy', $client->id) }}" method="POST" class="inline" onsubmit="return confirm('{{ __('Are you sure you want to delete this client?') }}');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-400 hover:text-red-300" :title="'{{ __('Delete') }}'">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                @endcan
                             </div>
                         </td>
                     </tr>
-                </template>
+                @endforeach
             </tbody>
         </table>
     </div>
 
     <!-- Mobile Cards -->
     <div class="md:hidden space-y-4">
-        <template x-for="client in clients" :key="client.id">
+        @foreach($clients as $client)
             <div class="glass-card rounded-xl p-4 border border-white/10">
                 <div class="flex items-start justify-between mb-3">
                     <div>
-                        <h3 class="text-white font-semibold mb-1" x-text="client.name"></h3>
-                        <p class="text-gray-400 text-sm" x-text="getClientTypeText(client.type)"></p>
+                        <h3 class="text-white font-semibold mb-1">{{ $client->name }}</h3>
+                        <p class="text-gray-400 text-sm">{{ $client->type_label }}</p>
                     </div>
                     <span 
-                        class="px-2 py-1 rounded text-xs font-semibold"
-                        :class="client.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'"
-                        x-text="client.status === 'active' ? 'نشط' : 'غير نشط'"
-                    ></span>
+                        class="px-2 py-1 rounded text-xs font-semibold {{ $client->status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400' }}"
+                    >
+                        {{ $client->status_label }}
+                    </span>
                 </div>
                 <div class="space-y-2 mb-3">
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-400 text-xs">الجوال</span>
-                        <span class="text-white text-sm" x-text="client.phone"></span>
+                        <span class="text-gray-400 text-xs">{{ __('Phone') }}</span>
+                        <span class="text-white text-sm">{{ $client->phone }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-400 text-xs">البريد</span>
-                        <span class="text-white text-sm" x-text="client.email"></span>
+                        <span class="text-gray-400 text-xs">{{ __('Email') }}</span>
+                        <span class="text-white text-sm">{{ $client->email ?? '-' }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-400 text-xs">المدينة</span>
-                        <span class="text-white text-sm" x-text="client.city + ' / ' + client.district"></span>
+                        <span class="text-gray-400 text-xs">{{ __('City') }}</span>
+                        <span class="text-white text-sm">{{ $client->city }}@if($client->district) / {{ $client->district }}@endif</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-400 text-xs">المشاريع</span>
-                        <span class="text-white font-semibold" x-text="client.projectsCount"></span>
+                        <span class="text-gray-400 text-xs">{{ __('Projects') }}</span>
+                        <span class="text-white font-semibold" style="color: #4787a7 !important;">{{ $client->projects_count }}</span>
                     </div>
                 </div>
                 <div class="flex items-center justify-between pt-3 border-t border-white/10">
                     <div class="flex items-center gap-2">
-                        <a :href="'/clients/' + client.id" class="text-primary-400 hover:text-primary-300">
+                        <a href="{{ route('clients.show', $client->id) }}" class="text-primary-400 hover:text-primary-300">
                             <i class="fas fa-eye"></i>
                         </a>
-                        <a :href="'/clients/' + client.id + '/edit'" class="text-blue-400 hover:text-blue-300">
+                        @can('update', $client)
+                        <a href="{{ route('clients.edit', $client->id) }}" class="text-blue-400 hover:text-blue-300">
                             <i class="fas fa-pen"></i>
                         </a>
-                        <button @click="openAttachmentModal(client.id)" class="text-purple-400 hover:text-purple-300">
+                        @endcan
+                        @can('viewAttachments', $client)
+                        <button onclick="openClientAttachmentModal({{ $client->id }})" class="text-purple-400 hover:text-purple-300">
                             <i class="fas fa-paperclip"></i>
                         </button>
+                        @endcan
                     </div>
-                    <button @click="openNotesModal(client.id)" class="px-3 py-1 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
-                        <i class="fas fa-comments ml-1"></i>
-                        ملاحظات
+                    @can('addNote', $client)
+                    <button onclick="openClientNotesModal({{ $client->id }})" class="px-3 py-1 bg-primary-400/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
+                        <i class="fas fa-comments {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+                        {{ __('Notes') }}
                     </button>
+                    @endcan
                 </div>
             </div>
-        </template>
-    </div>
-</div>
-
-<!-- Sidebar Widgets -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mt-4 md:mt-6" x-data="chartsData()" x-init="initCharts()">
-    <!-- New Clients Chart -->
-    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-        <h3 class="text-lg font-bold text-white mb-4">عدد العملاء الجدد شهريًا</h3>
-        <div class="relative" style="height: 250px;">
-            <canvas id="newClientsChart"></canvas>
-        </div>
+        @endforeach
     </div>
 
-    <!-- Clients by Type Chart -->
-    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-        <h3 class="text-lg font-bold text-white mb-4">توزيع العملاء حسب النوع</h3>
-        <div class="relative" style="height: 250px;">
-            <canvas id="clientsByTypeChart"></canvas>
-        </div>
+    <!-- Pagination -->
+    @if($clients->hasPages())
+    <div class="mt-6">
+        {{ $clients->links() }}
     </div>
+    @endif
 
-    <!-- Most Active Clients Chart -->
-    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-        <h3 class="text-lg font-bold text-white mb-4">العملاء الأكثر نشاطًا</h3>
-        <div class="relative" style="height: 250px;">
-            <canvas id="mostActiveClientsChart"></canvas>
-        </div>
+    @else
+    <div class="text-center py-12">
+        <i class="fas fa-users text-gray-400 text-6xl mb-4"></i>
+        <p class="text-gray-400 text-lg">{{ __('No clients found') }}</p>
+        @can('create', \App\Models\Client::class)
+        <a href="{{ route('clients.create') }}" class="mt-4 inline-block px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200">
+            <i class="fas fa-user-plus {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Add New Client') }}
+        </a>
+        @endcan
     </div>
+    @endif
 </div>
 
 <!-- Modals -->
 @include('components.modals.client-attachment')
 @include('components.modals.client-notes')
 
+
 @push('scripts')
 <script>
+function handleImport(input) {
+    if (!input.files || !input.files[0]) return;
+    
+    const formData = new FormData();
+    formData.append('file', input.files[0]);
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+    
+    const button = input.previousElementSibling;
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin ml-2"></i> جاري الاستيراد...';
+    
+    fetch('{{ route("clients.import") }}', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success !== false) {
+            showToast('success', data.message || 'تم الاستيراد بنجاح');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showToast('error', data.message || 'حدث خطأ أثناء الاستيراد');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('error', 'حدث خطأ أثناء الاستيراد');
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.innerHTML = originalText;
+        input.value = '';
+    });
+}
+
+function bulkActions() {
+    return {
+        selectedClients: [],
+        toggleClient(id, event) {
+            if (event.target.checked) {
+                if (!this.selectedClients.includes(id)) {
+                    this.selectedClients.push(id);
+                }
+            } else {
+                this.selectedClients = this.selectedClients.filter(c => c !== id);
+            }
+        },
+        toggleAll(event) {
+            if (event.target.checked) {
+                this.selectedClients = @json($clients->pluck('id')->toArray());
+                document.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => cb.checked = true);
+            } else {
+                this.selectedClients = [];
+                document.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => cb.checked = false);
+            }
+        },
+        clearSelection() {
+            this.selectedClients = [];
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+        },
+        async bulkDelete() {
+            if (!confirm(`{{ __('Are you sure you want to delete') }} ${this.selectedClients.length} {{ __('clients?') }}`)) return;
+            
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                const response = await fetch('{{ route("clients.bulk-delete") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({ ids: this.selectedClients })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success !== false) {
+                    showToast('success', result.message || 'تم الحذف بنجاح');
+                    this.clearSelection();
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast('error', result.message || 'حدث خطأ أثناء الحذف');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('error', 'حدث خطأ أثناء الحذف');
+            }
+        }
+    }
+}
+
+function showToast(type, message) {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 left-4 z-50 p-4 rounded-lg shadow-lg max-w-md text-white animate-slide-in ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    }`;
+    toast.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span>${message}</span>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="mr-2">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+
+// Global functions for opening modals
+function openClientAttachmentModal(clientId) {
+    window.dispatchEvent(new CustomEvent('open-client-attachment-modal', { 
+        detail: { clientId: clientId } 
+    }));
+}
+
+function openClientNotesModal(clientId) {
+    window.dispatchEvent(new CustomEvent('open-client-notes-modal', { 
+        detail: { clientId: clientId } 
+    }));
+}
+
+function columnVisibility() {
+    return {
+        columns: {
+            name: true,
+            type: true,
+            phone: true,
+            email: true,
+            city: true,
+            projects: true,
+            status: true,
+            created_at: true
+        },
+        init() {
+            // Load saved column visibility from localStorage
+            const saved = localStorage.getItem('clients_display_settings');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.columns) {
+                        this.columns = { ...this.columns, ...parsed.columns };
+                    }
+                } catch (e) {
+                    console.error('Error loading column settings:', e);
+                }
+            }
+        },
+        isVisible(column) {
+            return this.columns[column] !== false;
+        }
+    }
+}
+
+function clientsTableData() {
+    return {
+        ...bulkActions(),
+        ...columnVisibility()
+    }
+}
+
 function clientFilters() {
     return {
         search: '',
@@ -412,10 +633,10 @@ function clientsData() {
             window.dispatchEvent(new CustomEvent('open-client-notes-modal', { detail: { clientId: id } }));
         },
         linkProject(id) {
-            alert('ربط عميل #' + id + ' بمشروع جديد');
+            alert('{{ __('Link New Project') }}');
         },
         deleteClient(id) {
-            if (confirm('هل أنت متأكد من حذف هذا العميل؟')) {
+            if (confirm('{{ __('Are you sure you want to delete this client?') }}')) {
                 console.log('Deleting client:', id);
             }
         }
@@ -433,18 +654,33 @@ function chartsData() {
                 return;
             }
 
+            // بيانات العملاء الجدد شهريًا
+            const newClientsData = @json($newClientsByMonth ?? []);
+            const months = [];
+            const counts = [];
+            
+            // إنشاء قائمة الأشهر للـ 12 شهر الماضية
+            for (let i = 11; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const monthKey = date.toISOString().slice(0, 7); // YYYY-MM
+                const monthName = date.toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' });
+                months.push(monthName);
+                counts.push(newClientsData[monthKey] || 0);
+            }
+
             // New Clients Line Chart
             const newCtx = document.getElementById('newClientsChart');
             if (newCtx && !this.newClientsChart) {
                 this.newClientsChart = new Chart(newCtx, {
                     type: 'line',
                     data: {
-                        labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر'],
+                        labels: months,
                         datasets: [{
-                            label: 'عملاء جدد',
-                            data: [15, 18, 22, 20, 25, 28, 30, 27, 24, 26, 22],
-                            borderColor: '#1db8f8',
-                            backgroundColor: 'rgba(29, 184, 248, 0.1)',
+                            label: '{{ __('New Clients Monthly') }}',
+                            data: counts,
+                            borderColor: '#4787a7',
+                            backgroundColor: 'rgba(71, 135, 167, 0.1)',
                             tension: 0.4,
                             fill: true
                         }]
@@ -481,16 +717,28 @@ function chartsData() {
                 });
             }
 
+            // بيانات توزيع العملاء حسب النوع
+            const clientsByTypeData = @json($clientsByType ?? []);
+            const typeLabels = {
+                'individual': '{{ __('Individual') }}',
+                'company': '{{ __('Company') }}',
+                'government': '{{ __('Government Entity') }}'
+            };
+            const typeLabelsArray = Object.keys(clientsByTypeData).map(key => typeLabels[key] || key);
+            const typeDataArray = Object.values(clientsByTypeData);
+
             // Clients by Type Pie Chart
             const typeCtx = document.getElementById('clientsByTypeChart');
             if (typeCtx && !this.clientsByTypeChart) {
                 this.clientsByTypeChart = new Chart(typeCtx, {
                     type: 'pie',
                     data: {
-                        labels: ['فرد', 'شركة', 'جهة حكومية'],
+                        labels: typeLabelsArray.length > 0 ? typeLabelsArray : ['لا توجد بيانات'],
                         datasets: [{
-                            data: [120, 85, 40],
-                            backgroundColor: ['#1db8f8', '#10b981', '#f59e0b']
+                            data: typeDataArray.length > 0 ? typeDataArray : [0],
+                            backgroundColor: ['rgba(71, 135, 167, 0.8)', 'rgba(29, 184, 248, 0.8)', 'rgba(16, 185, 129, 0.8)'],
+                            borderColor: ['#4787a7', '#1db8f8', '#10b981'],
+                            borderWidth: 2
                         }]
                     },
                     options: {
@@ -509,17 +757,24 @@ function chartsData() {
                 });
             }
 
+            // بيانات العملاء الأكثر نشاطًا
+            const mostActiveClientsData = @json($mostActiveClients ?? []);
+            const activeClientNames = mostActiveClientsData.map(client => client.name);
+            const activeClientProjects = mostActiveClientsData.map(client => client.projects_count || 0);
+
             // Most Active Clients Bar Chart
             const activeCtx = document.getElementById('mostActiveClientsChart');
             if (activeCtx && !this.mostActiveChart) {
                 this.mostActiveChart = new Chart(activeCtx, {
                     type: 'bar',
                     data: {
-                        labels: ['أحمد محمد', 'شركة البناء', 'وزارة الشؤون', 'فاطمة سالم', 'خالد مطر'],
+                        labels: activeClientNames.length > 0 ? activeClientNames : ['لا توجد بيانات'],
                         datasets: [{
-                            label: 'عدد المشاريع',
-                            data: [12, 10, 8, 5, 4],
-                            backgroundColor: '#1db8f8'
+                            label: '{{ __('Projects Count') }}',
+                            data: activeClientProjects.length > 0 ? activeClientProjects : [0],
+                            backgroundColor: 'rgba(71, 135, 167, 0.8)',
+                            borderColor: '#4787a7',
+                            borderWidth: 1
                         }]
                     },
                     options: {
@@ -560,5 +815,6 @@ function chartsData() {
 @endpush
 
 @endsection
+
 
 

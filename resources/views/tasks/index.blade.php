@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'إدارة المهام - المنار')
-@section('page-title', 'إدارة المهام')
+@section('title', __('Task Management') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('Task Management'))
 
 @push('styles')
 <style>
@@ -20,6 +20,13 @@
     .task-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(29, 184, 248, 0.2);
+    }
+    .task-card.dragging {
+        opacity: 0.5;
+    }
+    .kanban-column.drag-over {
+        background: rgba(29, 184, 248, 0.1);
+        border: 2px dashed rgba(29, 184, 248, 0.5);
     }
 </style>
 @endpush
@@ -56,28 +63,75 @@
 
 <!-- Header Actions -->
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-white">إدارة المهام</h1>
+    <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('Task Management') }}</h1>
     <div class="flex items-center gap-3">
-        <button class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-chart-line ml-2"></i>
-            تقرير الأداء
-        </button>
         <a href="{{ route('tasks.create') }}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-plus-circle ml-2"></i>
-            مهمة جديدة
+            <i class="fas fa-plus-circle {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('New Task') }}
         </a>
     </div>
 </div>
 
+<!-- Statistics Charts -->
+@php
+    $projectsChartData = [
+        'completed' => $completedProjects ?? 0,
+        'in_progress' => $inProgressProjects ?? 0,
+        'delayed' => $delayedProjects ?? 0,
+    ];
+    
+    $engineersChartLabels = $topEngineersForChart->pluck('name')->toArray();
+    $engineersChartData = $topEngineersForChart->pluck('completed_tasks')->toArray();
+    
+    $tasksByStatusChartData = [
+        $tasksByStatus['new'] ?? 0,
+        $tasksByStatus['in_progress'] ?? 0,
+        $tasksByStatus['done'] ?? 0,
+        $tasksByStatus['rejected'] ?? 0,
+    ];
+@endphp
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6" 
+     x-data="chartsData(
+         {{ json_encode($projectsChartData) }},
+         {{ json_encode($engineersChartLabels) }},
+         {{ json_encode($engineersChartData) }},
+         {{ json_encode($tasksByStatusChartData) }}
+     )" 
+     x-init="initCharts()">
+    <!-- Project Completion Chart -->
+    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <h3 class="text-lg font-bold text-white mb-4">{{ __('Project Completion Rate') }}</h3>
+        <div class="relative" style="height: 250px;">
+            <canvas id="projectCompletionChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Engineers Chart -->
+    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <h3 class="text-lg font-bold text-white mb-4">{{ __('Top 5 Engineers') }}</h3>
+        <div class="relative" style="height: 250px;">
+            <canvas id="topEngineersChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Tasks by Stage Chart -->
+    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <h3 class="text-lg font-bold text-white mb-4">{{ __('Tasks by Stage') }}</h3>
+        <div class="relative" style="height: 250px;">
+            <canvas id="tasksByStageChart"></canvas>
+        </div>
+    </div>
+</div>
+
 <!-- KPIs -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-4 md:mb-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-4 md:mb-6">
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">عدد المهام الإجمالي</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">156</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Total Tasks Count') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{{ $totalTasks }}</h3>
             </div>
-            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-400/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-tasks text-primary-400 text-xl md:text-2xl"></i>
             </div>
         </div>
@@ -86,10 +140,10 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">قيد التنفيذ</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-primary-400 mt-1 md:mt-2">48</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('In Progress') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-primary-400 mt-1 md:mt-2" style="color: #4787a7 !important;">{{ $inProgressTasks }}</h3>
             </div>
-            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-400/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-spinner text-primary-400 text-xl md:text-2xl"></i>
             </div>
         </div>
@@ -98,8 +152,8 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">المهام المنجزة</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-green-400 mt-1 md:mt-2">98</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Completed Tasks') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-green-400 mt-1 md:mt-2">{{ $completedTasks }}</h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-check-circle text-green-400 text-xl md:text-2xl"></i>
@@ -110,28 +164,11 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">المهام المتأخرة</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-red-400 mt-1 md:mt-2">10</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Overdue Tasks') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-red-400 mt-1 md:mt-2">{{ $overdueTasks }}</h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-exclamation-triangle text-red-400 text-xl md:text-2xl"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-        <div class="flex items-center justify-between mb-3 md:mb-4">
-            <div>
-                <p class="text-gray-400 text-xs md:text-sm">نسبة الإنجاز</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">63%</h3>
-            </div>
-            <div class="w-12 h-12 md:w-16 md:h-16 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-percentage text-blue-400 text-xl md:text-2xl"></i>
-            </div>
-        </div>
-        <div class="mt-3">
-            <div class="w-full bg-white/5 rounded-full h-2">
-                <div class="bg-primary-400 h-2 rounded-full" style="width: 63%"></div>
             </div>
         </div>
     </div>
@@ -145,7 +182,7 @@
             <input 
                 type="text" 
                 x-model="search"
-                placeholder="بحث: اسم المهمة، الوصف..." 
+                placeholder="{{ __('Search: name, phone, email...') }}" 
                 class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base"
             >
             <i class="fas fa-search absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -154,55 +191,60 @@
         <!-- Filters Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">المشروع</label>
-                <select x-model="project" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع المشاريع</option>
-                    <option value="1">مشروع فيلا رقم 1</option>
-                    <option value="2">مشروع مجمع سكني</option>
-                    <option value="3">مشروع مبنى تجاري</option>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Project') }}</label>
+                <select name="project_id" x-model="project" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
+                    <option value="">{{ __('All Projects') }}</option>
+                    @foreach($projects as $proj)
+                        <option value="{{ $proj->id }}" {{ request('project_id') == $proj->id ? 'selected' : '' }}>
+                            {{ $proj->name }}@if($proj->project_number) ({{ $proj->project_number }})@endif
+                        </option>
+                    @endforeach
                 </select>
             </div>
 
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">المهندس</label>
-                <select x-model="engineer" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع المهندسين</option>
-                    <option value="1">محمد أحمد</option>
-                    <option value="2">فاطمة سالم</option>
-                    <option value="3">خالد مطر</option>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Engineer') }}</label>
+                <select name="assignee_id" x-model="engineer" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
+                    <option value="">{{ __('All Engineers') }}</option>
+                    @foreach($engineers as $eng)
+                        <option value="{{ $eng->id }}" {{ request('assignee_id') == $eng->id ? 'selected' : '' }}>
+                            {{ $eng->name }}@if($eng->job_title) - {{ $eng->job_title }}@endif
+                        </option>
+                    @endforeach
                 </select>
             </div>
 
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">المرحلة</label>
-                <select x-model="stage" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع المراحل</option>
-                    <option value="معماري">معماري</option>
-                    <option value="إنشائي">إنشائي</option>
-                    <option value="كهربائي">كهربائي</option>
-                    <option value="ميكانيكي">ميكانيكي</option>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Stage') }}</label>
+                <select name="project_stage_id" x-model="stage" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
+                    <option value="">{{ __('All Stages') }}</option>
+                    @foreach($stages as $stageName)
+                        <option value="{{ $stageName }}" {{ request('project_stage_id') == $stageName ? 'selected' : '' }}>
+                            {{ $stageName }}
+                        </option>
+                    @endforeach
                 </select>
             </div>
 
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">الحالة</label>
-                <select x-model="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع الحالات</option>
-                    <option value="new">جديد</option>
-                    <option value="in_progress">قيد التنفيذ</option>
-                    <option value="completed">منجز</option>
-                    <option value="rejected">مرفوض</option>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Status') }}</label>
+                <select name="status" x-model="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
+                    <option value="">{{ __('All Statuses') }}</option>
+                    <option value="new" {{ request('status') == 'new' ? 'selected' : '' }}>{{ __('New') }}</option>
+                    <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>{{ __('In Progress') }}</option>
+                    <option value="done" {{ request('status') == 'done' ? 'selected' : '' }}>{{ __('Done') }}</option>
+                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>{{ __('Rejected') }}</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">الفترة</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Period') }}</label>
                 <select x-model="period" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">كل الفترات</option>
-                    <option value="today">اليوم</option>
-                    <option value="week">هذا الأسبوع</option>
-                    <option value="month">هذا الشهر</option>
-                    <option value="custom">مخصص</option>
+                    <option value="">{{ __('All Periods') }}</option>
+                    <option value="today">{{ __('Today') }}</option>
+                    <option value="week">{{ __('This Week') }}</option>
+                    <option value="month">{{ __('This Month') }}</option>
+                    <option value="custom">{{ __('Custom') }}</option>
                 </select>
             </div>
         </div>
@@ -210,7 +252,7 @@
         <!-- Date Range (when custom selected) -->
         <div x-show="period === 'custom'" class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">من تاريخ</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('From Date') }}</label>
                 <input 
                     type="date" 
                     x-model="dateFrom"
@@ -218,7 +260,7 @@
                 >
             </div>
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">إلى تاريخ</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('To Date') }}</label>
                 <input 
                     type="date" 
                     x-model="dateTo"
@@ -228,30 +270,51 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <button @click="applyFilters()" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-                <i class="fas fa-filter ml-2"></i>
-                تطبيق الفلاتر
+        <form method="GET" action="{{ route('tasks.index') }}" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <input type="hidden" name="search" :value="search">
+            <input type="hidden" name="project_id" :value="project">
+            <input type="hidden" name="assignee_id" :value="engineer">
+            <input type="hidden" name="project_stage_id" :value="stage">
+            <input type="hidden" name="status" :value="status">
+            <input type="hidden" name="from_date" :value="dateFrom">
+            <input type="hidden" name="to_date" :value="dateTo">
+            <button type="submit" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
+                <i class="fas fa-filter {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Apply Filters') }}
             </button>
-            <button @click="clearFilters()" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-                <i class="fas fa-times ml-2"></i>
-                تفريغ
-            </button>
-        </div>
+            <a href="{{ route('tasks.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base text-center">
+                <i class="fas fa-times {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Clear') }}
+            </a>
+        </form>
     </div>
 </div>
 
 <!-- Kanban Board / Table View -->
-<div class="mb-4 md:mb-6" x-data="tasksData()">
+@php
+    $tasksJson = $tasks->map(function($task) {
+        return [
+            'id' => $task->id,
+            'title' => $task->title,
+            'project' => $task->project ? ['name' => $task->project->name] : null,
+            'assignee' => $task->assignee ? ['name' => $task->assignee->name] : null,
+            'project_stage' => $task->projectStage ? ['stage_name' => $task->projectStage->stage_name] : null,
+            'status' => $task->status,
+            'progress' => $task->progress ?? 0,
+            'due_date' => $task->due_date ? $task->due_date->format('Y-m-d') : null,
+        ];
+    })->values()->toJson();
+@endphp
+<div class="mb-4 md:mb-6" x-data="tasksData({{ $tasksJson }})">
     <!-- View Toggle -->
     <div class="flex items-center justify-end gap-3 mb-4">
         <button @click="viewMode = 'kanban'" :class="viewMode === 'kanban' ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-300'" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm">
-            <i class="fas fa-columns ml-2"></i>
+            <i class="fas fa-columns {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
             Kanban
         </button>
         <button @click="viewMode = 'table'" :class="viewMode === 'table' ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-300'" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm">
-            <i class="fas fa-table ml-2"></i>
-            جدول
+            <i class="fas fa-table {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Table') }}
         </button>
     </div>
 
@@ -260,12 +323,17 @@
         <!-- New Column -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 kanban-column">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-white">جديد</h3>
+                <h3 class="text-lg font-bold text-white">{{ __('New') }}</h3>
                 <span class="bg-gray-500/20 text-gray-400 px-2 py-1 rounded text-xs font-semibold" x-text="getTasksByStatus('new').length"></span>
             </div>
-            <div class="space-y-3">
-                <template x-for="task in getTasksByStatus('new')" :key="task.id">
-                    <div class="task-card glass-card rounded-lg p-4 border border-white/10 cursor-move">
+            <div class="space-y-3" @drop="handleDrop($event, 'new')" @dragover.prevent @dragenter.prevent>
+                <template x-for="task in getTasksByStatus('new')" :key="`task-${task.id}-${task.status}`">
+                    <div 
+                        class="task-card glass-card rounded-lg p-4 border border-white/10 cursor-move"
+                        draggable="true"
+                        @dragstart="handleDragStart($event, task)"
+                        @dragend="handleDragEnd($event)"
+                    >
                         <div class="flex items-start justify-between mb-2">
                             <h4 class="text-white font-semibold text-sm" x-text="task.title"></h4>
                             <div class="flex items-center gap-1">
@@ -307,12 +375,17 @@
         <!-- In Progress Column -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 kanban-column">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-primary-400">قيد التنفيذ</h3>
-                <span class="bg-primary-500/20 text-primary-400 px-2 py-1 rounded text-xs font-semibold" x-text="getTasksByStatus('in_progress').length"></span>
+                <h3 class="text-lg font-bold text-primary-400">{{ __('In Progress') }}</h3>
+                <span class="bg-primary-400/20 text-primary-400 px-2 py-1 rounded text-xs font-semibold" style="color: #4787a7 !important;" x-text="getTasksByStatus('in_progress').length"></span>
             </div>
-            <div class="space-y-3">
-                <template x-for="task in getTasksByStatus('in_progress')" :key="task.id">
-                    <div class="task-card glass-card rounded-lg p-4 border border-primary-400/30 cursor-move">
+            <div class="space-y-3" @drop="handleDrop($event, 'in_progress')" @dragover.prevent @dragenter.prevent @dragleave.prevent>
+                <template x-for="task in getTasksByStatus('in_progress')" :key="`task-${task.id}-${task.status}`">
+                    <div 
+                        class="task-card glass-card rounded-lg p-4 border border-primary-400/30 cursor-move"
+                        draggable="true"
+                        @dragstart="handleDragStart($event, task)"
+                        @dragend="handleDragEnd($event)"
+                    >
                         <div class="flex items-start justify-between mb-2">
                             <h4 class="text-white font-semibold text-sm" x-text="task.title"></h4>
                             <div class="flex items-center gap-1">
@@ -354,12 +427,17 @@
         <!-- Completed Column -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 kanban-column">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-green-400">منجز</h3>
-                <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-semibold" x-text="getTasksByStatus('completed').length"></span>
+                <h3 class="text-lg font-bold text-green-400">{{ __('Done') }}</h3>
+                <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-semibold" x-text="getTasksByStatus('done').length"></span>
             </div>
-            <div class="space-y-3">
-                <template x-for="task in getTasksByStatus('completed')" :key="task.id">
-                    <div class="task-card glass-card rounded-lg p-4 border border-green-400/30 cursor-move">
+            <div class="space-y-3" @drop="handleDrop($event, 'done')" @dragover.prevent @dragenter.prevent @dragleave.prevent>
+                <template x-for="task in getTasksByStatus('done')" :key="`task-${task.id}-${task.status}`">
+                    <div 
+                        class="task-card glass-card rounded-lg p-4 border border-green-400/30 cursor-move"
+                        draggable="true"
+                        @dragstart="handleDragStart($event, task)"
+                        @dragend="handleDragEnd($event)"
+                    >
                         <div class="flex items-start justify-between mb-2">
                             <h4 class="text-white font-semibold text-sm" x-text="task.title"></h4>
                             <div class="flex items-center gap-1">
@@ -383,11 +461,14 @@
                             <span class="text-green-400 text-xs">100%</span>
                         </div>
                         <div class="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
-                            <button @click="openCommentModal(task.id)" class="text-yellow-400 hover:text-yellow-300 text-xs">
+                            <button @click="openCommentModal(task.id)" class="text-yellow-400 hover:text-yellow-300 text-xs" :title="'{{ __('Comment') }}'">
                                 <i class="fas fa-comment-dots"></i>
                             </button>
-                            <button @click="openAttachmentModal(task.id)" class="text-purple-400 hover:text-purple-300 text-xs" x-show="task.hasAttachment">
-                                <i class="fas fa-paperclip"></i>
+                            <button @click="openStageModal(task.id)" class="text-purple-400 hover:text-purple-300 text-xs" :title="'{{ __('Edit Stage') }}'">
+                                <i class="fas fa-diagram-project"></i>
+                            </button>
+                            <button @click="openStatusModal(task.id)" class="text-primary-400 hover:text-primary-300 text-xs" :title="'{{ __('Update Status') }}'">
+                                <i class="fas fa-edit"></i>
                             </button>
                         </div>
                     </div>
@@ -398,12 +479,17 @@
         <!-- Rejected Column -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 kanban-column">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-red-400">مرفوض</h3>
+                <h3 class="text-lg font-bold text-red-400">{{ __('Rejected') }}</h3>
                 <span class="bg-red-500/20 text-red-400 px-2 py-1 rounded text-xs font-semibold" x-text="getTasksByStatus('rejected').length"></span>
             </div>
-            <div class="space-y-3">
-                <template x-for="task in getTasksByStatus('rejected')" :key="task.id">
-                    <div class="task-card glass-card rounded-lg p-4 border border-red-400/30 cursor-move">
+            <div class="space-y-3" @drop="handleDrop($event, 'rejected')" @dragover.prevent @dragenter.prevent @dragleave.prevent>
+                <template x-for="task in getTasksByStatus('rejected')" :key="`task-${task.id}-${task.status}`">
+                    <div 
+                        class="task-card glass-card rounded-lg p-4 border border-red-400/30 cursor-move"
+                        draggable="true"
+                        @dragstart="handleDragStart($event, task)"
+                        @dragend="handleDragEnd($event)"
+                    >
                         <div class="flex items-start justify-between mb-2">
                             <h4 class="text-white font-semibold text-sm" x-text="task.title"></h4>
                             <div class="flex items-center gap-1">
@@ -436,215 +522,301 @@
 
     <!-- Table View -->
     <div x-show="viewMode === 'table'" class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 overflow-x-auto">
+        @if($tasks->count() > 0)
         <table class="w-full">
             <thead>
                 <tr class="text-right border-b border-white/10">
-                    <th class="text-gray-400 text-sm font-normal pb-3">المهمة</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">المشروع</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">المهندس</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">المرحلة</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">التقدم</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الحالة</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الإجراءات</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Task') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Project') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Engineer') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Stage') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Progress') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Status') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
-                <template x-for="task in tasks" :key="task.id">
+                @foreach($tasks as $task)
+                    @php
+                        $statusMap = [
+                            'new' => ['text' => __('New'), 'class' => 'bg-gray-500/20 text-gray-400'],
+                            'in_progress' => ['text' => __('In Progress'), 'class' => 'bg-primary-400/20 text-primary-400'],
+                            'done' => ['text' => __('Done'), 'class' => 'bg-green-500/20 text-green-400'],
+                            'rejected' => ['text' => __('Rejected'), 'class' => 'bg-red-500/20 text-red-400'],
+                        ];
+                        $status = $statusMap[$task->status] ?? ['text' => $task->status, 'class' => 'bg-gray-500/20 text-gray-400'];
+                    @endphp
                     <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
-                        <td class="py-3 text-white text-sm font-semibold" x-text="task.title"></td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="task.project"></td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="task.engineer"></td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="task.stage"></td>
+                        <td class="py-3 text-white text-sm font-semibold">{{ $task->title }}</td>
+                        <td class="py-3 text-gray-300 text-sm">{{ $task->project->name ?? 'غير محدد' }}</td>
+                        <td class="py-3 text-gray-300 text-sm">{{ $task->assignee->name ?? 'غير محدد' }}</td>
+                        <td class="py-3 text-gray-300 text-sm">{{ $task->projectStage->stage_name ?? 'غير محدد' }}</td>
                         <td class="py-3">
                             <div class="flex items-center gap-2">
                                 <div class="flex-1 bg-white/5 rounded-full h-2 w-24">
-                                    <div class="bg-primary-400 h-2 rounded-full" :style="'width: ' + task.progress + '%'"></div>
+                                    <div class="bg-primary-400 h-2 rounded-full" style="width: {{ $task->progress }}%"></div>
                                 </div>
-                                <span class="text-gray-400 text-xs" x-text="task.progress + '%'"></span>
+                                <span class="text-gray-400 text-xs">{{ $task->progress }}%</span>
                             </div>
                         </td>
                         <td class="py-3">
-                            <span 
-                                class="px-2 py-1 rounded text-xs font-semibold"
-                                :class="{
-                                    'bg-gray-500/20 text-gray-400': task.status === 'new',
-                                    'bg-primary-500/20 text-primary-400': task.status === 'in_progress',
-                                    'bg-green-500/20 text-green-400': task.status === 'completed',
-                                    'bg-red-500/20 text-red-400': task.status === 'rejected'
-                                }"
-                                x-text="getStatusText(task.status)"
-                            ></span>
+                            <span class="px-2 py-1 rounded text-xs font-semibold {{ $status['class'] }}">
+                                {{ $status['text'] }}
+                            </span>
                         </td>
                         <td class="py-3">
                             <div class="flex items-center gap-2">
-                                <a :href="'/tasks/' + task.id" class="text-primary-400 hover:text-primary-300" title="عرض">
+                                <a href="{{ route('tasks.show', $task->id) }}" class="text-primary-400 hover:text-primary-300" :title="'{{ __('View') }}'">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a :href="'/tasks/' + task.id + '/edit'" class="text-blue-400 hover:text-blue-300" title="تعديل">
+                                @can('update', $task)
+                                <a href="{{ route('tasks.edit', $task->id) }}" class="text-blue-400 hover:text-blue-300" :title="'{{ __('Edit') }}'">
                                     <i class="fas fa-pen"></i>
                                 </a>
-                                <button @click="openStatusModal(task.id)" class="text-green-400 hover:text-green-300" title="تحديث الحالة">
+                                @endcan
+                                @can('changeStatus', $task)
+                                <button onclick="openStatusModal({{ $task->id }})" class="text-green-400 hover:text-green-300" :title="'{{ __('Update Status') }}'">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button @click="deleteTask(task.id)" class="text-red-400 hover:text-red-300" title="حذف">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                @endcan
+                                @can('delete', $task)
+                                <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" class="inline" onsubmit="return confirm('{{ __('Are you sure you want to delete this task?') }}')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-400 hover:text-red-300" :title="'{{ __('Delete') }}'">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                @endcan
                             </div>
                         </td>
                     </tr>
-                </template>
+                @endforeach
             </tbody>
         </table>
-    </div>
-</div>
-
-<!-- Sidebar Widgets -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mt-4 md:mt-6" x-data="chartsData()" x-init="initCharts()">
-    <!-- Project Completion Chart -->
-    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-        <h3 class="text-lg font-bold text-white mb-4">نسبة إنجاز المشاريع</h3>
-        <div class="relative" style="height: 250px;">
-            <canvas id="projectCompletionChart"></canvas>
+        
+        <!-- Pagination -->
+        <div class="mt-4">
+            {{ $tasks->links() }}
         </div>
-    </div>
-
-    <!-- Top Engineers Chart -->
-    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-        <h3 class="text-lg font-bold text-white mb-4">أفضل 5 مهندسين</h3>
-        <div class="relative" style="height: 250px;">
-            <canvas id="topEngineersChart"></canvas>
+        @else
+        <div class="text-center py-12">
+            <i class="fas fa-tasks text-6xl text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-bold text-white mb-2">{{ __('No tasks found') }}</h3>
+            <p class="text-gray-400 mb-4">{{ __('Start by creating a new task') }}</p>
+            <a href="{{ route('tasks.create') }}" class="inline-block px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200">
+                <i class="fas fa-plus {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('New Task') }}
+            </a>
         </div>
-    </div>
-
-    <!-- Tasks by Stage Chart -->
-    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-        <h3 class="text-lg font-bold text-white mb-4">عدد المهام حسب المرحلة</h3>
-        <div class="relative" style="height: 250px;">
-            <canvas id="tasksByStageChart"></canvas>
-        </div>
+        @endif
     </div>
 </div>
 
 <!-- Status Update Modal -->
 @include('components.modals.task-update')
+@include('components.modals.task-comment')
 
 @push('scripts')
 <script>
 function taskFilters() {
     return {
-        search: '',
-        project: '',
-        engineer: '',
-        stage: '',
-        status: '',
-        period: '',
-        dateFrom: '',
-        dateTo: '',
-        applyFilters() {
-            console.log('Applying filters:', this);
-        },
-        clearFilters() {
-            this.search = '';
-            this.project = '';
-            this.engineer = '';
-            this.stage = '';
-            this.status = '';
-            this.period = '';
-            this.dateFrom = '';
-            this.dateTo = '';
-        }
+        search: '{{ request('search', '') }}',
+        project: '{{ request('project_id', '') }}',
+        engineer: '{{ request('assignee_id', '') }}',
+        stage: '{{ request('project_stage_id', '') }}',
+        status: '{{ request('status', '') }}',
+        period: '{{ request('period', '') }}',
+        dateFrom: '{{ request('from_date', '') }}',
+        dateTo: '{{ request('to_date', '') }}',
     }
 }
 
-function tasksData() {
+function tasksData(initialTasks) {
     return {
-        viewMode: 'kanban',
-        tasks: [
-            {
-                id: 1,
-                title: 'مراجعة المخططات المعمارية',
-                project: 'مشروع فيلا رقم 1',
-                engineer: 'محمد أحمد',
-                stage: 'معماري',
-                status: 'new',
-                progress: 0,
-                hasAttachment: false
-            },
-            {
-                id: 2,
-                title: 'إعداد تقرير التقدم',
-                project: 'مشروع مجمع سكني',
-                engineer: 'فاطمة سالم',
-                stage: 'إنشائي',
-                status: 'in_progress',
-                progress: 45,
-                hasAttachment: true
-            },
-            {
-                id: 3,
-                title: 'فحص الشبكة الكهربائية',
-                project: 'مشروع مبنى تجاري',
-                engineer: 'خالد مطر',
-                stage: 'كهربائي',
-                status: 'in_progress',
-                progress: 70,
-                hasAttachment: true
-            },
-            {
-                id: 4,
-                title: 'توقيع المستندات',
-                project: 'مشروع فيلا رقم 1',
-                engineer: 'محمد أحمد',
-                stage: 'معماري',
-                status: 'completed',
-                progress: 100,
-                hasAttachment: false
-            },
-            {
-                id: 5,
-                title: 'مراجعة التصميم الميكانيكي',
-                project: 'مشروع مجمع سكني',
-                engineer: 'سارة علي',
-                stage: 'ميكانيكي',
-                status: 'rejected',
-                progress: 30,
-                hasAttachment: false
-            }
-        ],
+        viewMode: 'kanban', // Default to kanban view
+        tasks: initialTasks.map(function(task) {
+            return {
+                id: task.id,
+                title: task.title,
+                project: task.project ? task.project.name : 'غير محدد',
+                engineer: task.assignee ? task.assignee.name : 'غير محدد',
+                stage: task.project_stage ? task.project_stage.stage_name : 'غير محدد',
+                status: task.status,
+                progress: task.progress || 0,
+                hasAttachment: false,
+                due_date: task.due_date || null,
+            };
+        }),
         getTasksByStatus(status) {
             return this.tasks.filter(task => task.status === status);
         },
         getStatusText(status) {
             const statusMap = {
-                'new': 'جديد',
-                'in_progress': 'قيد التنفيذ',
-                'completed': 'منجز',
-                'rejected': 'مرفوض'
+                'new': '{{ __('New') }}',
+                'in_progress': '{{ __('In Progress') }}',
+                'done': '{{ __('Done') }}',
+                'rejected': '{{ __('Rejected') }}'
             };
             return statusMap[status] || status;
+        },
+        draggedTask: null,
+        isDragging: false,
+        handleDragStart(event, task) {
+            // حفظ نسخة كاملة من المهمة
+            this.draggedTask = { ...task };
+            this.isDragging = true;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.dropEffect = 'move';
+            // استخدام text/plain بدلاً من text/html لتجنب مشاكل المتصفح
+            event.dataTransfer.setData('text/plain', task.id.toString());
+            event.target.style.opacity = '0.5';
+            event.target.classList.add('dragging');
+        },
+        handleDragEnd(event) {
+            event.target.style.opacity = '1';
+            event.target.classList.remove('dragging');
+            this.isDragging = false;
+            // لا نقوم بمسح draggedTask هنا - سيتم مسحه في handleDrop
+        },
+        handleDrop(event, newStatus) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // التأكد من وجود مهمة مسحوبة
+            if (!this.draggedTask) {
+                console.log('No dragged task');
+                return;
+            }
+            
+            const taskId = this.draggedTask.id;
+            const oldStatus = this.draggedTask.status;
+            
+            console.log('Dropping task', taskId, 'from', oldStatus, 'to', newStatus);
+            
+            // إذا كانت الحالة نفسها، لا حاجة لفعل أي شيء
+            if (oldStatus === newStatus) {
+                this.draggedTask = null;
+                return;
+            }
+            
+            // تحديث الحالة في القائمة مباشرة - إعادة إنشاء الـ array بالكامل لإجبار Alpine.js على إعادة الرسم
+            this.tasks = this.tasks.map(task => 
+                task.id == taskId ? { ...task, status: newStatus } : task
+            );
+            
+            // تنظيف draggedTask بعد التحديث
+            this.draggedTask = null;
+            
+            // تحديث الحالة في قاعدة البيانات
+            this.updateTaskStatus(taskId, newStatus, oldStatus);
+        },
+        async updateTaskStatus(taskId, newStatus, oldStatus = null) {
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                const formData = new FormData();
+                formData.append('status', newStatus);
+                formData.append('_token', csrfToken);
+
+                const response = await fetch(`/tasks/${taskId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: formData
+                });
+                
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    throw new Error('{{ __('An error occurred') }}');
+                }
+                
+                if (response.ok) {
+                    // التحقق من وجود result.success (قد لا يكون موجوداً في بعض الحالات)
+                    if (result && result.success !== false) {
+                        // لا حاجة لتحديث القائمة مرة أخرى - تم التحديث في handleDrop
+                        // إظهار رسالة نجاح
+                        this.showToast('success', (result && result.message) || '{{ __('Success') }}');
+                    } else {
+                        // في حالة وجود خطأ في الـ result - إعادة الحالة القديمة
+                        if (oldStatus) {
+                            this.tasks = this.tasks.map(task => 
+                                task.id == taskId ? { ...task, status: oldStatus } : task
+                            );
+                        }
+                        this.showToast('error', (result && result.message) || '{{ __('An error occurred') }}');
+                    }
+                } else {
+                    // في حالة الفشل (response غير ok) - إعادة الحالة القديمة
+                    if (oldStatus) {
+                        this.tasks = this.tasks.map(task => 
+                            task.id == taskId ? { ...task, status: oldStatus } : task
+                        );
+                    }
+                    const errorMsg = (result && result.message) || `{{ __('An error occurred') }} (${response.status})`;
+                    this.showToast('error', errorMsg);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // في حالة الفشل، إعادة الحالة القديمة
+                if (oldStatus) {
+                    this.tasks = this.tasks.map(task => 
+                        task.id == taskId ? { ...task, status: oldStatus } : task
+                    );
+                }
+                this.showToast('error', '{{ __('An error occurred') }}');
+            }
+        },
+        showToast(type, message) {
+            // إنشاء toast notification
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 left-4 z-50 p-4 rounded-lg shadow-lg max-w-md ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`;
+            toast.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="mr-2">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
         },
         openStatusModal(id) {
             window.dispatchEvent(new CustomEvent('open-task-status-modal', { detail: { taskId: id } }));
         },
+        openStageModal(id) {
+            alert('{{ __('Edit Stage') }}');
+        },
         openCommentModal(id) {
-            alert('فتح نافذة التعليقات للمهمة #' + id);
+            window.dispatchEvent(new CustomEvent('open-task-comment-modal', { detail: { taskId: id } }));
         },
         openAttachmentModal(id) {
-            alert('فتح نافذة المرفقات للمهمة #' + id);
+            alert('{{ __('Attachments') }}');
         },
         deleteTask(id) {
-            if (confirm('هل أنت متأكد من حذف هذه المهمة؟')) {
+            if (confirm('{{ __('Are you sure you want to delete this task?') }}')) {
                 console.log('Deleting task:', id);
             }
         }
     }
 }
 
-function chartsData() {
+function chartsData(projectsData = {}, engineersLabels = [], engineersData = [], tasksByStatusData = []) {
     return {
         projectChart: null,
         engineersChart: null,
         stageChart: null,
+        projectsData: projectsData,
+        engineersLabels: engineersLabels,
+        engineersData: engineersData,
+        tasksByStatusData: tasksByStatusData,
         initCharts() {
             if (typeof Chart === 'undefined') {
                 setTimeout(() => this.initCharts(), 100);
@@ -657,9 +829,13 @@ function chartsData() {
                 this.projectChart = new Chart(projectCtx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['مكتمل', 'قيد التنفيذ', 'متأخر'],
+                        labels: ['{{ __('Completed') }}', '{{ __('In Progress') }}', '{{ __('Overdue') }}'],
                         datasets: [{
-                            data: [63, 31, 6],
+                            data: [
+                                this.projectsData.completed || 0,
+                                this.projectsData.in_progress || 0,
+                                this.projectsData.delayed || 0
+                            ],
                             backgroundColor: ['#10b981', '#1db8f8', '#ef4444'],
                             borderWidth: 0
                         }]
@@ -686,10 +862,10 @@ function chartsData() {
                 this.engineersChart = new Chart(engineersCtx, {
                     type: 'bar',
                     data: {
-                        labels: ['محمد أحمد', 'فاطمة سالم', 'خالد مطر', 'سارة علي', 'أحمد محمد'],
+                        labels: this.engineersLabels.length > 0 ? this.engineersLabels : ['لا توجد بيانات'],
                         datasets: [{
-                            label: 'المهام المنجزة',
-                            data: [45, 38, 32, 28, 25],
+                            label: '{{ __('Completed Tasks') }}',
+                            data: this.engineersData.length > 0 ? this.engineersData : [0],
                             backgroundColor: '#1db8f8'
                         }]
                     },
@@ -713,7 +889,9 @@ function chartsData() {
                             },
                             x: {
                                 ticks: {
-                                    color: '#9ca3af'
+                                    color: '#9ca3af',
+                                    maxRotation: 45,
+                                    minRotation: 45
                                 },
                                 grid: {
                                     color: 'rgba(255, 255, 255, 0.1)',
@@ -731,10 +909,10 @@ function chartsData() {
                 this.stageChart = new Chart(stageCtx, {
                     type: 'pie',
                     data: {
-                        labels: ['معماري', 'إنشائي', 'كهربائي', 'ميكانيكي'],
+                        labels: ['{{ __('New') }}', '{{ __('In Progress') }}', '{{ __('Done') }}', '{{ __('Rejected') }}'],
                         datasets: [{
-                            data: [45, 38, 35, 28],
-                            backgroundColor: ['#1db8f8', '#10b981', '#f59e0b', '#8b5cf6']
+                            data: this.tasksByStatusData.length > 0 ? this.tasksByStatusData : [0, 0, 0, 0],
+                            backgroundColor: ['#3b82f6', '#1db8f8', '#10b981', '#ef4444']
                         }]
                     },
                     options: {

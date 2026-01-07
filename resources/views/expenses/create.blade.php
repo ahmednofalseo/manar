@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'إضافة مصروف جديد - المنار')
-@section('page-title', 'إضافة مصروف جديد')
+@section('title', __('New Expense') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('New Expense'))
 
 @push('styles')
 <style>
@@ -17,10 +17,10 @@
 @section('content')
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-white">إضافة مصروف جديد</h1>
+    <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('New Expense') }}</h1>
     <a href="{{ route('expenses.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-        <i class="fas fa-arrow-right ml-2"></i>
-        رجوع
+        <i class="fas fa-arrow-right {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+        {{ __('Back') }}
     </a>
 </div>
 
@@ -30,7 +30,7 @@
 
     <!-- Basic Information -->
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
-        <h2 class="text-xl font-bold text-white mb-6">البيانات الأساسية</h2>
+        <h2 class="text-xl font-bold text-white mb-6">{{ __('Basic Information') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
                 <label class="block text-gray-300 text-sm mb-2">رقم السند</label>
@@ -38,15 +38,15 @@
                     <input 
                         type="text" 
                         name="voucher_number" 
-                        value="EXP-{{ date('Y') }}-{{ str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT) }}"
+                        value="{{ old('voucher_number', \App\Models\Expense::generateVoucherNumber()) }}"
                         class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                         readonly
                     >
-                    <button type="button" class="px-3 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
                 </div>
                 <p class="text-gray-400 text-xs mt-1">سيتم توليد الرقم تلقائياً</p>
+                @error('voucher_number')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
@@ -55,7 +55,7 @@
                     type="date" 
                     name="date" 
                     required
-                    value="{{ date('Y-m-d') }}"
+                    value="{{ old('date', date('Y-m-d')) }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 >
                 @error('date')
@@ -67,11 +67,11 @@
                 <label class="block text-gray-300 text-sm mb-2">القسم <span class="text-red-400">*</span></label>
                 <select name="department" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                     <option value="">اختر القسم</option>
-                    <option value="إدارة">إدارة</option>
-                    <option value="مشاريع">مشاريع</option>
-                    <option value="مالية">مالية</option>
-                    <option value="مبيعات">مبيعات</option>
-                    <option value="تسويق">تسويق</option>
+                    <option value="إدارة" {{ old('department') == 'إدارة' ? 'selected' : '' }}>إدارة</option>
+                    <option value="مشاريع" {{ old('department') == 'مشاريع' ? 'selected' : '' }}>مشاريع</option>
+                    <option value="مالية" {{ old('department') == 'مالية' ? 'selected' : '' }}>مالية</option>
+                    <option value="مبيعات" {{ old('department') == 'مبيعات' ? 'selected' : '' }}>مبيعات</option>
+                    <option value="تسويق" {{ old('department') == 'تسويق' ? 'selected' : '' }}>تسويق</option>
                 </select>
                 @error('department')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -81,15 +81,15 @@
             <div>
                 <label class="block text-gray-300 text-sm mb-2">نوع المصروف <span class="text-red-400">*</span></label>
                 <select name="type" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="">اختر النوع</option>
-                    <option value="رواتب">رواتب</option>
-                    <option value="إيجار">إيجار</option>
-                    <option value="كهرباء">كهرباء</option>
-                    <option value="مياه">مياه</option>
-                    <option value="صيانة">صيانة</option>
-                    <option value="معدات">معدات</option>
-                    <option value="نقل">نقل</option>
-                    <option value="أخرى">أخرى</option>
+                    <option value="">{{ __('Select Type') }}</option>
+                    <option value="رواتب" {{ old('type') == 'رواتب' ? 'selected' : '' }}>رواتب</option>
+                    <option value="إيجار" {{ old('type') == 'إيجار' ? 'selected' : '' }}>إيجار</option>
+                    <option value="كهرباء" {{ old('type') == 'كهرباء' ? 'selected' : '' }}>كهرباء</option>
+                    <option value="مياه" {{ old('type') == 'مياه' ? 'selected' : '' }}>مياه</option>
+                    <option value="صيانة" {{ old('type') == 'صيانة' ? 'selected' : '' }}>صيانة</option>
+                    <option value="معدات" {{ old('type') == 'معدات' ? 'selected' : '' }}>معدات</option>
+                    <option value="نقل" {{ old('type') == 'نقل' ? 'selected' : '' }}>نقل</option>
+                    <option value="أخرى" {{ old('type') == 'أخرى' ? 'selected' : '' }}>أخرى</option>
                 </select>
                 @error('type')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -104,7 +104,7 @@
                     rows="3"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="وصف تفصيلي للمصروف..."
-                ></textarea>
+                >{{ old('description') }}</textarea>
                 @error('description')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
                 @enderror
@@ -118,6 +118,7 @@
                         name="amount" 
                         required
                         step="0.01"
+                        value="{{ old('amount') }}"
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 pr-16 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                         placeholder="0.00"
                     >
@@ -132,10 +133,10 @@
                 <label class="block text-gray-300 text-sm mb-2">طريقة الدفع <span class="text-red-400">*</span></label>
                 <select name="payment_method" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                     <option value="">اختر طريقة الدفع</option>
-                    <option value="نقدي">نقدي</option>
-                    <option value="تحويل بنكي">تحويل بنكي</option>
-                    <option value="شيك">شيك</option>
-                    <option value="إلكتروني">إلكتروني</option>
+                    <option value="نقدي" {{ old('payment_method') == 'نقدي' ? 'selected' : '' }}>نقدي</option>
+                    <option value="تحويل بنكي" {{ old('payment_method') == 'تحويل بنكي' ? 'selected' : '' }}>تحويل بنكي</option>
+                    <option value="شيك" {{ old('payment_method') == 'شيك' ? 'selected' : '' }}>شيك</option>
+                    <option value="إلكتروني" {{ old('payment_method') == 'إلكتروني' ? 'selected' : '' }}>إلكتروني</option>
                 </select>
                 @error('payment_method')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -145,9 +146,9 @@
             <div>
                 <label class="block text-gray-300 text-sm mb-2">الحالة</label>
                 <select name="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="pending" selected>بانتظار الموافقة</option>
-                    <option value="approved">معتمد</option>
-                    <option value="rejected">مرفوض</option>
+                    <option value="pending" {{ old('status', 'pending') == 'pending' ? 'selected' : '' }}>بانتظار الموافقة</option>
+                    <option value="approved" {{ old('status') == 'approved' ? 'selected' : '' }}>معتمد</option>
+                    <option value="rejected" {{ old('status') == 'rejected' ? 'selected' : '' }}>مرفوض</option>
                 </select>
             </div>
         </div>
@@ -205,7 +206,7 @@
                 rows="4"
                 class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 placeholder="أي ملاحظات إضافية حول المصروف..."
-            ></textarea>
+            >{{ old('notes') }}</textarea>
         </div>
     </div>
 

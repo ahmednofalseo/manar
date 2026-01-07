@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'إضافة موظف جديد - المنار')
-@section('page-title', 'إضافة موظف جديد')
+@section('title', __('Add New Employee') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('Add New Employee'))
 
 @push('styles')
 <style>
@@ -17,10 +17,10 @@
 @section('content')
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-white">إضافة موظف جديد</h1>
+    <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('Add New Employee') }}</h1>
     <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-        <i class="fas fa-arrow-right ml-2"></i>
-        رجوع
+        <i class="fas fa-arrow-right {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+        {{ __('Back') }}
     </a>
 </div>
 
@@ -30,16 +30,16 @@
 
     <!-- Basic Information -->
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
-        <h2 class="text-xl font-bold text-white mb-6">البيانات الأساسية</h2>
+        <h2 class="text-xl font-bold text-white mb-6">{{ __('Basic Information') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
-                <label class="block text-gray-300 text-sm mb-2">الاسم الكامل <span class="text-red-400">*</span></label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Full Name') }} <span class="text-red-400">*</span></label>
                 <input 
                     type="text" 
                     name="name" 
                     required
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                    placeholder="مثال: محمد أحمد العلي"
+                    placeholder="{{ __('Example: Mohammed Ahmed Al-Ali') }}"
                 >
                 @error('name')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -47,11 +47,12 @@
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">البريد الإلكتروني <span class="text-red-400">*</span></label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Email') }} <span class="text-red-400">*</span></label>
                 <input 
                     type="email" 
                     name="email" 
                     required
+                    value="{{ old('email') }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="example@manar.com"
                 >
@@ -61,10 +62,11 @@
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">رقم الجوال</label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Mobile Number') }}</label>
                 <input 
                     type="tel" 
                     name="phone" 
+                    value="{{ old('phone') }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="05XXXXXXXX"
                 >
@@ -74,12 +76,13 @@
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">رقم الهوية</label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('National ID') }}</label>
                 <input 
                     type="text" 
                     name="national_id" 
+                    value="{{ old('national_id') }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                    placeholder="10 أرقام"
+                    placeholder="{{ __('10 digits') }}"
                 >
                 @error('national_id')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -87,7 +90,7 @@
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">كلمة المرور <span class="text-red-400">*</span></label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Password') }} <span class="text-red-400">*</span></label>
                 <input 
                     type="password" 
                     name="password" 
@@ -101,7 +104,7 @@
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">تأكيد كلمة المرور <span class="text-red-400">*</span></label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Password Confirmation') }} <span class="text-red-400">*</span></label>
                 <input 
                     type="password" 
                     name="password_confirmation" 
@@ -115,29 +118,29 @@
 
     <!-- Job Information -->
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
-        <h2 class="text-xl font-bold text-white mb-6">البيانات الوظيفية</h2>
+        <h2 class="text-xl font-bold text-white mb-6">{{ __('Job Information') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
-                <label class="block text-gray-300 text-sm mb-2">الوظيفة</label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Job Title/Department') }}</label>
                 <select name="job_title" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="">اختر الوظيفة</option>
-                    <option value="مهندس معماري">مهندس معماري</option>
-                    <option value="مهندس إنشائي">مهندس إنشائي</option>
-                    <option value="مهندس كهرباء">مهندس كهرباء</option>
-                    <option value="مهندس ميكانيكي">مهندس ميكانيكي</option>
-                    <option value="مدير مشروع">مدير مشروع</option>
-                    <option value="إداري">إداري</option>
+                    <option value="">{{ __('Select Job') }}</option>
+                    <option value="مهندس معماري">{{ __('Architectural Engineer') }}</option>
+                    <option value="مهندس إنشائي">{{ __('Structural Engineer') }}</option>
+                    <option value="مهندس كهرباء">{{ __('Electrical Engineer') }}</option>
+                    <option value="مهندس ميكانيكي">{{ __('Mechanical Engineer') }}</option>
+                    <option value="مدير مشروع">{{ __('Project Manager') }}</option>
+                    <option value="إداري">{{ __('Administrative') }}</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">رقم/ملف مزاولة المهنة</label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Practice License Number/File') }}</label>
                 <div class="flex items-center gap-2">
                     <input 
                         type="text" 
                         name="practice_license_no" 
                         class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                        placeholder="رقم الرخصة"
+                        placeholder="{{ __('License Number') }}"
                     >
                     <input 
                         type="file" 
@@ -155,19 +158,20 @@
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">تاريخ انتهاء تصنيف المهندس</label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Engineer Rank Expiry Date') }}</label>
                 <input 
                     type="date" 
                     name="engineer_rank_expiry" 
+                    value="{{ old('engineer_rank_expiry') }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 >
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">الحالة</label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Status') }}</label>
                 <select name="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="active" selected>نشط</option>
-                    <option value="suspended">معلق</option>
+                    <option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                    <option value="suspended" {{ old('status') == 'suspended' ? 'selected' : '' }}>{{ __('Suspended') }}</option>
                 </select>
             </div>
         </div>
@@ -175,26 +179,27 @@
 
     <!-- Roles & Avatar -->
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
-        <h2 class="text-xl font-bold text-white mb-6">الأدوار والصورة الشخصية</h2>
+        <h2 class="text-xl font-bold text-white mb-6">{{ __('Roles & Avatar') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
-                <label class="block text-gray-300 text-sm mb-2">الأدوار <span class="text-red-400">*</span></label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Roles') }} <span class="text-red-400">*</span></label>
                 <select name="roles[]" multiple required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 h-32">
-                    <option value="super_admin">الأدمن العام</option>
-                    <option value="project_manager">مدير المشروع</option>
-                    <option value="engineer">مهندس/فني</option>
-                    <option value="admin_staff">الإداري</option>
+                    @foreach($roles as $role)
+                        <option value="{{ $role->id }}" {{ old('roles') && in_array($role->id, old('roles')) ? 'selected' : '' }}>
+                            {{ $role->display_name }}
+                        </option>
+                    @endforeach
                 </select>
-                <p class="text-gray-400 text-xs mt-1">يمكن اختيار عدة أدوار (اضغط Ctrl/CMD للاختيار المتعدد)</p>
+                <p class="text-gray-400 text-xs mt-1">{{ __('You can select multiple roles (Press Ctrl/CMD for multiple selection)') }}</p>
                 @error('roles')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
                 @enderror
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">الصورة الشخصية (Avatar)</label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Avatar') }}</label>
                 <div class="flex items-center gap-4">
-                    <div class="w-20 h-20 bg-primary-500/20 rounded-full flex items-center justify-center overflow-hidden">
+                    <div class="w-20 h-20 bg-primary-400/20 rounded-full flex items-center justify-center overflow-hidden">
                         <img x-show="avatarPreview" :src="avatarPreview" alt="Avatar" class="w-full h-full object-cover">
                         <i x-show="!avatarPreview" class="fas fa-user-circle text-primary-400 text-4xl"></i>
                     </div>
@@ -208,10 +213,10 @@
                             @change="handleAvatarSelect($event)"
                         >
                         <label for="avatarInput" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg cursor-pointer transition-all duration-200 text-sm inline-block">
-                            <i class="fas fa-upload ml-2"></i>
-                            اختر صورة
+                            <i class="fas fa-upload {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                            {{ __('Select Image') }}
                         </label>
-                        <p class="text-gray-400 text-xs mt-1">JPG, PNG (حد أقصى 2MB)</p>
+                        <p class="text-gray-400 text-xs mt-1">{{ __('JPG, PNG (Max 2MB)') }}</p>
                     </div>
                 </div>
             </div>
@@ -221,11 +226,11 @@
     <!-- Action Buttons -->
     <div class="flex items-center justify-end gap-3">
         <a href="{{ route('admin.users.index') }}" class="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-            إلغاء
+            {{ __('Cancel') }}
         </a>
         <button type="submit" class="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200">
-            <i class="fas fa-save ml-2"></i>
-            حفظ
+            <i class="fas fa-save {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Save') }}
         </button>
     </div>
 </form>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'تسجيل الدخول - المنار')
+@section('title', __('Login') . ' - ' . \App\Helpers\SettingsHelper::systemName())
 
 @section('content')
 <div class="min-h-screen pattern-bg flex items-center justify-center p-4 relative">
@@ -62,18 +62,26 @@
         <!-- Header -->
         <div class="relative mb-8">
             <!-- Language Toggle -->
-            <button onclick="toggleLanguage()" class="absolute top-0 left-0 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300">
-                EN
-            </button>
+            <a href="{{ route('language.switch', app()->getLocale() === 'ar' ? 'en' : 'ar') }}" class="absolute top-0 left-0 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300">
+                {{ app()->getLocale() === 'ar' ? 'EN' : 'AR' }}
+            </a>
             
             <!-- Logo -->
             <div class="text-center pt-2">
-                <div class="flex items-center justify-center gap-3 mb-4">
-                    <i class="fas fa-tower-cell lighthouse-icon text-4xl text-white"></i>
-                    <h1 class="text-3xl md:text-4xl font-bold text-white">المنار</h1>
+                @php
+                    $systemName = \App\Helpers\SettingsHelper::systemName();
+                    $systemLogo = \App\Helpers\SettingsHelper::systemLogo();
+                @endphp
+                <div class="flex items-center justify-center gap-3 mb-4 flex-wrap">
+                    @if($systemLogo)
+                        <img src="{{ $systemLogo }}" alt="{{ $systemName }}" class="h-16 w-auto object-contain flex-shrink-0">
+                    @else
+                        <i class="fas fa-tower-cell lighthouse-icon text-4xl text-white flex-shrink-0"></i>
+                        <h1 class="text-3xl md:text-4xl font-bold text-white">{{ $systemName }}</h1>
+                    @endif
                 </div>
-                <h2 class="text-xl md:text-2xl font-bold text-white mb-2">تسجيل الدخول إلى نظام المنار</h2>
-                <p class="text-gray-300 text-sm md:text-base">أدخل بيانات حسابك للمتابعة وإدارة المشاريع والفواتير</p>
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-2">{{ __('Login') }} {{ app()->getLocale() === 'ar' ? 'إلى نظام' : 'to' }} {{ $systemName }}</h2>
+                <p class="text-gray-300 text-sm md:text-base">{{ app()->getLocale() === 'ar' ? 'أدخل بيانات حسابك للمتابعة وإدارة المشاريع والفواتير' : 'Enter your credentials to continue and manage projects and invoices' }}</p>
             </div>
         </div>
 
@@ -83,6 +91,7 @@
 
             <!-- Email Field -->
             <div>
+                <label for="email" class="block text-gray-300 text-sm mb-2">{{ __('Email') }}</label>
                 <div class="input-icon-wrapper">
                     <i class="fas fa-envelope icon"></i>
                     <input 
@@ -90,11 +99,11 @@
                         name="email" 
                         id="email"
                         value="{{ old('email') }}"
-                        placeholder="name@example.com"
+                        placeholder="{{ __('Email') }}"
                         required
                         autocomplete="email"
                         autofocus
-                        class="w-full bg-white/90 text-gray-800 rounded-lg px-4 py-3 pr-11 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 input-glow transition-all duration-300"
+                        class="w-full bg-white/10 text-white placeholder-gray-400 rounded-lg px-4 py-3 {{ app()->getLocale() === 'ar' ? 'pr-11' : 'pl-11' }} border border-white/20 focus:outline-none focus:ring-2 focus:ring-primary-400/40 focus:border-primary-400/40 input-glow transition-all duration-300"
                     >
                 </div>
                 @error('email')
@@ -107,16 +116,17 @@
 
             <!-- Password Field -->
             <div>
+                <label for="password" class="block text-gray-300 text-sm mb-2">{{ __('Password') }}</label>
                 <div class="input-icon-wrapper password-input">
                     <i class="fas fa-lock icon"></i>
                     <input 
                         type="password" 
                         name="password" 
                         id="password"
-                        placeholder="ادخل كلمة المرور"
+                        placeholder="{{ __('Password') }}"
                         required
                         autocomplete="current-password"
-                        class="w-full bg-white/90 text-gray-800 rounded-lg px-4 py-3 pr-11 pl-11 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 input-glow transition-all duration-300"
+                        class="w-full bg-white/10 text-white placeholder-gray-400 rounded-lg px-4 py-3 {{ app()->getLocale() === 'ar' ? 'pr-11 pl-11' : 'pl-11 pr-11' }} border border-white/20 focus:outline-none focus:ring-2 focus:ring-primary-400/40 focus:border-primary-400/40 input-glow transition-all duration-300"
                     >
                     <button 
                         type="button"
@@ -146,35 +156,63 @@
                         id="remember"
                         class="w-4 h-4 text-primary-500 bg-white/20 border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
                     >
-                    <span>تذكرني</span>
+                    <span>{{ __('Remember Me') }}</span>
                 </label>
-                <a href="{{ route('password.request') }}" class="text-primary-400 hover:text-primary-300 transition-colors duration-200">
-                    نسيت كلمة المرور؟
+                <a href="{{ route('password.request') }}" class="text-primary-400 hover:text-primary-300 transition-colors duration-200 font-semibold" style="color: #4787a7 !important;">
+                    {{ __('Forgot Password?') }}
                 </a>
             </div>
 
             <!-- Login Button -->
             <button 
                 type="submit"
-                class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 px-6 rounded-lg btn-primary text-lg transition-all duration-300"
+                class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 px-6 rounded-lg border border-primary-400/30 hover:border-primary-400/50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-                <i class="fas fa-sign-in-alt ml-2"></i>
-                تسجيل الدخول
+                <i class="fas fa-sign-in-alt {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Login') }}
             </button>
         </form>
 
         <!-- Bottom Links -->
         <div class="mt-6">
+            @php
+                $supportEmail = \App\Models\Setting::get('support_email');
+                $supportPhone = \App\Models\Setting::get('support_phone');
+                $supportWhatsapp = \App\Models\Setting::get('support_whatsapp');
+            @endphp
+            @if($supportEmail || $supportPhone || $supportWhatsapp)
+            <div class="space-y-2">
+                @if($supportEmail)
+                <a href="mailto:{{ $supportEmail }}" class="flex items-center justify-center gap-2 w-full bg-white/10 hover:bg-white/20 text-white py-2.5 px-4 rounded-lg transition-all duration-300 text-sm">
+                    <i class="fas fa-envelope"></i>
+                    <span>الدعم الفني: {{ $supportEmail }}</span>
+                </a>
+                @endif
+                @if($supportPhone)
+                <a href="tel:{{ $supportPhone }}" class="flex items-center justify-center gap-2 w-full bg-white/10 hover:bg-white/20 text-white py-2.5 px-4 rounded-lg transition-all duration-300 text-sm">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ $supportPhone }}</span>
+                </a>
+                @endif
+                @if($supportWhatsapp)
+                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $supportWhatsapp) }}" target="_blank" class="flex items-center justify-center gap-2 w-full bg-white/10 hover:bg-white/20 text-white py-2.5 px-4 rounded-lg transition-all duration-300 text-sm">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>واتساب: {{ $supportWhatsapp }}</span>
+                </a>
+                @endif
+            </div>
+            @else
             <a href="#" class="flex items-center justify-center gap-2 w-full bg-white/10 hover:bg-white/20 text-white py-2.5 px-4 rounded-lg transition-all duration-300 text-sm">
                 <i class="fas fa-life-ring"></i>
                 <span>الدعم الفني</span>
             </a>
+            @endif
         </div>
 
         <!-- Footer -->
         <div class="mt-8 pt-6 border-t border-white/10 text-center">
             <p class="text-gray-400 text-xs">
-                © 2025 نظام المنار – جميع الحقوق محفوظة
+                © {{ date('Y') }} نظام {{ \App\Helpers\SettingsHelper::systemName() }} – جميع الحقوق محفوظة
             </p>
         </div>
     </div>

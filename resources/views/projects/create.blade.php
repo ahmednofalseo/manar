@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'مشروع جديد - المنار')
-@section('page-title', 'مشروع جديد')
+@section('title', __('New Project') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('New Project'))
 
 @push('styles')
 <style>
@@ -11,17 +11,82 @@
         -webkit-backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
     }
+    
+    @keyframes slide-in {
+        from {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .animate-slide-in {
+        animation: slide-in 0.3s ease-out;
+    }
 </style>
 @endpush
 
 @section('content')
 <div class="max-w-5xl mx-auto">
+    <!-- Toast Notifications -->
+    @if(session('success'))
+    <div class="fixed top-20 left-4 right-4 sm:right-auto sm:left-4 z-[70] p-4 rounded-lg shadow-lg max-w-md bg-green-500 text-white animate-slide-in mx-auto sm:mx-0" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 flex-1">
+                <i class="fas fa-check-circle"></i>
+                <span class="text-sm sm:text-base">{{ session('success') }}</span>
+            </div>
+            <button @click="show = false" class="mr-2 flex-shrink-0">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    @endif
+
+    @if(session('error'))
+    <div class="fixed top-20 left-4 right-4 sm:right-auto sm:left-4 z-[70] p-4 rounded-lg shadow-lg max-w-md bg-red-500 text-white animate-slide-in mx-auto sm:mx-0" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 7000)" x-transition>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 flex-1">
+                <i class="fas fa-exclamation-circle"></i>
+                <span class="text-sm sm:text-base">{{ session('error') }}</span>
+            </div>
+            <button @click="show = false" class="mr-2 flex-shrink-0">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    @endif
+
+    @if($errors->any())
+    <div class="fixed top-20 left-4 right-4 sm:right-auto sm:left-4 z-[70] p-4 rounded-lg shadow-lg max-w-md bg-red-500 text-white animate-slide-in mx-auto sm:mx-0 mb-4" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 7000)" x-transition>
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span class="text-sm sm:text-base font-semibold">يرجى تصحيح الأخطاء التالية:</span>
+                </div>
+                <ul class="list-disc list-inside text-sm space-y-1 mr-4">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+            <button @click="show = false" class="mr-2 flex-shrink-0 mt-1">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    @endif
+
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl md:text-3xl font-bold text-white">مشروع جديد</h1>
+        <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('New Project') }}</h1>
         <a href="{{ route('projects.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-            <i class="fas fa-arrow-right ml-2"></i>
-            رجوع
+            <i class="fas fa-arrow-right {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Back') }}
         </a>
     </div>
 
@@ -38,7 +103,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
-                    <label class="block text-gray-300 text-sm mb-2">اسم المشروع <span class="text-red-400">*</span></label>
+                    <label class="block text-gray-300 text-sm mb-2">{{ __('Project Name') }} <span class="text-red-400">*</span></label>
                     <input 
                         type="text" 
                         name="name"
@@ -53,7 +118,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-gray-300 text-sm mb-2">رقم المشروع</label>
+                    <label class="block text-gray-300 text-sm mb-2">{{ __('Project Number') }}</label>
                     <input 
                         type="text" 
                         name="project_number"
@@ -110,41 +175,46 @@
 
                 <div>
                     <label class="block text-gray-300 text-sm mb-2">الحي</label>
-                    <select 
+                    <input 
+                        type="text" 
                         name="district"
+                        value="{{ old('district') }}"
+                        id="district"
+                        autocomplete="off"
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                        placeholder="أدخل اسم الحي"
                     >
-                        <option value="">اختر الحي</option>
-                        <template x-if="city === 'الرياض'">
-                            <template>
-                                <option value="العليا">العليا</option>
-                                <option value="الملك فهد">الملك فهد</option>
-                                <option value="المرسلات">المرسلات</option>
-                                <option value="الملز">الملز</option>
-                            </template>
-                        </template>
-                        <template x-if="city === 'جدة'">
-                            <template>
-                                <option value="النخيل">النخيل</option>
-                                <option value="الكورنيش">الكورنيش</option>
-                                <option value="الروابي">الروابي</option>
-                            </template>
-                        </template>
-                    </select>
                     @error('district')
                     <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div>
-                    <label class="block text-gray-300 text-sm mb-2">المالك <span class="text-red-400">*</span></label>
+                    <label class="block text-gray-300 text-sm mb-2">العميل</label>
+                    <select 
+                        name="client_id" 
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    >
+                        <option value="">اختر العميل (اختياري)</option>
+                        @foreach($clients ?? [] as $client)
+                            <option value="{{ $client->id }}" {{ old('client_id', $selectedClientId ?? '') == $client->id ? 'selected' : '' }}>
+                                {{ $client->name }} - {{ $client->type_label }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('client_id')
+                        <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-gray-300 text-sm mb-2">المالك</label>
                     <input 
                         type="text" 
                         name="owner"
                         value="{{ old('owner') }}"
-                        required
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                        placeholder="اسم المالك"
+                        placeholder="اسم المالك (في حالة عدم اختيار عميل)"
                     >
                     @error('owner')
                     <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
@@ -152,7 +222,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-gray-300 text-sm mb-2">قيمة المشروع <span class="text-red-400">*</span></label>
+                    <label class="block text-gray-300 text-sm mb-2">{{ __('Value') }} <span class="text-red-400">*</span></label>
                     <input 
                         type="number" 
                         name="value"
@@ -194,7 +264,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-gray-300 text-sm mb-2">رقم/كود الأرض</label>
+                    <label class="block text-gray-300 text-sm mb-2">رقم الأرض</label>
                     <input 
                         type="text" 
                         name="land_number"
@@ -202,6 +272,22 @@
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     >
                     @error('land_number')
+                    <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-gray-300 text-sm mb-2">كود الأرض</label>
+                    <input 
+                        type="text" 
+                        name="land_code"
+                        id="land_code"
+                        value="{{ old('land_code') }}"
+                        autocomplete="off"
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                        placeholder="أدخل كود الأرض"
+                    >
+                    @error('land_code')
                     <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
@@ -312,6 +398,10 @@
                     <span class="text-white">ميكانيكي</span>
                 </label>
                 <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
+                    <input type="checkbox" name="stages[]" value="صحي/بيئي" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
+                    <span class="text-white">صحي/بيئي</span>
+                </label>
+                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
                     <input type="checkbox" name="stages[]" value="تقديم للبلدية" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
                     <span class="text-white">تقديم للبلدية</span>
                 </label>
@@ -322,26 +412,66 @@
             </div>
         </div>
 
-        <!-- Team Assignment -->
+        <!-- Project Dates -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
             <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <i class="fas fa-users text-primary-400"></i>
-                إسناد الفريق
+                <i class="fas fa-calendar text-primary-400"></i>
+                {{ __('Project Dates') }}
             </h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
-                    <label class="block text-gray-300 text-sm mb-2">مدير المشروع</label>
-                    <select 
-                        name="project_manager"
+                    <label class="block text-gray-300 text-sm mb-2">{{ __('Start Date') }}</label>
+                    <input 
+                        type="date" 
+                        name="start_date"
+                        value="{{ old('start_date') }}"
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     >
-                        <option value="">اختر مدير المشروع</option>
-                        <option value="1">محمد أحمد</option>
-                        <option value="2">فاطمة سالم</option>
-                        <option value="3">خالد مطر</option>
+                    @error('start_date')
+                    <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-gray-300 text-sm mb-2">{{ __('End Date') }}</label>
+                    <input 
+                        type="date" 
+                        name="end_date"
+                        value="{{ old('end_date') }}"
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    >
+                    @error('end_date')
+                    <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Assignment -->
+        <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
+            <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <i class="fas fa-users text-primary-400"></i>
+                {{ __('Assign Team') }}
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div>
+                    <label class="block text-gray-300 text-sm mb-2">{{ __('Project Manager') }}</label>
+                    <select 
+                        name="project_manager_id"
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    >
+                        <option value="">{{ __('Select Project Manager') }}</option>
+                        @forelse($projectManagers ?? [] as $manager)
+                            <option value="{{ $manager->id }}" {{ old('project_manager_id') == $manager->id ? 'selected' : '' }}>
+                                {{ $manager->name }}@if($manager->job_title) - {{ $manager->job_title }}@endif
+                            </option>
+                        @empty
+                            <option value="" disabled>{{ __('No Project Managers Available') }}</option>
+                        @endforelse
                     </select>
-                    @error('project_manager')
+                    @error('project_manager_id')
                     <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
@@ -349,18 +479,21 @@
                 <div>
                     <label class="block text-gray-300 text-sm mb-2">المهندسون/الفنيون</label>
                     <select 
-                        name="engineers[]"
+                        name="team_members[]"
                         multiple
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                        size="4"
+                        size="6"
                     >
-                        <option value="1">محمد أحمد - مهندس معماري</option>
-                        <option value="2">فاطمة سالم - مهندسة إنشائية</option>
-                        <option value="3">خالد مطر - مهندس كهرباء</option>
-                        <option value="4">سارة علي - مهندسة ميكانيكا</option>
+                        @forelse($engineers ?? [] as $engineer)
+                            <option value="{{ $engineer->id }}" {{ in_array($engineer->id, old('team_members', [])) ? 'selected' : '' }}>
+                                {{ $engineer->name }}@if($engineer->job_title) - {{ $engineer->job_title }}@endif
+                            </option>
+                        @empty
+                            <option value="" disabled>لا يوجد مستخدمون متاحون</option>
+                        @endforelse
                     </select>
                     <p class="mt-1 text-xs text-gray-400">اضغط Ctrl/Command لاختيار أكثر من واحد</p>
-                    @error('engineers')
+                    @error('team_members')
                     <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
@@ -371,14 +504,14 @@
         <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
             <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
                 <i class="fas fa-sticky-note text-primary-400"></i>
-                ملاحظات داخلية
+                {{ __('Internal Notes') }}
             </h2>
 
             <textarea 
                 name="internal_notes"
                 rows="4"
                 class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                placeholder="ملاحظات داخلية حول المشروع..."
+                placeholder="{{ __('Internal Notes Placeholder') }}"
             >{{ old('internal_notes') }}</textarea>
             @error('internal_notes')
             <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
@@ -388,11 +521,11 @@
         <!-- Form Actions -->
         <div class="flex items-center justify-end gap-4">
             <a href="{{ route('projects.index') }}" class="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-                إلغاء
+                {{ __('Cancel') }}
             </a>
             <button type="submit" class="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200">
-                <i class="fas fa-save ml-2"></i>
-                حفظ المشروع
+                <i class="fas fa-save {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Save Project') }}
             </button>
         </div>
     </form>

@@ -8,4 +8,17 @@
 @theme {
     --font-sans: 'Cairo', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    
+    /* Primary Colors */
+    --color-primary-50: #e8f0f4;
+    --color-primary-100: #d1e1e9;
+    --color-primary-200: #a3c3d3;
+    --color-primary-300: #75a5bd;
+    --color-primary-400: #4787a7;
+    --color-primary-500: #173343;
+    --color-primary-600: #122936;
+    --color-primary-700: #0e1f29;
+    --color-primary-800: #09141c;
+    --color-primary-900: #050a0f;
+    --color-primary: #173343;
 }

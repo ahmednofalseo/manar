@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'الموظفون - المنار')
-@section('page-title', 'الموظفون')
+@section('title', __('Employees') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('Employees'))
 
 @push('styles')
 <style>
@@ -46,19 +46,15 @@
 
 <!-- Header Actions -->
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-white">الموظفون</h1>
-    <div class="flex items-center gap-3">
-        <button class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-file-import ml-2"></i>
-            استيراد CSV
-        </button>
-        <button class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-file-export ml-2"></i>
-            تصدير
-        </button>
+    <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('Employees') }}</h1>
+    <div class="flex items-center gap-3 flex-wrap">
+        <a href="{{ route('admin.users.roles-permissions.index') }}" class="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-lg transition-all duration-200 text-sm md:text-base border border-purple-500/30">
+            <i class="fas fa-shield-halved {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Roles & Permissions') }}
+        </a>
         <a href="{{ route('admin.users.create') }}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-user-plus ml-2"></i>
-            إضافة موظف
+            <i class="fas fa-user-plus {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Add Employee') }}
         </a>
     </div>
 </div>
@@ -68,10 +64,10 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">إجمالي الموظفين</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">45</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Total Employees') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{{ $totalUsers }}</h3>
             </div>
-            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-400/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-users text-primary-400 text-xl md:text-2xl"></i>
             </div>
         </div>
@@ -80,8 +76,8 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">النشطون</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-green-400 mt-1 md:mt-2">38</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Active') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-green-400 mt-1 md:mt-2">{{ $activeUsers }}</h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-user-check text-green-400 text-xl md:text-2xl"></i>
@@ -92,8 +88,8 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">المعلّقون</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-gray-400 mt-1 md:mt-2">7</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Suspended') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-gray-400 mt-1 md:mt-2">{{ $suspendedUsers }}</h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-gray-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-user-slash text-gray-400 text-xl md:text-2xl"></i>
@@ -104,10 +100,10 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">آخر تسجيل دخول</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-primary-400 mt-1 md:mt-2">32</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Recent Logins') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-primary-400 mt-1 md:mt-2" style="color: #4787a7 !important;">{{ $recentLogins }}</h3>
             </div>
-            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-400/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-clock-rotate-left text-primary-400 text-xl md:text-2xl"></i>
             </div>
         </div>
@@ -122,7 +118,7 @@
             <input 
                 type="text" 
                 x-model="search"
-                placeholder="بحث: الاسم، البريد، الهاتف، الهوية..." 
+                placeholder="{{ __('Search: name, email, phone, ID...') }}" 
                 class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base"
             >
             <i class="fas fa-search absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -131,65 +127,55 @@
         <!-- Filters Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">الحالة</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Status') }}</label>
                 <select x-model="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع الحالات</option>
-                    <option value="active">نشط</option>
-                    <option value="suspended">معلق</option>
+                    <option value="">{{ __('All Statuses') }}</option>
+                    <option value="active">{{ __('Active') }}</option>
+                    <option value="suspended">{{ __('Suspended') }}</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">الدور</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Role') }}</label>
                 <select x-model="role" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع الأدوار</option>
-                    <option value="super_admin">الأدمن العام</option>
-                    <option value="project_manager">مدير المشروع</option>
-                    <option value="engineer">مهندس/فني</option>
-                    <option value="admin_staff">الإداري</option>
+                    <option value="">{{ __('All Roles') }}</option>
+                    <option value="super_admin">{{ __('Super Admin') }}</option>
+                    <option value="project_manager">{{ __('Project Manager') }}</option>
+                    <option value="engineer">{{ __('Engineer/Technician') }}</option>
+                    <option value="admin_staff">{{ __('Admin Staff') }}</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">الوظيفة/القسم</label>
-                <select x-model="jobTitle" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع الوظائف</option>
-                    <option value="مهندس معماري">مهندس معماري</option>
-                    <option value="مهندس إنشائي">مهندس إنشائي</option>
-                    <option value="مهندس كهرباء">مهندس كهرباء</option>
-                    <option value="مهندس ميكانيكي">مهندس ميكانيكي</option>
-                    <option value="مدير مشروع">مدير مشروع</option>
-                    <option value="إداري">إداري</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">الفترة الزمنية</label>
-                <select x-model="period" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">كل الفترات</option>
-                    <option value="today">اليوم</option>
-                    <option value="week">هذا الأسبوع</option>
-                    <option value="month">هذا الشهر</option>
-                    <option value="custom">مخصص</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Date Range (when custom selected) -->
-        <div x-show="period === 'custom'" class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-            <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">من تاريخ</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Job Title/Department') }}</label>
                 <input 
-                    type="date" 
-                    x-model="dateFrom"
+                    type="text" 
+                    name="job_title"
+                    value="{{ request('job_title') }}"
+                    placeholder="{{ __('Example: Architectural Engineer') }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base"
                 >
             </div>
+
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">إلى تاريخ</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('From Date') }}</label>
                 <input 
                     type="date" 
-                    x-model="dateTo"
+                    name="date_from"
+                    value="{{ request('date_from') }}"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base"
+                >
+            </div>
+        </div>
+
+        <!-- Additional Date Filter -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+            <div>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('To Date') }}</label>
+                <input 
+                    type="date" 
+                    name="date_to"
+                    value="{{ request('date_to') }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base"
                 >
             </div>
@@ -197,39 +183,56 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <button @click="applyFilters()" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-                <i class="fas fa-filter ml-2"></i>
-                تطبيق الفلاتر
+            <button type="submit" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
+                <i class="fas fa-filter {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Apply Filters') }}
             </button>
-            <button @click="clearFilters()" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-                <i class="fas fa-times ml-2"></i>
-                تفريغ
-            </button>
+            <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base text-center">
+                <i class="fas fa-times {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Clear') }}
+            </a>
         </div>
     </div>
-</div>
+</form>
 
 <!-- Users Table -->
-<div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6" x-data="usersData()">
+@php
+    use Illuminate\Support\Facades\Storage;
+    $usersJson = $users->map(function($user) {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone ?? '',
+            'nationalId' => $user->national_id ?? '',
+            'jobTitle' => $user->job_title ?? '',
+            'roles' => $user->roles->pluck('display_name')->toArray(),
+            'status' => $user->status,
+            'lastLogin' => $user->last_login_at ? $user->last_login_at->format('Y-m-d H:i') : null,
+            'avatar' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+        ];
+    })->toJson();
+@endphp
+<div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6" x-data="usersData({{ $usersJson }})">
     <!-- Bulk Actions -->
-    <div x-show="selectedUsers.length > 0" class="mb-4 p-3 bg-primary-500/20 rounded-lg flex items-center justify-between">
-        <span class="text-white text-sm" x-text="selectedUsers.length + ' موظف محدد'"></span>
+    <div x-show="selectedUsers.length > 0" class="mb-4 p-3 bg-primary-400/20 rounded-lg flex items-center justify-between">
+        <span class="text-white text-sm" x-text="selectedUsers.length + ' {{ __('employees selected') }}'"></span>
         <div class="flex items-center gap-2">
             <button @click="bulkActivate()" class="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded text-sm">
-                <i class="fas fa-toggle-on ml-1"></i>
-                تفعيل
+                <i class="fas fa-toggle-on {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+                {{ __('Activate') }}
             </button>
             <button @click="bulkSuspend()" class="px-3 py-1 bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 rounded text-sm">
-                <i class="fas fa-toggle-off ml-1"></i>
-                تعليق
+                <i class="fas fa-toggle-off {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+                {{ __('Suspend') }}
             </button>
-            <button @click="bulkAssignRole()" class="px-3 py-1 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
-                <i class="fas fa-user-shield ml-1"></i>
-                إسناد دور
+            <button @click="bulkAssignRole()" class="px-3 py-1 bg-primary-400/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
+                <i class="fas fa-user-shield {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+                {{ __('Assign Role') }}
             </button>
             <button @click="bulkDelete()" class="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-sm">
-                <i class="fas fa-trash ml-1"></i>
-                حذف
+                <i class="fas fa-trash {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+                {{ __('Delete') }}
             </button>
         </div>
     </div>
@@ -242,15 +245,15 @@
                     <th class="pb-3">
                         <input type="checkbox" @change="toggleAll()" class="rounded border-white/20 bg-white/5 text-primary-400 focus:ring-primary-400">
                     </th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الاسم</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">البريد</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الهاتف</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الهوية</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الوظيفة</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الأدوار</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الحالة</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">آخر تسجيل دخول</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الإجراءات</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Name') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Email') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Phone') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('National ID') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Job Title/Department') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Roles') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Status') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Last Login') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -266,18 +269,17 @@
                                      class="w-10 h-10 rounded-full">
                                 <div>
                                     <p class="text-white text-sm font-semibold" x-text="user.name"></p>
-                                    <p class="text-gray-400 text-xs" x-text="user.jobTitle"></p>
                                 </div>
                             </div>
                         </td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="user.email"></td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="user.phone"></td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="user.nationalId"></td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="user.jobTitle"></td>
+                        <td class="py-3 text-gray-300 text-sm" x-text="user.email || '-'"></td>
+                        <td class="py-3 text-gray-300 text-sm" x-text="user.phone || '-'"></td>
+                        <td class="py-3 text-gray-300 text-sm" x-text="user.nationalId || '-'"></td>
+                        <td class="py-3 text-gray-300 text-sm" x-text="user.jobTitle || '-'"></td>
                         <td class="py-3">
                             <div class="flex flex-wrap gap-1">
                                 <template x-for="role in user.roles" :key="role">
-                                    <span class="px-2 py-0.5 bg-primary-500/20 text-primary-400 rounded text-xs font-semibold" x-text="role"></span>
+                                    <span class="px-2 py-0.5 bg-primary-400/20 text-primary-400 rounded text-xs font-semibold" x-text="role"></span>
                                 </template>
                             </div>
                         </td>
@@ -285,28 +287,28 @@
                             <span 
                                 class="px-2 py-1 rounded text-xs font-semibold"
                                 :class="user.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'"
-                                x-text="user.status === 'active' ? 'نشط' : 'معلق'"
+                                x-text="user.status === 'active' ? '{{ __('Active') }}' : '{{ __('Suspended') }}'"
                             ></span>
                         </td>
-                        <td class="py-3 text-gray-300 text-sm" x-text="user.lastLogin || 'لم يسجل دخول'"></td>
+                            <td class="py-3 text-gray-300 text-sm" x-text="user.lastLogin || '{{ __('Never logged in') }}'"></td>
                         <td class="py-3">
                             <div class="flex items-center gap-2">
-                                <a :href="'/admin/users/' + user.id" class="text-primary-400 hover:text-primary-300" title="عرض">
+                                <a :href="'/admin/users/' + user.id" class="text-primary-400 hover:text-primary-300" :title="'{{ __('View') }}'">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a :href="'/admin/users/' + user.id + '/edit'" class="text-blue-400 hover:text-blue-300" title="تعديل">
+                                <a :href="'/admin/users/' + user.id + '/edit'" class="text-blue-400 hover:text-blue-300" :title="'{{ __('Edit') }}'">
                                     <i class="fas fa-pen"></i>
                                 </a>
-                                <button @click="openRolesModal(user.id)" class="text-purple-400 hover:text-purple-300" title="أدوار وصلاحيات">
+                                <button @click="openRolesModal(user.id)" class="text-purple-400 hover:text-purple-300" :title="'{{ __('Roles & Permissions') }}'">
                                     <i class="fas fa-user-shield"></i>
                                 </button>
-                                <button @click="openResetPasswordModal(user.id)" class="text-yellow-400 hover:text-yellow-300" title="إعادة ضبط كلمة المرور">
+                                <button @click="openResetPasswordModal(user.id)" class="text-yellow-400 hover:text-yellow-300" :title="'{{ __('Reset Password') }}'">
                                     <i class="fas fa-key"></i>
                                 </button>
-                                <button @click="toggleUser(user.id)" class="text-green-400 hover:text-green-300" :title="user.status === 'active' ? 'تعليق' : 'تفعيل'">
+                                <button @click="toggleUser(user.id)" class="text-green-400 hover:text-green-300" :title="user.status === 'active' ? '{{ __('Suspend') }}' : '{{ __('Activate') }}'">
                                     <i :class="user.status === 'active' ? 'fas fa-toggle-on' : 'fas fa-toggle-off'"></i>
                                 </button>
-                                <button @click="deleteUser(user.id)" class="text-red-400 hover:text-red-300" title="حذف">
+                                <button @click="deleteUser(user.id)" class="text-red-400 hover:text-red-300" :title="'{{ __('Delete') }}'">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -317,9 +319,16 @@
         </table>
     </div>
 
+    <!-- Pagination -->
+    @if($users->hasPages())
+    <div class="mt-4">
+        {{ $users->links() }}
+    </div>
+    @endif
+
     <!-- Mobile Cards -->
     <div class="md:hidden space-y-4">
-        <template x-for="user in users" :key="user.id">
+        <template x-for="user in users" :key="'mobile-user-' + user.id">
             <div class="glass-card rounded-xl p-4 border border-white/10">
                 <div class="flex items-start justify-between mb-3">
                     <div class="flex items-center gap-3">
@@ -335,27 +344,27 @@
                 </div>
                 <div class="space-y-2 mb-3">
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-400 text-xs">البريد</span>
+                        <span class="text-gray-400 text-xs">{{ __('Email') }}</span>
                         <span class="text-white text-sm" x-text="user.email"></span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-400 text-xs">الهاتف</span>
+                        <span class="text-gray-400 text-xs">{{ __('Phone') }}</span>
                         <span class="text-white text-sm" x-text="user.phone"></span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-400 text-xs">الأدوار</span>
+                        <span class="text-gray-400 text-xs">{{ __('Roles') }}</span>
                         <div class="flex flex-wrap gap-1">
                             <template x-for="role in user.roles" :key="role">
-                                <span class="px-2 py-0.5 bg-primary-500/20 text-primary-400 rounded text-xs" x-text="role"></span>
+                                <span class="px-2 py-0.5 bg-primary-400/20 text-primary-400 rounded text-xs" x-text="role"></span>
                             </template>
                         </div>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-400 text-xs">الحالة</span>
+                        <span class="text-gray-400 text-xs">{{ __('Status') }}</span>
                         <span 
                             class="px-2 py-1 rounded text-xs font-semibold"
                             :class="user.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'"
-                            x-text="user.status === 'active' ? 'نشط' : 'معلق'"
+                            x-text="user.status === 'active' ? '{{ __('Active') }}' : '{{ __('Suspended') }}'"
                         ></span>
                     </div>
                 </div>
@@ -410,47 +419,10 @@ function userFilters() {
     }
 }
 
-function usersData() {
+function usersData(initialUsers) {
     return {
         selectedUsers: [],
-        users: [
-            {
-                id: 1,
-                name: 'محمد أحمد',
-                email: 'mohamed@manar.com',
-                phone: '0501234567',
-                nationalId: '1234567890',
-                jobTitle: 'مهندس معماري',
-                roles: ['مدير المشروع', 'مهندس'],
-                status: 'active',
-                lastLogin: '2025-11-05 10:30 ص',
-                avatar: null
-            },
-            {
-                id: 2,
-                name: 'فاطمة سالم',
-                email: 'fatima@manar.com',
-                phone: '0509876543',
-                nationalId: '0987654321',
-                jobTitle: 'مهندسة إنشائية',
-                roles: ['مهندس'],
-                status: 'active',
-                lastLogin: '2025-11-04 14:20 م',
-                avatar: null
-            },
-            {
-                id: 3,
-                name: 'خالد مطر',
-                email: 'khaled@manar.com',
-                phone: '0551234567',
-                nationalId: '1122334455',
-                jobTitle: 'إداري',
-                roles: ['الإداري'],
-                status: 'suspended',
-                lastLogin: '2025-10-28 09:15 ص',
-                avatar: null
-            }
-        ],
+        users: initialUsers || [],
         toggleAll() {
             // TODO: Implement toggle all
         },
@@ -461,34 +433,34 @@ function usersData() {
             window.dispatchEvent(new CustomEvent('open-user-reset-password-modal', { detail: { userId: id } }));
         },
         toggleUser(id) {
-            if (confirm('هل أنت متأكد من تغيير حالة هذا الموظف؟')) {
+            if (confirm('{{ __('Are you sure you want to change this employee\'s status?') }}')) {
                 console.log('Toggling user:', id);
             }
         },
         deleteUser(id) {
-            if (confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
+            if (confirm('{{ __('Are you sure you want to delete this employee?') }}')) {
                 console.log('Deleting user:', id);
             }
         },
         bulkActivate() {
             if (this.selectedUsers.length === 0) return;
-            if (confirm('هل أنت متأكد من تفعيل ' + this.selectedUsers.length + ' موظف؟')) {
+            if (confirm('{{ __('Are you sure you want to activate') }} ' + this.selectedUsers.length + ' {{ __('employees?') }}')) {
                 console.log('Bulk activate:', this.selectedUsers);
             }
         },
         bulkSuspend() {
             if (this.selectedUsers.length === 0) return;
-            if (confirm('هل أنت متأكد من تعليق ' + this.selectedUsers.length + ' موظف؟')) {
+            if (confirm('{{ __('Are you sure you want to suspend') }} ' + this.selectedUsers.length + ' {{ __('employees?') }}')) {
                 console.log('Bulk suspend:', this.selectedUsers);
             }
         },
         bulkAssignRole() {
             if (this.selectedUsers.length === 0) return;
-            alert('إسناد دور للموظفين المحددين');
+            alert('{{ __('Assign Role') }}');
         },
         bulkDelete() {
             if (this.selectedUsers.length === 0) return;
-            if (confirm('هل أنت متأكد من حذف ' + this.selectedUsers.length + ' موظف؟')) {
+            if (confirm('{{ __('Are you sure you want to delete') }} ' + this.selectedUsers.length + ' {{ __('employees?') }}')) {
                 console.log('Bulk delete:', this.selectedUsers);
             }
         }

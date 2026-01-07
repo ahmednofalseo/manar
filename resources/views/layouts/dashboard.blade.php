@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'لوحة التحكم - المنار')</title>
+    <title>@yield('title', 'لوحة التحكم - ' . \App\Helpers\SettingsHelper::systemName())</title>
     
     <!-- TailwindCSS -->
     @if(file_exists(public_path('build/manifest.json')))
@@ -59,7 +59,7 @@
     
     @stack('styles')
 </head>
-<body class="font-cairo antialiased bg-gradient-to-br from-[#0e1f27] to-[#173343] min-h-screen">
+<body class="font-cairo antialiased bg-gradient-to-br from-[#0e1f27] to-[#173343] min-h-screen" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
     <div class="flex h-screen overflow-hidden">
         <!-- Mobile Overlay -->
         <div id="mobileOverlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleMobileSidebar()"></div>

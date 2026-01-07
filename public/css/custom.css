@@ -1,6 +1,48 @@
+/* RTL/LTR Support */
+[dir="rtl"] {
+    direction: rtl;
+    text-align: right;
+}
+
+[dir="ltr"] {
+    direction: ltr;
+    text-align: left;
+}
+
+/* RTL-specific adjustments */
+[dir="rtl"] .ml-2 {
+    margin-left: 0;
+    margin-right: 0.5rem;
+}
+
+[dir="ltr"] .mr-2 {
+    margin-right: 0;
+    margin-left: 0.5rem;
+}
+
+[dir="rtl"] .mr-2 {
+    margin-right: 0.5rem;
+}
+
+[dir="ltr"] .ml-2 {
+    margin-left: 0.5rem;
+}
+
 /* Font Family */
 body {
     font-family: 'Cairo', sans-serif;
+}
+
+/* Fix text-primary-400 color to ensure it's not black */
+.text-primary-400 {
+    color: #4787a7 !important;
+}
+
+/* Ensure direct children and text nodes inherit the color */
+.text-primary-400 > *:not([class*="text-"]),
+.text-primary-400 > span:not([class*="text-"]),
+.text-primary-400 > p:not([class*="text-"]) {
+    color: #4787a7 !important;
 }
 
 /* Glassmorphism Effect */
@@ -303,7 +345,7 @@ body {
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: #6b7280;
+    color: rgba(255, 255, 255, 0.6);
     pointer-events: none;
 }
 
@@ -321,12 +363,13 @@ body {
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
-    color: #6b7280;
+    color: rgba(255, 255, 255, 0.6);
     z-index: 10;
+    transition: color 0.2s;
 }
 
 .password-toggle:hover {
-    color: #173343;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* Dashboard Styles */

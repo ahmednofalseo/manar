@@ -50,7 +50,7 @@
                     @click="close()"
                     class="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200"
                 >
-                    إلغاء
+                    {{ __('Cancel') }}
                 </button>
                 <button 
                     type="submit"
@@ -108,20 +108,41 @@ function expenseApprovalModal() {
                 return;
             }
 
-            // TODO: Submit via AJAX
-            console.log('Submitting:', this.action, this.form);
+            const url = this.action === 'approve' 
+                ? `/expenses/${this.form.expenseId}/approve`
+                : `/expenses/${this.form.expenseId}/reject`;
             
-            const message = this.action === 'approve' 
-                ? 'تم اعتماد المصروف بنجاح' 
-                : 'تم رفض المصروف بنجاح';
-            
-            alert(message);
-            this.close();
-            
-            // Reload page or update UI
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+            const formData = new FormData();
+            formData.append('notes', this.form.notes);
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]')?.value);
+
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]')?.value
+                }
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    return response.json().catch(() => ({ success: true }));
+                }
+            })
+            .then(data => {
+                if (data && data.success !== false) {
+                    this.close();
+                    window.location.reload();
+                } else {
+                    alert(data?.message || 'حدث خطأ أثناء ' + (this.action === 'approve' ? 'اعتماد' : 'رفض') + ' المصروف');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء ' + (this.action === 'approve' ? 'اعتماد' : 'رفض') + ' المصروف');
+            });
         }
     }
 }

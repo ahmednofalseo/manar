@@ -65,10 +65,359 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Language Toggle (Placeholder)
+// Language Toggle
 function toggleLanguage() {
-    // Implementation for language switching
-    console.log('Language toggle clicked');
+    const currentLocale = document.documentElement.lang || 'ar';
+    const newLocale = currentLocale === 'ar' ? 'en' : 'ar';
+    window.location.href = `/language/${newLocale}`;
+}
+
+// Notifications Dropdown (Alpine.js component)
+function notificationsDropdown() {
+    return {
+        isOpen: false,
+        notifications: [],
+        unreadCount: 0,
+        taskSound: null,
+        commentSound: null,
+        isLoading: false,
+        lastNotificationCheck: null,
+        
+        init() {
+            // Load notification sounds (using Web Audio API for better control)
+            this.audioEnabled = false; // Will be enabled after user interaction
+            
+            try {
+                // Create audio context for sounds (will be resumed on user interaction)
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Task notification sound (higher pitch, shorter)
+                this.taskSound = this.createTaskSound();
+                
+                // Comment notification sound (lower pitch, longer)
+                this.commentSound = this.createCommentSound();
+                
+                // Enable audio on first user interaction (required by browsers)
+                const enableAudio = () => {
+                    if (this.audioContext && this.audioContext.state === 'suspended') {
+                        this.audioContext.resume().then(() => {
+                            this.audioEnabled = true;
+                            console.log('Audio enabled');
+                        }).catch(e => {
+                            console.warn('Could not enable audio:', e);
+                        });
+                    } else {
+                        this.audioEnabled = true;
+                    }
+                    // Remove listeners after first interaction
+                    document.removeEventListener('click', enableAudio);
+                    document.removeEventListener('touchstart', enableAudio);
+                    document.removeEventListener('keydown', enableAudio);
+                };
+                
+                // Listen for user interaction to enable audio
+                document.addEventListener('click', enableAudio, { once: true });
+                document.addEventListener('touchstart', enableAudio, { once: true });
+                document.addEventListener('keydown', enableAudio, { once: true });
+            } catch (e) {
+                console.warn('Audio context not supported, using fallback');
+                // Fallback: try to load audio files if they exist
+                this.taskSound = new Audio();
+                this.commentSound = new Audio();
+                this.audioEnabled = true; // Enable for fallback
+            }
+            
+            // Load notifications
+            this.loadNotifications();
+            
+            // Poll for new notifications every 30 seconds
+            setInterval(() => {
+                this.loadNotifications(true);
+            }, 30000);
+        },
+        
+        createTaskSound() {
+            // Create a short, high-pitched beep for task notifications
+            const audioContext = this.audioContext;
+            return {
+                play: async () => {
+                    try {
+                        if (!audioContext) {
+                            console.warn('Audio context not available');
+                            return;
+                        }
+                        
+                        // Resume audio context if suspended (required by browsers)
+                        if (audioContext.state === 'suspended') {
+                            await audioContext.resume();
+                        }
+                        
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.value = 800; // Higher pitch
+                        oscillator.type = 'sine';
+                        
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                        
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.3);
+                    } catch (e) {
+                        console.warn('Could not play task sound:', e);
+                    }
+                }
+            };
+        },
+        
+        createCommentSound() {
+            // Create a longer, lower-pitched beep for comment notifications
+            const audioContext = this.audioContext;
+            return {
+                play: async () => {
+                    try {
+                        if (!audioContext) {
+                            console.warn('Audio context not available');
+                            return;
+                        }
+                        
+                        // Resume audio context if suspended (required by browsers)
+                        if (audioContext.state === 'suspended') {
+                            await audioContext.resume();
+                        }
+                        
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.value = 600; // Lower pitch
+                        oscillator.type = 'sine';
+                        
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                        
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.5);
+                    } catch (e) {
+                        console.warn('Could not play comment sound:', e);
+                    }
+                }
+            };
+        },
+        
+        async loadNotifications(silent = false) {
+            // Prevent multiple simultaneous requests
+            if (this.isLoading) {
+                return;
+            }
+            
+            this.isLoading = true;
+            
+            try {
+                const response = await fetch('/notifications', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                const oldUnreadCount = this.unreadCount;
+                const oldNotificationIds = new Set(this.notifications.map(n => n.id));
+                
+                this.notifications = data.notifications || [];
+                this.unreadCount = data.unread_count || 0;
+                
+                // Play sound if new notifications arrived (only once, not for each notification)
+                if (!silent && this.unreadCount > oldUnreadCount && this.audioEnabled) {
+                    // Find truly new notifications (not in the old list)
+                    const newNotifications = this.notifications.filter(n => 
+                        !n.read && 
+                        !oldNotificationIds.has(n.id) &&
+                        new Date(n.created_at) > new Date(Date.now() - 60000) // Last 60 seconds
+                    );
+                    
+                    if (newNotifications.length > 0) {
+                        // Play sound only once, not for each notification
+                        // Determine which sound to play based on the first new notification
+                        const firstNewNotification = newNotifications[0];
+                        
+                        try {
+                            // Resume audio context if suspended
+                            if (this.audioContext && this.audioContext.state === 'suspended') {
+                                await this.audioContext.resume();
+                            }
+                            
+                            if (firstNewNotification.type === 'task_assigned' && this.taskSound) {
+                                try {
+                                    this.taskSound.play();
+                                } catch (e) {
+                                    console.warn('Could not play task sound:', e);
+                                }
+                            } else if (firstNewNotification.type === 'task_comment' && this.commentSound) {
+                                try {
+                                    // Ensure audio context is resumed
+                                    if (this.audioContext && this.audioContext.state === 'suspended') {
+                                        await this.audioContext.resume();
+                                    }
+                                    this.commentSound.play();
+                                } catch (e) {
+                                    console.warn('Could not play comment sound:', e);
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Could not play notification sound:', e);
+                        }
+                    }
+                }
+                
+                this.lastNotificationCheck = Date.now();
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+        
+        toggle() {
+            this.isOpen = !this.isOpen;
+            if (this.isOpen) {
+                this.loadNotifications();
+            }
+        },
+        
+        close() {
+            this.isOpen = false;
+        },
+        
+        async openNotification(notification) {
+            // Mark as read
+            if (!notification.read) {
+                await this.markAsRead(notification.id);
+                notification.read = true;
+                if (this.unreadCount > 0) {
+                    this.unreadCount--;
+                }
+            }
+            
+            // Navigate to task
+            if (notification.data && notification.data.task_id) {
+                window.location.href = `/tasks/${notification.data.task_id}`;
+            }
+        },
+        
+        async markAsRead(id) {
+            try {
+                await fetch(`/notifications/${id}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        },
+        
+        async markAllAsRead() {
+            try {
+                await fetch('/notifications/read-all', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+                
+                this.notifications.forEach(n => {
+                    n.read = true;
+                });
+                this.unreadCount = 0;
+            } catch (error) {
+                console.error('Error marking all as read:', error);
+            }
+        },
+        
+        async deleteNotification(id) {
+            const locale = document.documentElement.lang || 'ar';
+            const message = locale === 'ar' ? 'هل أنت متأكد؟' : 'Are you sure?';
+            if (!confirm(message)) {
+                return;
+            }
+            
+            try {
+                await fetch(`/notifications/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+                
+                this.notifications = this.notifications.filter(n => n.id !== id);
+                if (this.unreadCount > 0) {
+                    this.unreadCount--;
+                }
+            } catch (error) {
+                console.error('Error deleting notification:', error);
+            }
+        },
+        
+        async deleteAll() {
+            const locale = document.documentElement.lang || 'ar';
+            const message = locale === 'ar' ? 'هل أنت متأكد من حذف جميع الإشعارات؟' : 'Are you sure you want to delete all notifications?';
+            if (!confirm(message)) {
+                return;
+            }
+            
+            try {
+                await fetch('/notifications', {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+                
+                this.notifications = [];
+                this.unreadCount = 0;
+            } catch (error) {
+                console.error('Error deleting all notifications:', error);
+            }
+        },
+        
+        formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            const locale = document.documentElement.lang || 'ar';
+            
+            if (minutes < 1) {
+                return locale === 'ar' ? 'الآن' : 'Just now';
+            } else if (minutes < 60) {
+                return locale === 'ar' ? `${minutes} دقيقة` : `${minutes} minutes ago`;
+            } else if (hours < 24) {
+                return locale === 'ar' ? `${hours} ساعة` : `${hours} hours ago`;
+            } else if (days < 7) {
+                return locale === 'ar' ? `${days} يوم` : `${days} days ago`;
+            } else {
+                return date.toLocaleDateString(locale);
+            }
+        }
+    };
 }
 
 // User Dropdown Toggle

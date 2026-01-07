@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'المشاريع - المنار')
-@section('page-title', 'المشاريع')
+@section('title', __('Projects') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('Projects'))
 
 @push('styles')
 <style>
@@ -17,13 +17,13 @@
 @section('content')
 <!-- Toast Notifications -->
 @if(session('success'))
-<div class="fixed top-4 left-4 z-50 p-4 rounded-lg shadow-lg max-w-md bg-green-500 text-white animate-slide-in">
+<div class="fixed top-20 left-4 right-4 sm:right-auto sm:left-4 z-[70] p-4 rounded-lg shadow-lg max-w-md bg-green-500 text-white animate-slide-in mx-auto sm:mx-0" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition>
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
             <i class="fas fa-check-circle"></i>
             <span>{{ session('success') }}</span>
         </div>
-        <button onclick="this.parentElement.parentElement.remove()" class="mr-2">
+        <button @click="show = false" class="mr-2 flex-shrink-0">
             <i class="fas fa-times"></i>
         </button>
     </div>
@@ -31,13 +31,13 @@
 @endif
 
 @if(session('error'))
-<div class="fixed top-4 left-4 z-50 p-4 rounded-lg shadow-lg max-w-md bg-red-500 text-white animate-slide-in">
+<div class="fixed top-20 left-4 right-4 sm:right-auto sm:left-4 z-[70] p-4 rounded-lg shadow-lg max-w-md bg-red-500 text-white animate-slide-in mx-auto sm:mx-0" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 7000)" x-transition>
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
             <i class="fas fa-exclamation-circle"></i>
             <span>{{ session('error') }}</span>
         </div>
-        <button onclick="this.parentElement.parentElement.remove()" class="mr-2">
+        <button @click="show = false" class="mr-2 flex-shrink-0">
             <i class="fas fa-times"></i>
         </button>
     </div>
@@ -46,20 +46,14 @@
 
 <!-- Header Actions -->
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-white">المشاريع</h1>
+    <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('Projects') }}</h1>
     <div class="flex items-center gap-3 w-full sm:w-auto">
-        <button onclick="openDisplaySettings()" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-gear ml-2"></i>
-            إعدادات العرض
-        </button>
-        <button class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-file-export ml-2"></i>
-            تصدير
-        </button>
+        @can('create', \App\Models\Project::class)
         <a href="{{ route('projects.create') }}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-plus ml-2"></i>
-            مشروع جديد
+            <i class="fas fa-plus {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('New Project') }}
         </a>
+        @endcan
     </div>
 </div>
 
@@ -71,7 +65,7 @@
             <input 
                 type="text" 
                 x-model="search"
-                placeholder="بحث: اسم المشروع، رقم المشروع، المالك..." 
+                placeholder="{{ __('Search: project name, number, owner...') }}" 
                 class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base"
             >
             <i class="fas fa-search absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -80,9 +74,9 @@
         <!-- Filters Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">المدينة</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('City') }}</label>
                 <select x-model="city" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع المدن</option>
+                    <option value="">{{ __('All Cities') }}</option>
                     <option value="الرياض">الرياض</option>
                     <option value="جدة">جدة</option>
                     <option value="الدمام">الدمام</option>
@@ -92,9 +86,9 @@
             </div>
 
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">الحي</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('District') }}</label>
                 <select x-model="district" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع الأحياء</option>
+                    <option value="">{{ __('All Districts') }}</option>
                     <option value="العليا">العليا</option>
                     <option value="النخيل">النخيل</option>
                     <option value="الملك فهد">الملك فهد</option>
@@ -103,9 +97,9 @@
             </div>
 
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">المالك</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Owner') }}</label>
                 <select x-model="owner" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع الملاك</option>
+                    <option value="">{{ __('All Owners') }}</option>
                     <option value="أحمد محمد">أحمد محمد</option>
                     <option value="سارة علي">سارة علي</option>
                     <option value="خالد مطر">خالد مطر</option>
@@ -113,9 +107,9 @@
             </div>
 
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">نوع المشروع</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Project Type') }}</label>
                 <select x-model="type" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع الأنواع</option>
+                    <option value="">{{ __('All Types') }}</option>
                     <option value="تصميم">تصميم</option>
                     <option value="تصميم وإشراف">تصميم وإشراف</option>
                     <option value="إشراف">إشراف</option>
@@ -126,9 +120,9 @@
             </div>
 
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">الحالة/المرحلة</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Status/Stage') }}</label>
                 <select x-model="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">جميع الحالات</option>
+                    <option value="">{{ __('All Statuses') }}</option>
                     <option value="قيد التنفيذ">قيد التنفيذ</option>
                     <option value="مكتمل">مكتمل</option>
                     <option value="متوقف">متوقف</option>
@@ -144,7 +138,7 @@
         <!-- Date Range -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">من تاريخ</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('From Date') }}</label>
                 <input 
                     type="date" 
                     x-model="dateFrom"
@@ -152,7 +146,7 @@
                 >
             </div>
             <div>
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">إلى تاريخ</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('To Date') }}</label>
                 <input 
                     type="date" 
                     x-model="dateTo"
@@ -162,16 +156,25 @@
         </div>
 
         <!-- Filter Actions -->
-        <div class="flex items-center gap-3">
-            <button @click="applyFilters()" class="px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-                <i class="fas fa-filter ml-2"></i>
-                تطبيق الفلاتر
+        <form method="GET" action="{{ route('projects.index') }}" class="flex items-center gap-3">
+            <input type="hidden" name="search" :value="search">
+            <input type="hidden" name="city" :value="city">
+            <input type="hidden" name="district" :value="district">
+            <input type="hidden" name="owner" :value="owner">
+            <input type="hidden" name="type" :value="type">
+            <input type="hidden" name="status" :value="status">
+            <input type="hidden" name="current_stage" :value="currentStage">
+            <input type="hidden" name="from_date" :value="dateFrom">
+            <input type="hidden" name="to_date" :value="dateTo">
+            <button type="submit" class="px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
+                <i class="fas fa-filter {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Apply Filters') }}
             </button>
-            <button @click="clearFilters()" class="px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-                <i class="fas fa-times ml-2"></i>
-                تفريغ
-            </button>
-        </div>
+            <a href="{{ route('projects.index') }}" class="px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
+                <i class="fas fa-times {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Clear') }}
+            </a>
+        </form>
     </div>
 </div>
 
@@ -180,10 +183,10 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">إجمالي المشاريع</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">45</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Total Projects') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{{ $totalProjects }}</h3>
             </div>
-            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-400/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-diagram-project text-primary-400 text-xl md:text-2xl"></i>
             </div>
         </div>
@@ -192,8 +195,8 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">قيد التنفيذ</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">28</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('In Progress') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{{ $activeProjects }}</h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-clock text-blue-400 text-xl md:text-2xl"></i>
@@ -204,8 +207,8 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">المكتملة</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">15</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Completed') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{{ $completedProjects }}</h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-check-circle text-green-400 text-xl md:text-2xl"></i>
@@ -216,8 +219,8 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
-                <p class="text-gray-400 text-xs md:text-sm">المتأخرة</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">2</h3>
+                <p class="text-gray-400 text-xs md:text-sm">{{ __('Delayed Projects') }}</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{{ $delayedProjects }}</h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-exclamation-triangle text-red-400 text-xl md:text-2xl"></i>
@@ -227,52 +230,51 @@
 </div>
 
 <!-- Financial Summary -->
+@if(\App\Helpers\PermissionHelper::hasPermission('financials.view') || \App\Helpers\PermissionHelper::hasPermission('financials.manage'))
 <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
     <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg md:text-xl font-bold text-white">ملخص مالي</h3>
+        <h3 class="text-lg md:text-xl font-bold text-white">{{ __('Financial Summary') }}</h3>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-            <p class="text-gray-400 text-sm mb-2">إجمالي قيمة المشاريع</p>
-            <p class="text-2xl md:text-3xl font-bold text-white">2,450,000 <span class="text-lg text-gray-400">ر.س</span></p>
+            <p class="text-gray-400 text-sm mb-2">{{ __('Total Projects Value') }}</p>
+            <p class="text-2xl md:text-3xl font-bold text-white">{{ number_format($totalValue, 2) }} <span class="text-lg text-gray-400">{{ app()->getLocale() === 'ar' ? 'ر.س' : 'SAR' }}</span></p>
         </div>
         <div>
-            <p class="text-gray-400 text-sm mb-2">المحصل هذا الشهر</p>
-            <p class="text-2xl md:text-3xl font-bold text-primary-400">450,000 <span class="text-lg text-gray-400">ر.س</span></p>
-            <div class="mt-3">
-                <div class="flex items-center justify-between mb-1">
-                    <span class="text-gray-400 text-xs">المحصل</span>
-                    <span class="text-white text-sm font-semibold">450,000 / 600,000 ر.س</span>
-                </div>
-                <div class="w-full bg-white/5 rounded-full h-2">
-                    <div class="bg-primary-400 h-2 rounded-full" style="width: 75%"></div>
-                </div>
-            </div>
+            <p class="text-gray-400 text-sm mb-2">{{ __('Collections This Month') }}</p>
+            <p class="text-2xl md:text-3xl font-bold text-primary-400"><span class="text-primary-400">0</span> <span class="text-lg text-gray-400">{{ app()->getLocale() === 'ar' ? 'ر.س' : 'SAR' }}</span></p>
+            <p class="text-gray-400 text-xs mt-2">{{ __('Will be linked to invoices module') }}</p>
         </div>
     </div>
 </div>
+@endif
 
 <!-- Projects Grid -->
-<div id="projectsGrid" x-data="projectsData()" x-show="projects.length > 0">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        <template x-for="project in filteredProjects" :key="project.id">
-            @include('components.cards.project-card')
-        </template>
-    </div>
+@if($projects->count() > 0)
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+    @foreach($projects as $project)
+        @include('components.cards.project-card', ['project' => $project])
+    @endforeach
 </div>
 
+<!-- Pagination -->
+<div class="mt-6">
+    {{ $projects->links() }}
+</div>
+@else
 <!-- Empty State -->
-<div id="emptyState" x-data="projectsData()" x-show="projects.length === 0" class="text-center py-12 md:py-16">
+<div class="text-center py-12 md:py-16">
     <div class="glass-card rounded-xl md:rounded-2xl p-8 md:p-12 max-w-md mx-auto">
         <i class="fas fa-folder-open text-6xl md:text-7xl text-gray-400 mb-6"></i>
-        <h3 class="text-xl md:text-2xl font-bold text-white mb-3">لا توجد مشاريع</h3>
-        <p class="text-gray-400 mb-6">ابدأ بإنشاء مشروع جديد لإدارة أعمالك</p>
+        <h3 class="text-xl md:text-2xl font-bold text-white mb-3">{{ __('No projects found') }}</h3>
+        <p class="text-gray-400 mb-6">{{ __('Start by creating a new project to manage your business') }}</p>
         <a href="{{ route('projects.create') }}" class="inline-block px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200">
-            <i class="fas fa-plus ml-2"></i>
-            مشروع جديد
+            <i class="fas fa-plus {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('New Project') }}
         </a>
     </div>
 </div>
+@endif
 
 @push('scripts')
 <script>
@@ -284,6 +286,7 @@
             owner: '',
             type: '',
             status: '',
+            currentStage: '',
             dateFrom: '',
             dateTo: '',
             applyFilters() {
@@ -297,6 +300,7 @@
                 this.owner = '';
                 this.type = '';
                 this.status = '';
+                this.currentStage = '';
                 this.dateFrom = '';
                 this.dateTo = '';
             }
@@ -371,10 +375,6 @@
         }
     }
 
-    function openDisplaySettings() {
-        // TODO: Open display settings modal
-        alert('إعدادات العرض');
-    }
 </script>
 @endpush
 

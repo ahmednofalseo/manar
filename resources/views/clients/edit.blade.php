@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'تعديل بيانات العميل - المنار')
-@section('page-title', 'تعديل بيانات العميل')
+@section('title', __('Edit') . ' ' . __('Clients') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('Edit') . ' ' . __('Clients'))
 
 @push('styles')
 <style>
@@ -17,34 +17,35 @@
 @section('content')
 <!-- Header -->
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-white">تعديل بيانات العميل</h1>
+    <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('Edit') }} {{ __('Clients') }}</h1>
     <div class="flex items-center gap-3">
-        <a href="{{ route('clients.show', $id) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-            <i class="fas fa-eye ml-2"></i>
-            عرض
+        <a href="{{ route('clients.show', $client->id) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
+            <i class="fas fa-eye {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('View') }}
         </a>
         <a href="{{ route('clients.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-            <i class="fas fa-arrow-right ml-2"></i>
-            رجوع
+            <i class="fas fa-arrow-right {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Back') }}
         </a>
     </div>
 </div>
 
 <!-- Form -->
-<form method="POST" action="{{ route('clients.update', $id) }}" enctype="multipart/form-data" x-data="clientForm()">
+<form method="POST" action="{{ route('clients.update', $client->id) }}" enctype="multipart/form-data" x-data="clientForm()">
     @csrf
     @method('PUT')
 
     <!-- Basic Information -->
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
-        <h2 class="text-xl font-bold text-white mb-6">البيانات الأساسية</h2>
+        <h2 class="text-xl font-bold text-white mb-6">{{ __('Basic Information') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div class="md:col-span-2">
-                <label class="block text-gray-300 text-sm mb-2">الاسم الكامل <span class="text-red-400">*</span></label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Full Name') }} <span class="text-red-400">*</span></label>
                 <input 
                     type="text" 
                     name="name" 
                     required
+                    value="{{ old('name', $client->name) }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="مثال: أحمد محمد العلي"
                 >
@@ -56,10 +57,10 @@
             <div>
                 <label class="block text-gray-300 text-sm mb-2">نوع العميل <span class="text-red-400">*</span></label>
                 <select name="type" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="">اختر النوع</option>
-                    <option value="individual">فرد</option>
-                    <option value="company">شركة</option>
-                    <option value="government">جهة حكومية</option>
+                    <option value="">{{ __('Select Type') }}</option>
+                    <option value="individual" {{ old('type', $client->type) == 'individual' ? 'selected' : '' }}>{{ __('Individual') }}</option>
+                    <option value="company" {{ old('type', $client->type) == 'company' ? 'selected' : '' }}>{{ __('Company') }}</option>
+                    <option value="government" {{ old('type', $client->type) == 'government' ? 'selected' : '' }}>{{ __('Government Entity') }}</option>
                 </select>
                 @error('type')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -70,7 +71,8 @@
                 <label class="block text-gray-300 text-sm mb-2">رقم الهوية / السجل التجاري</label>
                 <input 
                     type="text" 
-                    name="id_number" 
+                    name="national_id_or_cr" 
+                    value="{{ old('national_id_or_cr', $client->national_id_or_cr) }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="رقم الهوية أو السجل التجاري"
                 >
@@ -82,6 +84,7 @@
                     type="tel" 
                     name="phone" 
                     required
+                    value="{{ old('phone', $client->phone) }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="05XXXXXXXX"
                 >
@@ -95,6 +98,7 @@
                 <input 
                     type="email" 
                     name="email" 
+                    value="{{ old('email', $client->email) }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="example@email.com"
                 >
@@ -107,11 +111,11 @@
                 <label class="block text-gray-300 text-sm mb-2">المدينة <span class="text-red-400">*</span></label>
                 <select name="city" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                     <option value="">اختر المدينة</option>
-                    <option value="الرياض">الرياض</option>
-                    <option value="جدة">جدة</option>
-                    <option value="الدمام">الدمام</option>
-                    <option value="مكة">مكة</option>
-                    <option value="المدينة">المدينة</option>
+                    <option value="الرياض" {{ old('city', $client->city) == 'الرياض' ? 'selected' : '' }}>الرياض</option>
+                    <option value="جدة" {{ old('city', $client->city) == 'جدة' ? 'selected' : '' }}>جدة</option>
+                    <option value="الدمام" {{ old('city', $client->city) == 'الدمام' ? 'selected' : '' }}>الدمام</option>
+                    <option value="مكة" {{ old('city', $client->city) == 'مكة' ? 'selected' : '' }}>مكة</option>
+                    <option value="المدينة" {{ old('city', $client->city) == 'المدينة' ? 'selected' : '' }}>المدينة</option>
                 </select>
                 @error('city')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -123,6 +127,7 @@
                 <input 
                     type="text" 
                     name="district" 
+                    value="{{ old('district', $client->district) }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="اسم الحي"
                 >
@@ -135,14 +140,14 @@
                     rows="3"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="العنوان التفصيلي..."
-                ></textarea>
+                >{{ old('address', $client->address) }}</textarea>
             </div>
 
             <div>
                 <label class="block text-gray-300 text-sm mb-2">الحالة</label>
                 <select name="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="active" selected>نشط</option>
-                    <option value="inactive">غير نشط</option>
+                    <option value="active" {{ old('status', $client->status) == 'active' ? 'selected' : '' }}>نشط</option>
+                    <option value="inactive" {{ old('status', $client->status) == 'inactive' ? 'selected' : '' }}>غير نشط</option>
                 </select>
             </div>
         </div>
@@ -194,11 +199,11 @@
         <h2 class="text-xl font-bold text-white mb-6">ملاحظات داخلية</h2>
         <div>
             <textarea 
-                name="notes" 
+                name="notes_internal"
                 rows="4"
                 class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 placeholder="أي ملاحظات داخلية حول العميل..."
-            ></textarea>
+            >{{ old('notes_internal', $client->notes_internal) }}</textarea>
         </div>
     </div>
 

@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -25,6 +25,7 @@ class User extends Authenticatable
         'national_id',
         'job_title',
         'practice_license_no',
+        'practice_license_file',
         'engineer_rank_expiry',
         'status',
         'avatar',
@@ -99,5 +100,45 @@ class User extends Authenticatable
             }
         }
         return false;
+    }
+
+    /**
+     * المهام المسندة للمستخدم
+     */
+    public function assignedTasks()
+    {
+        return $this->hasMany(Task::class, 'assignee_id');
+    }
+
+    /**
+     * المهام التي أنشأها المستخدم
+     */
+    public function createdTasks()
+    {
+        return $this->hasMany(Task::class, 'created_by');
+    }
+
+    /**
+     * ملاحظات المهام
+     */
+    public function taskNotes()
+    {
+        return $this->hasMany(TaskNote::class);
+    }
+
+    /**
+     * الإشعارات
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * الإشعارات غير المقروءة
+     */
+    public function unreadNotifications()
+    {
+        return $this->hasMany(Notification::class)->where('read', false);
     }
 }
