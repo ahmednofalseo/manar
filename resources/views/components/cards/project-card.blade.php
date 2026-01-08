@@ -199,6 +199,14 @@
             تحرير
         </a>
         @endcan
+        @if(($project->project_manager_id && $project->project_manager_id === auth()->id()) || auth()->user()->hasRole('super_admin'))
+        <form action="{{ route('projects.toggle-hide', $project->id) }}" method="POST" class="inline">
+            @csrf
+            <button type="submit" class="px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 rounded-lg text-xs md:text-sm transition-all duration-200" title="{{ __('Hide Project') }}">
+                <i class="fas fa-eye-slash"></i>
+            </button>
+        </form>
+        @endif
         @can('delete', $project)
         <form action="{{ route('projects.destroy', $project->id) }}" method="POST" class="inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المشروع؟')">
             @csrf

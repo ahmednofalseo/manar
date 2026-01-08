@@ -29,7 +29,7 @@ class ProjectsController extends Controller
                 $q->whereIn('status', ['new', 'in_progress']);
             },
             'attachments' // إضافة attachments لتجنب N+1 في project-card
-        ]);
+        ])->where('is_hidden', false); // إخفاء المشاريع المخفية
 
         // تطبيق فلاتر الصلاحيات - المستخدم يرى المشاريع المخصصة له فقط
         if (!$user->hasRole('super_admin')) {
@@ -87,7 +87,7 @@ class ProjectsController extends Controller
         // KPIs (optimized - single query for counts)
         // Note: Using 'delayed_count' instead of 'delayed' as it's a MySQL reserved word
         // تطبيق نفس فلاتر الصلاحيات على KPIs
-        $kpisQuery = Project::query();
+        $kpisQuery = Project::query()->where('is_hidden', false); // إخفاء المشاريع المخفية
         if (!$user->hasRole('super_admin')) {
             $kpisQuery->where(function($q) use ($user) {
                 $q->where('project_manager_id', $user->id)
@@ -320,13 +320,24 @@ class ProjectsController extends Controller
 
         $projectManagers = User::whereHas('roles', function($q) {
             $q->where('name', 'project_manager');
-        })->get();
+        })->where('status', 'active')->orderBy('name')->get();
 
         $engineers = User::whereHas('roles', function($q) {
             $q->whereIn('name', ['engineer', 'project_manager']);
-        })->get();
+        })->where('status', 'active')->orderBy('name')->get();
 
-        return view('projects.edit', compact('project', 'projectManagers', 'engineers'));
+        // إذا لم يوجد مستخدمون بأدوار محددة، جلب جميع المستخدمين النشطين
+        if ($projectManagers->isEmpty()) {
+            $projectManagers = User::where('status', 'active')->orderBy('name')->get();
+        }
+
+        if ($engineers->isEmpty()) {
+            $engineers = User::where('status', 'active')->orderBy('name')->get();
+        }
+
+        $clients = \App\Models\Client::where('status', 'active')->orderBy('name')->get();
+
+        return view('projects.edit', compact('project', 'projectManagers', 'engineers', 'clients'));
     }
 
     /**
@@ -390,7 +401,19 @@ class ProjectsController extends Controller
             }
 
             // تحديث المشروع
+            $oldStatus = $project->status;
             $project->update($validated);
+
+            // إغلاق الشات إذا المشروع أصبح مكتمل
+            if ($validated['status'] === 'مكتمل' && $oldStatus !== 'مكتمل') {
+                $conversation = \App\Models\Conversation::where('type', 'project')
+                    ->where('project_id', $project->id)
+                    ->first();
+                
+                if ($conversation && !$conversation->is_closed) {
+                    $conversation->close();
+                }
+            }
 
             // تحديث المراحل
             if ($request->filled('stages')) {
@@ -452,6 +475,32 @@ class ProjectsController extends Controller
 
         return redirect()->route('projects.index')
             ->with('success', 'تم حذف المشروع بنجاح');
+    }
+    
+    /**
+     * إخفاء/إظهار المشروع
+     */
+    public function toggleHide(string $id)
+    {
+        $project = Project::findOrFail($id);
+        
+        // التحقق من الصلاحيات - فقط super_admin أو project_manager يمكنه إخفاء المشروع
+        if (!$project->project_manager_id || $project->project_manager_id !== Auth::id()) {
+            if (!Auth::user()->hasRole('super_admin')) {
+                abort(403, 'غير مصرح لك بإخفاء هذا المشروع');
+            }
+        }
+        
+        $project->update([
+            'is_hidden' => !$project->is_hidden,
+        ]);
+        
+        $message = $project->is_hidden 
+            ? 'تم إخفاء المشروع بنجاح' 
+            : 'تم إظهار المشروع بنجاح';
+        
+        return redirect()->route('projects.index')
+            ->with('success', $message);
     }
 
     /**

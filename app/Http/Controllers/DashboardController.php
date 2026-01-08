@@ -28,7 +28,7 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         // Apply filters based on user role
-        $projectQuery = Project::query();
+        $projectQuery = Project::query()->where('is_hidden', false); // إخفاء المشاريع المخفية
         $taskQuery = Task::query()->whereNotNull('project_id');
         
         // Filter projects based on role
@@ -249,7 +249,7 @@ class DashboardController extends Controller
 
         if (!$isAdmin) {
             // Rebuild queries for user-specific data (without admin filters)
-            $userProjectQuery = Project::query();
+            $userProjectQuery = Project::query()->where('is_hidden', false); // إخفاء المشاريع المخفية
             $userTaskQuery = Task::query()->whereNotNull('project_id');
             
             // Apply user-specific filters

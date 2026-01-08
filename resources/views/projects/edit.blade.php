@@ -114,7 +114,7 @@
                     <input 
                         type="text" 
                         name="project_number"
-                        value="{{ old('project_number') }}"
+                        value="{{ old('project_number', $project->project_number) }}"
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                         placeholder="{{ __('Will be generated automatically') }}"
                     >
@@ -182,11 +182,29 @@
                 </div>
 
                 <div>
+                    <label class="block text-gray-300 text-sm mb-2">{{ __('Client') }}</label>
+                    <select 
+                        name="client_id" 
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    >
+                        <option value="">{{ __('Select Client') }} ({{ __('Optional') }})</option>
+                        @foreach($clients ?? [] as $client)
+                            <option value="{{ $client->id }}" {{ old('client_id', $project->client_id) == $client->id ? 'selected' : '' }}>
+                                {{ $client->name }}@if($client->type_label) - {{ $client->type_label }}@endif
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('client_id')
+                        <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
                     <label class="block text-gray-300 text-sm mb-2">{{ __('Owner') }} <span class="text-red-400">*</span></label>
                     <input 
                         type="text" 
                         name="owner"
-                        value="{{ old('owner') }}"
+                        value="{{ old('owner', $project->owner) }}"
                         required
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                         placeholder="{{ __('Enter Owner Name') }}"
@@ -201,7 +219,7 @@
                     <input 
                         type="number" 
                         name="value"
-                        value="{{ old('value') }}"
+                        value="{{ old('value', $project->value) }}"
                         required
                         step="0.01"
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
@@ -217,7 +235,7 @@
                     <input 
                         type="text" 
                         name="contract_number"
-                        value="{{ old('contract_number') }}"
+                        value="{{ old('contract_number', $project->contract_number) }}"
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     >
                     @error('contract_number')
@@ -298,7 +316,7 @@
                     <input 
                         type="text" 
                         name="baladi_request_number"
-                        value="{{ old('baladi_request_number') }}"
+                        value="{{ old('baladi_request_number', $project->baladi_request_number) }}"
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     >
                     @error('baladi_request_number')
@@ -308,7 +326,7 @@
             </div>
 
             <!-- Third Party Repeater -->
-            <div x-data="thirdPartyRepeater()">
+            <div x-data="thirdPartyRepeater({{ json_encode($project->thirdParties->map(function($tp) { return ['name' => $tp->name, 'date' => $tp->date]; })->toArray()) }})">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-white">{{ __('Third Party') }}</h3>
                     <button type="button" @click="addItem()" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm">
@@ -360,19 +378,19 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="معماري" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
+                    <input type="checkbox" name="stages[]" value="معماري" {{ in_array('معماري', old('stages', $project->stages ?? [])) ? 'checked' : '' }} class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
                     <span class="text-white">{{ __('Architectural') }}</span>
                 </label>
                 <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="إنشائي" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
+                    <input type="checkbox" name="stages[]" value="إنشائي" {{ in_array('إنشائي', old('stages', $project->stages ?? [])) ? 'checked' : '' }} class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
                     <span class="text-white">{{ __('Structural') }}</span>
                 </label>
                 <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="كهربائي" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
+                    <input type="checkbox" name="stages[]" value="كهربائي" {{ in_array('كهربائي', old('stages', $project->stages ?? [])) ? 'checked' : '' }} class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
                     <span class="text-white">{{ __('Electrical') }}</span>
                 </label>
                 <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="ميكانيكي" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
+                    <input type="checkbox" name="stages[]" value="ميكانيكي" {{ in_array('ميكانيكي', old('stages', $project->stages ?? [])) ? 'checked' : '' }} class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
                     <span class="text-white">{{ __('Mechanical') }}</span>
                 </label>
                 <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
@@ -390,12 +408,48 @@
             </div>
         </div>
 
-        <!-- Project Dates -->
+        <!-- Project Status & Dates -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
             <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
                 <i class="fas fa-calendar text-primary-400"></i>
-                {{ __('Project Dates') }}
+                {{ __('Project Status & Dates') }}
             </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6">
+                <div>
+                    <label class="block text-gray-300 text-sm mb-2">{{ __('Status') }} <span class="text-red-400">*</span></label>
+                    <select 
+                        name="status"
+                        required
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    >
+                        <option value="">{{ __('Select Status') }}</option>
+                        <option value="قيد التنفيذ" {{ old('status', $project->status) == 'قيد التنفيذ' ? 'selected' : '' }}>{{ __('In Progress') }}</option>
+                        <option value="مكتمل" {{ old('status', $project->status) == 'مكتمل' ? 'selected' : '' }}>{{ __('Completed') }}</option>
+                        <option value="متوقف" {{ old('status', $project->status) == 'متوقف' ? 'selected' : '' }}>{{ __('Paused') }}</option>
+                        <option value="ملغي" {{ old('status', $project->status) == 'ملغي' ? 'selected' : '' }}>{{ __('Cancelled') }}</option>
+                    </select>
+                    @error('status')
+                    <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-gray-300 text-sm mb-2">{{ __('Progress') }} (%)</label>
+                    <input 
+                        type="number" 
+                        name="progress"
+                        min="0"
+                        max="100"
+                        value="{{ old('progress', $project->progress ?? 0) }}"
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                        placeholder="0"
+                    >
+                    @error('progress')
+                    <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
@@ -437,15 +491,19 @@
                 <div>
                     <label class="block text-gray-300 text-sm mb-2">{{ __('Project Manager') }}</label>
                     <select 
-                        name="project_manager"
+                        name="project_manager_id"
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     >
                         <option value="">{{ __('Select Project Manager') }}</option>
-                        <option value="1">محمد أحمد</option>
-                        <option value="2">فاطمة سالم</option>
-                        <option value="3">خالد مطر</option>
+                        @forelse($projectManagers ?? [] as $manager)
+                            <option value="{{ $manager->id }}" {{ old('project_manager_id', $project->project_manager_id) == $manager->id ? 'selected' : '' }}>
+                                {{ $manager->name }}@if($manager->job_title) - {{ $manager->job_title }}@endif
+                            </option>
+                        @empty
+                            <option value="" disabled>{{ __('No Project Managers Available') }}</option>
+                        @endforelse
                     </select>
-                    @error('project_manager')
+                    @error('project_manager_id')
                     <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
@@ -453,18 +511,21 @@
                 <div>
                     <label class="block text-gray-300 text-sm mb-2">{{ __('Engineers/Technicians') }}</label>
                     <select 
-                        name="engineers[]"
+                        name="team_members[]"
                         multiple
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                        size="4"
+                        size="6"
                     >
-                        <option value="1">محمد أحمد - مهندس معماري</option>
-                        <option value="2">فاطمة سالم - مهندسة إنشائية</option>
-                        <option value="3">خالد مطر - مهندس كهرباء</option>
-                        <option value="4">سارة علي - مهندسة ميكانيكا</option>
+                        @forelse($engineers ?? [] as $engineer)
+                            <option value="{{ $engineer->id }}" {{ in_array($engineer->id, old('team_members', $project->team_members ?? [])) ? 'selected' : '' }}>
+                                {{ $engineer->name }}@if($engineer->job_title) - {{ $engineer->job_title }}@endif
+                            </option>
+                        @empty
+                            <option value="" disabled>{{ __('No Engineers Available') }}</option>
+                        @endforelse
                     </select>
                     <p class="mt-1 text-xs text-gray-400">{{ __('Press Ctrl/Command to select multiple') }}</p>
-                    @error('engineers')
+                    @error('team_members')
                     <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
@@ -483,7 +544,7 @@
                 rows="4"
                 class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 placeholder="{{ __('Internal Notes Placeholder') }}"
-            >{{ old('internal_notes') }}</textarea>
+            >{{ old('internal_notes', $project->internal_notes) }}</textarea>
             @error('internal_notes')
             <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
             @enderror
@@ -510,9 +571,9 @@
         }
     }
 
-    function thirdPartyRepeater() {
+    function thirdPartyRepeater(initialItems = []) {
         return {
-            items: [],
+            items: initialItems.length > 0 ? initialItems : [],
             addItem() {
                 this.items.push({ name: '', date: '' });
             },

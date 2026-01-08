@@ -35,6 +35,7 @@ class Project extends Model
         'internal_notes',
         'start_date',
         'end_date',
+        'is_hidden',
     ];
 
     protected $casts = [
@@ -44,6 +45,7 @@ class Project extends Model
         'progress' => 'integer',
         'start_date' => 'date',
         'end_date' => 'date',
+        'is_hidden' => 'boolean',
     ];
 
     /**
@@ -175,5 +177,13 @@ class Project extends Model
 
         $completedTasks = $tasks->where('status', 'done')->count();
         return round(($completedTasks / $tasks->count()) * 100);
+    }
+
+    /**
+     * محادثة المشروع
+     */
+    public function conversation()
+    {
+        return $this->hasOne(Conversation::class)->where('type', 'project');
     }
 }

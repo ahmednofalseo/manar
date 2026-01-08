@@ -55,6 +55,7 @@ Route::prefix('projects')->name('projects.')->group(function () {
     Route::get('/{id}/edit', [App\Http\Controllers\ProjectsController::class, 'edit'])->name('edit');
     Route::put('/{id}', [App\Http\Controllers\ProjectsController::class, 'update'])->name('update');
     Route::delete('/{id}', [App\Http\Controllers\ProjectsController::class, 'destroy'])->name('destroy');
+    Route::post('/{id}/toggle-hide', [App\Http\Controllers\ProjectsController::class, 'toggleHide'])->name('toggle-hide');
     
     // Sub routes
     Route::post('/{id}/attachments', [App\Http\Controllers\ProjectsController::class, 'storeAttachment'])->name('attachments.store');
@@ -65,6 +66,26 @@ Route::prefix('projects')->name('projects.')->group(function () {
     Route::post('/{id}/invoices', [App\Http\Controllers\ProjectsController::class, 'storeInvoice'])->name('invoices.store');
     Route::post('/{id}/thirdparty', [App\Http\Controllers\ProjectsController::class, 'storeThirdParty'])->name('thirdparty.store');
     Route::delete('/{id}/thirdparty/{thirdPartyId}', [App\Http\Controllers\ProjectsController::class, 'destroyThirdParty'])->name('thirdparty.destroy');
+});
+
+// Chat Routes
+Route::prefix('chat')->name('chat.')->middleware('auth')->group(function () {
+    // Project Chat
+    Route::get('/project/{projectId}', [App\Http\Controllers\ChatController::class, 'getOrCreateProjectConversation'])->name('project');
+    Route::post('/project/{projectId}/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('project.send');
+    Route::get('/project/{projectId}/messages', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('project.messages');
+    
+    // Private Chat
+    Route::get('/private/{userId}', [App\Http\Controllers\ChatController::class, 'getOrCreatePrivateConversation'])->name('private');
+    Route::get('/private', [App\Http\Controllers\ChatController::class, 'getPrivateConversations'])->name('private.list');
+    
+    // Messages
+    Route::post('/conversation/{conversationId}/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('send');
+    Route::get('/conversation/{conversationId}/messages', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('messages');
+    Route::delete('/message/{messageId}', [App\Http\Controllers\ChatController::class, 'deleteMessage'])->name('message.delete');
+    
+    // Unread Messages Count
+    Route::get('/unread-count', [App\Http\Controllers\ChatController::class, 'getUnreadMessagesCount'])->name('unread.count');
 });
 
 // Tasks Routes

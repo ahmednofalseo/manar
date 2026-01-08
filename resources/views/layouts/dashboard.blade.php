@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+<html lang="{{ app()->getLocale() }}" 
+      dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}"
+      data-just-now="{{ __('Just now') }}"
+      data-minutes-ago="{{ __('minutes ago') }}"
+      data-hours-ago="{{ __('hours ago') }}"
+      data-attachment-text="{{ __('Attachment') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

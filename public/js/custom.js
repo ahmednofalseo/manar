@@ -420,6 +420,140 @@ function notificationsDropdown() {
     };
 }
 
+// Project Messages Dropdown (Alpine.js component)
+function projectMessagesDropdown() {
+    return {
+        isOpen: false,
+        unreadCount: 0,
+        projectsWithMessages: [],
+        loading: false,
+        pollingInterval: null,
+        attachmentText: document.documentElement.dataset.attachmentText || 'Attachment',
+        
+        init() {
+            this.loadUnreadMessages();
+            // Poll for new messages every 10 seconds
+            this.pollingInterval = setInterval(() => {
+                this.loadUnreadMessages(true);
+            }, 10000);
+        },
+        
+        async loadUnreadMessages(silent = false) {
+            if (this.loading) return;
+            
+            this.loading = true;
+            
+            try {
+                const response = await fetch('/chat/unread-count', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const oldUnreadCount = this.unreadCount;
+                    this.unreadCount = data.unread_count || 0;
+                    this.projectsWithMessages = data.projects_with_messages || [];
+                    
+                    // Play notification sound if new messages arrived (only if count increased)
+                    if (!silent && this.unreadCount > oldUnreadCount && oldUnreadCount >= 0) {
+                        this.playNotificationSound();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading unread messages:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async playNotificationSound() {
+            try {
+                if (!this.audioContext) {
+                    return;
+                }
+                
+                // Resume audio context if suspended (required by browsers)
+                if (this.audioContext.state === 'suspended') {
+                    try {
+                        await this.audioContext.resume();
+                    } catch (e) {
+                        console.warn('Could not resume audio context:', e);
+                        return;
+                    }
+                }
+                
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.value = 800; // Higher pitch for messages
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.3);
+            } catch (error) {
+                console.error('Error playing notification sound:', error);
+            }
+        },
+        
+        toggle() {
+            this.isOpen = !this.isOpen;
+            if (this.isOpen) {
+                this.loadUnreadMessages();
+            }
+        },
+        
+        close() {
+            this.isOpen = false;
+        },
+        
+        formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            
+            // Get translations from data attributes if available
+            const justNow = document.documentElement.dataset.justNow || 'Just now';
+            const minutesAgo = document.documentElement.dataset.minutesAgo || 'minutes ago';
+            const hoursAgo = document.documentElement.dataset.hoursAgo || 'hours ago';
+            const locale = document.documentElement.lang || 'ar';
+            
+            if (diff < 60000) { // Less than 1 minute
+                return justNow;
+            } else if (diff < 3600000) { // Less than 1 hour
+                const minutes = Math.floor(diff / 60000);
+                return minutes + ' ' + minutesAgo;
+            } else if (diff < 86400000) { // Less than 1 day
+                const hours = Math.floor(diff / 3600000);
+                return hours + ' ' + hoursAgo;
+            } else {
+                return date.toLocaleDateString(locale, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        },
+        
+        destroyed() {
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
+            }
+        }
+    };
+}
+
 // User Dropdown Toggle
 function toggleUserDropdown(event) {
     event.stopPropagation();

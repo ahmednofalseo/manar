@@ -43,6 +43,13 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['avatar_url'];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -140,5 +147,25 @@ class User extends Authenticatable implements MustVerifyEmail
     public function unreadNotifications()
     {
         return $this->hasMany(Notification::class)->where('read', false);
+    }
+
+    /**
+     * المشاريع المشترك فيها المستخدم
+     */
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'project_user', 'user_id', 'project_id');
+    }
+
+    /**
+     * الحصول على رابط الصورة الشخصية
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (!$this->avatar) {
+            return null;
+        }
+        
+        return asset('storage/' . $this->avatar);
     }
 }

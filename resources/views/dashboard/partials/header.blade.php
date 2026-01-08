@@ -105,10 +105,61 @@ use Illuminate\Support\Facades\Auth;
             </div>
             
             <!-- Messages -->
-            <button class="relative p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 hidden sm:block" aria-label="{{ __('Messages') }}">
-                <i class="fas fa-envelope text-lg md:text-xl"></i>
-                <span class="absolute {{ app()->getLocale() === 'ar' ? 'top-0 left-0' : 'top-0 right-0' }} bg-blue-500 text-white text-xs rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center text-[10px] md:text-xs">2</span>
-            </button>
+            <div class="relative" x-data="projectMessagesDropdown()" @click.away="close()">
+                <button @click="toggle()" class="relative p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 hidden sm:block" aria-label="{{ __('Messages') }}">
+                    <i class="fas fa-comments text-lg md:text-xl"></i>
+                    <span x-show="unreadCount > 0" class="absolute {{ app()->getLocale() === 'ar' ? 'top-0 left-0' : 'top-0 right-0' }} bg-blue-500 text-white text-xs rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center text-[10px] md:text-xs font-semibold" x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
+                </button>
+                
+                <!-- Messages Dropdown -->
+                <div x-show="isOpen" 
+                     x-transition:enter="transition ease-out duration-100"
+                     x-transition:enter-start="transform opacity-0 scale-95"
+                     x-transition:enter-end="transform opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-75"
+                     x-transition:leave-start="transform opacity-100 scale-100"
+                     x-transition:leave-end="transform opacity-0 scale-95"
+                     class="absolute {{ app()->getLocale() === 'ar' ? 'left-0' : 'right-0' }} mt-2 w-80 md:w-96 rounded-lg shadow-xl border border-white/10 py-2 z-50 max-h-[500px] overflow-y-auto"
+                     style="display: none; background-color: #09141c;"
+                     >
+                    <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                        <h3 class="text-white font-semibold text-sm">{{ __('Project Messages') }}</h3>
+                        <span x-show="unreadCount > 0" class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full" x-text="unreadCount + ' {{ __('unread') }}'"></span>
+                    </div>
+                    
+                    <div x-show="loading" class="px-4 py-8 text-center">
+                        <i class="fas fa-spinner fa-spin text-primary-400 text-xl"></i>
+                    </div>
+                    
+                    <div x-show="!loading && projectsWithMessages.length === 0" class="px-4 py-8 text-center text-gray-400 text-sm">
+                        {{ __('No new messages') }}
+                    </div>
+                    
+                    <template x-for="project in projectsWithMessages" :key="project.project_id">
+                        <a :href="'/projects/' + project.project_id + '#chat'" 
+                           class="block px-4 py-3 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                           :class="{ 'bg-blue-500/10': project.unread_count > 0 }">
+                            <div class="flex items-start gap-3">
+                                <div class="flex-shrink-0 mt-1">
+                                    <i class="fas fa-comments text-blue-400"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-white text-sm font-semibold" x-text="project.project_name"></p>
+                                    <template x-if="project.last_message">
+                                        <div>
+                                            <p class="text-gray-400 text-xs mt-1 truncate" x-text="project.last_message.user.name + ': ' + (project.last_message.message || attachmentText)"></p>
+                                            <p class="text-gray-500 text-xs mt-1" x-text="formatDate(project.last_message.created_at)"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <span x-show="project.unread_count > 0" class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-semibold" x-text="project.unread_count > 99 ? '99+' : project.unread_count"></span>
+                                </div>
+                            </div>
+                        </a>
+                    </template>
+                </div>
+            </div>
             
             <!-- Settings -->
             <a href="{{ route('admin.settings.index') }}" class="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 hidden sm:block" aria-label="{{ __('Settings') }}">

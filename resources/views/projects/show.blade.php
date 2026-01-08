@@ -147,6 +147,16 @@
                 <i class="fas fa-clock-rotate-left"></i>
                 السجل
             </button>
+            @if($project->status !== 'مكتمل')
+            <button 
+                @click="activeTab = 'chat'"
+                :class="activeTab === 'chat' ? 'border-b-2 border-primary-400 text-primary-400' : 'text-gray-400 hover:text-white'"
+                class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
+            >
+                <i class="fas fa-comments"></i>
+                {{ __('Chat') }}
+            </button>
+            @endif
         </div>
     </div>
 
@@ -187,6 +197,13 @@
     <div x-show="activeTab === 'activity'" class="space-y-4 md:space-y-6">
         @include('projects.tabs.activity')
     </div>
+
+    <!-- Chat Tab -->
+    @if($project->status !== 'مكتمل')
+    <div x-show="activeTab === 'chat'" class="space-y-4 md:space-y-6">
+        @include('projects.tabs.chat', ['currentUserId' => auth()->user()->id])
+    </div>
+    @endif
 </div>
 
 @push('scripts')
@@ -198,5 +215,226 @@
     }
 </script>
 @endpush
+
+@if($project->status !== 'مكتمل')
+@push('scripts')
+<script>
+    function projectChat(projectId, currentUserId) {
+        return {
+            projectId: projectId,
+            currentUserId: currentUserId,
+            errorMessage: {!! json_encode(__('Error sending message')) !!},
+            fileSizeMessage: {!! json_encode(__('File size must be less than 10MB')) !!},
+            justNow: {!! json_encode(__('Just now')) !!},
+            minutesAgo: {!! json_encode(__('minutes ago')) !!},
+            hoursAgo: {!! json_encode(__('hours ago')) !!},
+            locale: {!! json_encode(app()->getLocale()) !!},
+            conversation: null,
+            messages: [],
+            participants: [],
+            newMessage: '',
+            attachment: null,
+            attachmentPreview: null,
+            loading: true,
+            sending: false,
+            lastMessageId: null,
+            pollingInterval: null,
+
+            async init() {
+                await this.loadConversation();
+                this.startPolling();
+                
+                // Auto scroll to bottom
+                this.$watch('messages', () => {
+                    this.$nextTick(() => {
+                        this.scrollToBottom();
+                    });
+                });
+            },
+
+            async loadConversation() {
+                try {
+                    this.loading = true;
+                    const response = await fetch(`/chat/project/${this.projectId}`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.conversation = data.conversation;
+                        this.messages = data.messages.data.reverse(); // Reverse to show oldest first
+                        this.participants = data.participants || [];
+                        this.lastMessageId = this.messages.length > 0 ? this.messages[this.messages.length - 1].id : null;
+                    }
+                } catch (error) {
+                    console.error('Error loading conversation:', error);
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            async sendMessage() {
+                if (!this.newMessage.trim() && !this.attachment) return;
+                if (this.sending) return;
+
+                this.sending = true;
+
+                try {
+                    const formData = new FormData();
+                    formData.append('message', this.newMessage);
+                    if (this.attachment) {
+                        formData.append('attachment', this.attachment);
+                    }
+
+                    const response = await fetch(`/chat/conversation/${this.conversation.id}/send`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.messages.push(data.message);
+                        this.newMessage = '';
+                        this.clearAttachment();
+                        this.scrollToBottom();
+                        this.lastMessageId = data.message.id;
+                    } else {
+                        alert(data.message || this.errorMessage);
+                    }
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    alert(this.errorMessage);
+                } finally {
+                    this.sending = false;
+                }
+            },
+
+            handleAttachment(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert(this.fileSizeMessage);
+                        return;
+                    }
+                    this.attachment = file;
+                    this.attachmentPreview = {
+                        name: file.name,
+                        size: file.size
+                    };
+                }
+            },
+
+            clearAttachment() {
+                this.attachment = null;
+                this.attachmentPreview = null;
+                document.getElementById('chat-attachment').value = '';
+            },
+
+            startPolling() {
+                // Poll for new messages every 3 seconds
+                this.pollingInterval = setInterval(() => {
+                    if (this.conversation && !this.conversation.is_closed) {
+                        this.checkNewMessages();
+                    }
+                }, 3000);
+            },
+
+            async checkNewMessages() {
+                try {
+                    const response = await fetch(`/chat/conversation/${this.conversation.id}/messages?last_message_id=${this.lastMessageId}`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success && data.messages.data.length > 0) {
+                        // Add new messages
+                        const newMessages = data.messages.data.filter(msg => 
+                            !this.messages.find(m => m.id === msg.id)
+                        );
+                        
+                        if (newMessages.length > 0) {
+                            this.messages.push(...newMessages);
+                            this.lastMessageId = newMessages[newMessages.length - 1].id;
+                            this.scrollToBottom();
+                        }
+                    }
+
+                    // Update conversation status
+                    if (data.conversation) {
+                        this.conversation = data.conversation;
+                    }
+                } catch (error) {
+                    console.error('Error checking new messages:', error);
+                }
+            },
+
+            scrollToBottom() {
+                const container = document.getElementById('messages-container');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            },
+
+            getAvatarUrl(user) {
+                // إذا كان هناك avatar_url (من accessor في Model)
+                if (user.avatar_url) {
+                    return user.avatar_url;
+                }
+                // إذا كان هناك avatar (مسار الملف)
+                if (user.avatar) {
+                    return '/storage/' + user.avatar;
+                }
+                // إذا لم يكن هناك صورة، استخدم ui-avatars
+                return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&background=1db8f8&color=fff&size=48';
+            },
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diff = now - date;
+                
+                if (diff < 60000) { // Less than 1 minute
+                    return this.justNow;
+                } else if (diff < 3600000) { // Less than 1 hour
+                    const minutes = Math.floor(diff / 60000);
+                    return minutes + ' ' + this.minutesAgo;
+                } else if (diff < 86400000) { // Less than 1 day
+                    const hours = Math.floor(diff / 3600000);
+                    return hours + ' ' + this.hoursAgo;
+                } else {
+                    return date.toLocaleDateString(this.locale, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+            },
+
+            destroyed() {
+                if (this.pollingInterval) {
+                    clearInterval(this.pollingInterval);
+                }
+            }
+        }
+    }
+</script>
+@endpush
+@endif
 
 @endsection
