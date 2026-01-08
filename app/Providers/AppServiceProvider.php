@@ -27,6 +27,9 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Approval::class, \App\Policies\ApprovalPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Invoice::class, \App\Policies\InvoicePolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Expense::class, \App\Policies\ExpensePolicy::class);
+        
+        // Register Observers
+        \App\Models\Project::observe(\App\Observers\ProjectObserver::class);
 
         // Register Gates for permissions
         \Illuminate\Support\Facades\Gate::define('manage-roles-permissions', function ($user) {

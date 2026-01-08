@@ -292,3 +292,4 @@ $attachmentsCount = $project->attachments->count();
 **تم إنشاء التقرير بواسطة:** AI Code Reviewer  
 **آخر تحديث:** {{ date('Y-m-d H:i:s') }}
 
+
