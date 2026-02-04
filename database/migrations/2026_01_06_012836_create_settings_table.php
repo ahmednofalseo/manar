@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('settings')) {
+            return;
+        }
+        
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
             $table->string('key')->unique();
@@ -51,10 +55,13 @@ return new class extends Migration
         ];
 
         foreach ($defaultSettings as $setting) {
-            DB::table('settings')->insert(array_merge($setting, [
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]));
+            // التحقق من عدم وجود الإعداد مسبقاً
+            if (!DB::table('settings')->where('key', $setting['key'])->exists()) {
+                DB::table('settings')->insert(array_merge($setting, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]));
+            }
         }
     }
 
