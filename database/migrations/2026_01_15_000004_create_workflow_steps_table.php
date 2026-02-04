@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('workflow_steps')) {
+            return;
+        }
+        
         Schema::create('workflow_steps', function (Blueprint $table) {
             $table->id();
             $table->foreignId('workflow_template_id')->constrained('workflow_templates')->onDelete('cascade'); // القالب
