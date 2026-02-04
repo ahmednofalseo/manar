@@ -66,6 +66,18 @@ Route::prefix('projects')->name('projects.')->group(function () {
     Route::post('/{id}/invoices', [App\Http\Controllers\ProjectsController::class, 'storeInvoice'])->name('invoices.store');
     Route::post('/{id}/thirdparty', [App\Http\Controllers\ProjectsController::class, 'storeThirdParty'])->name('thirdparty.store');
     Route::delete('/{id}/thirdparty/{thirdPartyId}', [App\Http\Controllers\ProjectsController::class, 'destroyThirdParty'])->name('thirdparty.destroy');
+    
+    // Project Workflows Routes
+    Route::prefix('{project}/workflows')->name('workflows.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ProjectWorkflowsController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\ProjectWorkflowsController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\ProjectWorkflowsController::class, 'store'])->name('store');
+        Route::get('/{workflow}', [App\Http\Controllers\ProjectWorkflowsController::class, 'show'])->name('show');
+        Route::post('/{workflow}/steps/{step}/status', [App\Http\Controllers\ProjectWorkflowsController::class, 'updateStepStatus'])->name('steps.update-status');
+        Route::post('/{workflow}/steps', [App\Http\Controllers\ProjectWorkflowsController::class, 'addCustomStep'])->name('steps.add');
+        Route::delete('/{workflow}/steps/{step}', [App\Http\Controllers\ProjectWorkflowsController::class, 'deleteStep'])->name('steps.delete');
+        Route::post('/{workflow}/reorder-steps', [App\Http\Controllers\ProjectWorkflowsController::class, 'reorderSteps'])->name('reorder-steps');
+    });
 });
 
 // Chat Routes
@@ -209,3 +221,52 @@ Route::get('/users', function () {
 Route::get('/settings', function () {
     return redirect('/dashboard')->with('info', 'صفحة الإعدادات قيد التطوير');
 })->name('settings.index');
+
+// Services Routes
+Route::prefix('services')->name('services.')->middleware('auth')->group(function () {
+    Route::get('/', [App\Http\Controllers\ServicesController::class, 'index'])->name('index');
+    Route::get('/create', [App\Http\Controllers\ServicesController::class, 'create'])->name('create');
+    Route::post('/', [App\Http\Controllers\ServicesController::class, 'store'])->name('store');
+    Route::get('/{service}', [App\Http\Controllers\ServicesController::class, 'show'])->name('show');
+    Route::get('/{service}/edit', [App\Http\Controllers\ServicesController::class, 'edit'])->name('edit');
+    Route::put('/{service}', [App\Http\Controllers\ServicesController::class, 'update'])->name('update');
+    Route::delete('/{service}', [App\Http\Controllers\ServicesController::class, 'destroy'])->name('destroy');
+});
+
+// Workflow Templates Routes
+Route::prefix('workflow-templates')->name('workflow-templates.')->middleware('auth')->group(function () {
+    Route::get('/', [App\Http\Controllers\WorkflowTemplatesController::class, 'index'])->name('index');
+    Route::get('/create', [App\Http\Controllers\WorkflowTemplatesController::class, 'create'])->name('create');
+    Route::post('/', [App\Http\Controllers\WorkflowTemplatesController::class, 'store'])->name('store');
+    Route::get('/{workflowTemplate}', [App\Http\Controllers\WorkflowTemplatesController::class, 'show'])->name('show');
+    Route::get('/{workflowTemplate}/edit', [App\Http\Controllers\WorkflowTemplatesController::class, 'edit'])->name('edit');
+    Route::put('/{workflowTemplate}', [App\Http\Controllers\WorkflowTemplatesController::class, 'update'])->name('update');
+    Route::delete('/{workflowTemplate}', [App\Http\Controllers\WorkflowTemplatesController::class, 'destroy'])->name('destroy');
+});
+
+// Documents Routes
+Route::prefix('documents')->name('documents.')->middleware('auth')->group(function () {
+    Route::get('/', [App\Http\Controllers\DocumentsController::class, 'index'])->name('index');
+    Route::get('/create', [App\Http\Controllers\DocumentsController::class, 'create'])->name('create');
+    Route::post('/', [App\Http\Controllers\DocumentsController::class, 'store'])->name('store');
+    Route::get('/{document}', [App\Http\Controllers\DocumentsController::class, 'show'])->name('show');
+    Route::get('/{document}/edit', [App\Http\Controllers\DocumentsController::class, 'edit'])->name('edit');
+    Route::put('/{document}', [App\Http\Controllers\DocumentsController::class, 'update'])->name('update');
+    Route::delete('/{document}', [App\Http\Controllers\DocumentsController::class, 'destroy'])->name('destroy');
+    Route::post('/{document}/duplicate', [App\Http\Controllers\DocumentsController::class, 'duplicate'])->name('duplicate');
+    Route::post('/{document}/submit', [App\Http\Controllers\DocumentsController::class, 'submit'])->name('submit');
+    Route::post('/{document}/approve', [App\Http\Controllers\DocumentsController::class, 'approve'])->name('approve');
+    Route::get('/{document}/pdf', [App\Http\Controllers\DocumentsController::class, 'generatePdf'])->name('pdf');
+    Route::get('/{document}/preview-pdf', [App\Http\Controllers\DocumentsController::class, 'previewPdf'])->name('preview-pdf');
+});
+
+// Document Templates Routes (Admin Only)
+Route::prefix('document-templates')->name('document-templates.')->middleware('auth')->group(function () {
+    Route::get('/', [App\Http\Controllers\DocumentTemplatesController::class, 'index'])->name('index');
+    Route::get('/create', [App\Http\Controllers\DocumentTemplatesController::class, 'create'])->name('create');
+    Route::post('/', [App\Http\Controllers\DocumentTemplatesController::class, 'store'])->name('store');
+    Route::get('/{documentTemplate}', [App\Http\Controllers\DocumentTemplatesController::class, 'show'])->name('show');
+    Route::get('/{documentTemplate}/edit', [App\Http\Controllers\DocumentTemplatesController::class, 'edit'])->name('edit');
+    Route::put('/{documentTemplate}', [App\Http\Controllers\DocumentTemplatesController::class, 'update'])->name('update');
+    Route::delete('/{documentTemplate}', [App\Http\Controllers\DocumentTemplatesController::class, 'destroy'])->name('destroy');
+});

@@ -34,6 +34,13 @@
         </a>
         @endif
         
+        @can('viewAny', \App\Models\Service::class)
+        <a href="{{ route('services.index') }}" onclick="closeMobileSidebarOnClick()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-white/10 transition-all duration-200 {{ request()->routeIs('services.*') || request()->routeIs('workflow-templates.*') ? 'bg-white/10 ring-2 ring-primary-400/40' : '' }}">
+            <i class="fas fa-cogs w-5"></i>
+            <span>الخدمات والمسارات</span>
+        </a>
+        @endcan
+        
         @if(\App\Helpers\PermissionHelper::hasPermission('tasks.view') || \App\Helpers\PermissionHelper::hasPermission('tasks.manage'))
         <a href="{{ route('tasks.index') }}" onclick="closeMobileSidebarOnClick()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-white/10 transition-all duration-200 {{ request()->routeIs('tasks.*') ? 'bg-white/10 ring-2 ring-primary-400/40' : '' }}">
             <i class="fas fa-list-check w-5"></i>

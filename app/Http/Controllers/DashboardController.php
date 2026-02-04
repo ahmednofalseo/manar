@@ -28,11 +28,13 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         // Apply filters based on user role
-        $projectQuery = Project::query()->where('is_hidden', false); // إخفاء المشاريع المخفية
+        $projectQuery = Project::query();
         $taskQuery = Task::query()->whereNotNull('project_id');
         
         // Filter projects based on role
         if ($user->hasRole('engineer') || $user->hasRole('admin_staff')) {
+            // للمستخدمين العاديين: إخفاء المشاريع المخفية
+            $projectQuery->where('is_hidden', false);
             $projectQuery->where(function($q) use ($user) {
                 $q->where('project_manager_id', $user->id)
                   ->orWhereJsonContains('team_members', (string)$user->id)
@@ -40,6 +42,8 @@ class DashboardController extends Controller
             });
             $taskQuery->where('assignee_id', $user->id);
         } elseif ($user->hasRole('project_manager')) {
+            // للمديرين: إخفاء المشاريع المخفية
+            $projectQuery->where('is_hidden', false);
             $projectIds = Project::where('project_manager_id', $user->id)
                 ->orWhereHas('teamUsers', function($q) use ($user) {
                     $q->where('users.id', $user->id);
@@ -48,7 +52,7 @@ class DashboardController extends Controller
             $projectQuery->whereIn('id', $projectIds);
             $taskQuery->whereIn('project_id', $projectIds);
         }
-        // Super Admin sees everything (no filters)
+        // Super Admin sees everything (بما في ذلك المشاريع المخفية - no filters)
 
         // Apply filters from request
         if ($request->filled('city')) {
@@ -249,11 +253,13 @@ class DashboardController extends Controller
 
         if (!$isAdmin) {
             // Rebuild queries for user-specific data (without admin filters)
-            $userProjectQuery = Project::query()->where('is_hidden', false); // إخفاء المشاريع المخفية
+            $userProjectQuery = Project::query();
             $userTaskQuery = Task::query()->whereNotNull('project_id');
             
             // Apply user-specific filters
             if ($user->hasRole('engineer') || $user->hasRole('admin_staff')) {
+                // للمستخدمين العاديين: إخفاء المشاريع المخفية
+                $userProjectQuery->where('is_hidden', false);
                 $userProjectQuery->where(function($q) use ($user) {
                     $q->where('project_manager_id', $user->id)
                       ->orWhereJsonContains('team_members', (string)$user->id)
@@ -261,6 +267,8 @@ class DashboardController extends Controller
                 });
                 $userTaskQuery->where('assignee_id', $user->id);
             } elseif ($user->hasRole('project_manager')) {
+                // للمديرين: إخفاء المشاريع المخفية
+                $userProjectQuery->where('is_hidden', false);
                 $projectIds = Project::where('project_manager_id', $user->id)
                     ->orWhereHas('teamUsers', function($q) use ($user) {
                         $q->where('users.id', $user->id);
@@ -270,6 +278,7 @@ class DashboardController extends Controller
                 $userTaskQuery->whereIn('project_id', $projectIds);
             } else {
                 // For other roles, show projects where user is manager or team member
+                $userProjectQuery->where('is_hidden', false);
                 $userProjectQuery->where(function($q) use ($user) {
                     $q->where('project_manager_id', $user->id)
                       ->orWhereJsonContains('team_members', (string)$user->id)

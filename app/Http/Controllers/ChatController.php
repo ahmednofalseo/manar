@@ -313,16 +313,24 @@ class ChatController extends Controller
         
         // الحصول على جميع المشاريع التي المستخدم مشترك فيها
         // استخدام نفس الطريقة المستخدمة في ProjectsController و DashboardController
-        $userProjects = Project::where('is_hidden', false) // إخفاء المشاريع المخفية
-            ->where(function($q) use ($user) {
+        $userProjectsQuery = Project::query();
+        
+        // Super Admin يرى الكل (بما في ذلك المشاريع المخفية)
+        if (!$user->hasRole('super_admin')) {
+            // للمستخدمين العاديين: إخفاء المشاريع المخفية
+            $userProjectsQuery->where('is_hidden', false);
+            $userProjectsQuery->where(function($q) use ($user) {
                 $q->where('project_manager_id', $user->id)
                   ->orWhereHas('teamUsers', function($query) use ($user) {
                       $query->where('users.id', $user->id);
                   })
                   ->orWhereJsonContains('team_members', (string)$user->id)
                   ->orWhereJsonContains('team_members', $user->id);
-            })
-            ->pluck('id');
+            });
+        }
+        // Super Admin لا يحتاج فلاتر - يرى الكل
+        
+        $userProjects = $userProjectsQuery->pluck('id');
         
         if ($userProjects->isEmpty()) {
             return response()->json([

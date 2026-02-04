@@ -584,16 +584,12 @@ class ClientsController extends Controller
 
             return back()->with('success', "تم حذف {$deleted} عميل بنجاح");
         } catch (\Exception $e) {
-            DB::rollBack();
-
-            if ($request->expectsJson()) {
+            DB::rollBack();            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'حدث خطأ أثناء الحذف: ' . $e->getMessage(),
                 ], 422);
-            }
-
-            return back()->with('error', 'حدث خطأ أثناء الحذف: ' . $e->getMessage());
+            }            return back()->with('error', 'حدث خطأ أثناء الحذف: ' . $e->getMessage());
         }
     }
 }

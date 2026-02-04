@@ -119,6 +119,17 @@
             المرفقات
             <span class="mr-2 bg-white/10 px-2 py-0.5 rounded text-xs">{{ $client->attachments->count() }}</span>
         </button>
+        @if(\App\Helpers\PermissionHelper::hasPermission('documents.view'))
+        <button 
+            @click="activeTab = 'documents'"
+            :class="activeTab === 'documents' ? 'bg-primary-400/20 text-primary-400 border-primary-400' : 'text-gray-400 hover:text-white'"
+            class="px-4 py-2 border-b-2 border-transparent transition-all duration-200 text-sm font-semibold"
+        >
+            <i class="fas fa-file-alt ml-2"></i>
+            المستندات
+            <span class="mr-2 bg-white/10 px-2 py-0.5 rounded text-xs">{{ $client->documents->count() }}</span>
+        </button>
+        @endif
         <button 
             @click="activeTab = 'notes'"
             :class="activeTab === 'notes' ? 'bg-primary-400/20 text-primary-400 border-primary-400' : 'text-gray-400 hover:text-white'"
@@ -250,6 +261,71 @@
             </div>
         @endif
     </div>
+
+    @if(\App\Helpers\PermissionHelper::hasPermission('documents.view'))
+    <!-- Documents Tab -->
+    <div x-show="activeTab === 'documents'" class="space-y-4">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-white">مستندات العميل</h3>
+            @can('create', \App\Models\Document::class)
+            <div class="flex items-center gap-2">
+                <a href="{{ route('documents.create', ['type' => 'technical_report', 'client_id' => $client->id]) }}" class="px-3 py-1 bg-primary-400/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
+                    <i class="fas fa-file-alt ml-1"></i>
+                    تقرير فني
+                </a>
+                <a href="{{ route('documents.create', ['type' => 'quotation', 'client_id' => $client->id]) }}" class="px-3 py-1 bg-[#1db8f8]/20 hover:bg-[#1db8f8]/30 text-[#1db8f8] rounded text-sm">
+                    <i class="fas fa-file-invoice-dollar ml-1"></i>
+                    عرض سعر
+                </a>
+            </div>
+            @endcan
+        </div>
+        @if($client->documents->count() > 0)
+        <div class="space-y-3">
+            @foreach($client->documents as $document)
+            <div class="bg-white/5 rounded-lg p-4 border border-white/10">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3 flex-1">
+                        <i class="fas {{ $document->type === 'technical_report' ? 'fa-file-alt' : 'fa-file-invoice-dollar' }} text-2xl text-[#1db8f8]"></i>
+                        <div>
+                            <h4 class="text-white font-semibold">
+                                <a href="{{ route('documents.show', $document) }}" class="hover:text-[#1db8f8] transition-colors">
+                                    {{ $document->title }}
+                                </a>
+                            </h4>
+                            <p class="text-gray-400 text-sm">
+                                <i class="fas fa-hashtag ml-1"></i>
+                                {{ $document->document_number }}
+                                @if($document->project)
+                                - {{ $document->project->name }}
+                                @endif
+                            </p>
+                            <p class="text-gray-400 text-xs mt-1">
+                                <i class="fas fa-calendar ml-1"></i>
+                                {{ $document->created_at->format('Y-m-d') }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('documents.show', $document) }}" class="px-3 py-2 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded-lg transition-all duration-200 text-sm">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ route('documents.preview-pdf', $document) }}" target="_blank" class="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-all duration-200 text-sm">
+                            <i class="fas fa-file-pdf"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+        @else
+        <div class="text-center py-12 bg-white/5 rounded-lg">
+            <i class="fas fa-file-alt text-6xl text-gray-500 mb-4"></i>
+            <p class="text-gray-400 text-lg">لا توجد مستندات</p>
+        </div>
+        @endif
+    </div>
+    @endif
 
     <!-- Notes Tab -->
     <div x-show="activeTab === 'notes'" class="space-y-4">

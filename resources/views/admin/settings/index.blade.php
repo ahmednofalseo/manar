@@ -36,6 +36,106 @@
     .animate-slide-in {
         animation: slide-in 0.3s ease-out;
     }
+    /* Enhanced Select Dropdowns - High Contrast for Better Visibility */
+    .select-wrapper {
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+    
+    .select-wrapper select {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        
+        /* High Contrast Colors - Visible on All Screens */
+        background-color: #173343 !important;
+        background-image: none !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        
+        /* Clear Border - High Contrast */
+        border: 2px solid rgba(255, 255, 255, 0.6) !important;
+        border-radius: 8px !important;
+        
+        /* Prevent overflow */
+        min-width: 0 !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        
+        /* Custom arrow - RTL aware */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-size: 12px !important;
+        
+        /* Default padding for LTR */
+        padding: 12px 40px 12px 16px !important;
+        background-position: right 16px center !important;
+    }
+    
+    /* RTL Support */
+    [dir="rtl"] .select-wrapper select {
+        padding: 12px 16px 12px 40px !important;
+        background-position: left 16px center !important;
+    }
+    
+    .select-wrapper select:hover {
+        border-color: #1db8f8 !important;
+        border-opacity: 0.8 !important;
+        background-color: #1a3d52 !important;
+    }
+    
+    .select-wrapper select:focus {
+        outline: none !important;
+        border-color: #1db8f8 !important;
+        border-width: 2px !important;
+        border-opacity: 1 !important;
+        background-color: #1a3d52 !important;
+        box-shadow: 0 0 0 3px rgba(29, 184, 248, 0.3) !important;
+    }
+    
+    /* High Contrast Options */
+    .select-wrapper select option {
+        background-color: #173343 !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        padding: 12px 16px !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        max-width: 100% !important;
+        border: none !important;
+    }
+    
+    .select-wrapper select option:hover,
+    .select-wrapper select option:checked {
+        background-color: #1db8f8 !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
+    
+    /* Ensure dropdown doesn't overflow */
+    .select-wrapper select:focus {
+        position: relative;
+        z-index: 50;
+    }
+    
+    /* Mobile fixes */
+    @media (max-width: 768px) {
+        .select-wrapper select {
+            font-size: 16px !important;
+            padding: 14px 40px 14px 16px !important;
+        }
+        
+        [dir="rtl"] .select-wrapper select {
+            padding: 14px 16px 14px 40px !important;
+        }
+    }
 </style>
 @endpush
 
@@ -171,11 +271,11 @@
             </div>
 
             <!-- Language -->
-            <div>
+            <div class="select-wrapper">
                 <label class="block text-gray-300 text-sm font-semibold mb-2">{{ __('Default Language') }}</label>
                 <select 
                     name="language" 
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    class="w-full"
                     required
                 >
                     <option value="ar" {{ old('language', $settings['language'] ?? 'ar') === 'ar' ? 'selected' : '' }}>{{ __('Arabic') }}</option>
@@ -187,11 +287,11 @@
             </div>
 
             <!-- Timezone -->
-            <div>
+            <div class="select-wrapper">
                 <label class="block text-gray-300 text-sm font-semibold mb-2">{{ __('Timezone') }}</label>
                 <select 
                     name="timezone" 
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    class="w-full"
                     required
                 >
                     <option value="Asia/Riyadh" {{ old('timezone', $settings['timezone'] ?? 'Asia/Riyadh') === 'Asia/Riyadh' ? 'selected' : '' }}>{{ __('Riyadh (GMT+3)') }}</option>
@@ -205,11 +305,11 @@
             </div>
 
             <!-- Date Format -->
-            <div>
+            <div class="select-wrapper">
                 <label class="block text-gray-300 text-sm font-semibold mb-2">{{ __('Date Format') }}</label>
                 <select 
                     name="date_format" 
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    class="w-full"
                     required
                 >
                     <option value="Y-m-d" {{ old('date_format', $settings['date_format'] ?? 'Y-m-d') === 'Y-m-d' ? 'selected' : '' }}>2025-01-06</option>
@@ -223,11 +323,11 @@
             </div>
 
             <!-- Time Format -->
-            <div>
+            <div class="select-wrapper">
                 <label class="block text-gray-300 text-sm font-semibold mb-2">{{ __('Time Format') }}</label>
                 <select 
                     name="time_format" 
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    class="w-full"
                     required
                 >
                     <option value="H:i" {{ old('time_format', $settings['time_format'] ?? 'H:i') === 'H:i' ? 'selected' : '' }}>{{ __('24 Hour (14:30)') }}</option>
@@ -260,11 +360,11 @@
         
         <div class="space-y-6">
             <!-- Mail Mailer -->
-            <div>
+            <div class="select-wrapper">
                 <label class="block text-gray-300 text-sm font-semibold mb-2">{{ __('Mail Type') }}</label>
                 <select 
                     name="mail_mailer" 
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    class="w-full"
                     required
                 >
                     <option value="smtp" {{ old('mail_mailer', $settings['mail_mailer'] ?? 'smtp') === 'smtp' ? 'selected' : '' }}>SMTP</option>
@@ -334,11 +434,11 @@
             </div>
 
             <!-- Mail Encryption -->
-            <div>
+            <div class="select-wrapper">
                 <label class="block text-gray-300 text-sm font-semibold mb-2">{{ __('Encryption') }}</label>
                 <select 
                     name="mail_encryption" 
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    class="w-full"
                 >
                     <option value="tls" {{ old('mail_encryption', $settings['mail_encryption'] ?? 'tls') === 'tls' ? 'selected' : '' }}>TLS</option>
                     <option value="ssl" {{ old('mail_encryption', $settings['mail_encryption'] ?? 'tls') === 'ssl' ? 'selected' : '' }}>SSL</option>

@@ -60,27 +60,6 @@
     </div>
     @endif
 
-    @if($errors->any())
-    <div class="fixed top-20 left-4 right-4 sm:right-auto sm:left-4 z-[70] p-4 rounded-lg shadow-lg max-w-md bg-red-500 text-white animate-slide-in mx-auto sm:mx-0 mb-4" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 7000)" x-transition>
-        <div class="flex items-start justify-between">
-            <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <span class="text-sm sm:text-base font-semibold">يرجى تصحيح الأخطاء التالية:</span>
-                </div>
-                <ul class="list-disc list-inside text-sm space-y-1 mr-4">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-            <button @click="show = false" class="mr-2 flex-shrink-0 mt-1">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    </div>
-    @endif
-
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('New Project') }}</h1>
@@ -89,6 +68,25 @@
             {{ __('Back') }}
         </a>
     </div>
+
+    <!-- Validation Errors -->
+    @if($errors->any())
+    <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-6 border-2 border-red-500/50 bg-red-500/10">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-exclamation-circle text-red-400"></i>
+                    <span class="text-base font-semibold text-red-400">يرجى تصحيح الأخطاء التالية:</span>
+                </div>
+                <ul class="list-disc list-inside text-sm space-y-1 mr-4 text-red-300">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Form -->
     <form method="POST" action="{{ route('projects.store') }}" enctype="multipart/form-data" x-data="projectForm()">
@@ -435,15 +433,18 @@
 
                 <div>
                     <label class="block text-gray-300 text-sm mb-2">{{ __('End Date') }}</label>
+                    @error('end_date')
+                    <p class="mb-2 text-sm text-red-400 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ $message }}
+                    </p>
+                    @enderror
                     <input 
                         type="date" 
                         name="end_date"
                         value="{{ old('end_date') }}"
-                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 @error('end_date') border-red-500 bg-red-500/10 focus:ring-red-500/40 @enderror"
                     >
-                    @error('end_date')
-                    <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
-                    @enderror
                 </div>
             </div>
         </div>

@@ -14,6 +14,7 @@ class Project extends Model
         'name',
         'project_number',
         'type',
+        'service_id',
         'city',
         'district',
         'owner',
@@ -86,6 +87,14 @@ class Project extends Model
     public function attachments()
     {
         return $this->hasMany(ProjectAttachment::class);
+    }
+
+    /**
+     * المستندات المرتبطة
+     */
+    public function documents()
+    {
+        return $this->hasMany(Document::class);
     }
 
     /**
@@ -185,5 +194,29 @@ class Project extends Model
     public function conversation()
     {
         return $this->hasOne(Conversation::class)->where('type', 'project');
+    }
+
+    /**
+     * الخدمة المرتبطة
+     */
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
+    }
+
+    /**
+     * مسارات المشروع
+     */
+    public function workflows()
+    {
+        return $this->hasMany(ProjectWorkflow::class);
+    }
+
+    /**
+     * المسار الرئيسي
+     */
+    public function mainWorkflow()
+    {
+        return $this->hasOne(ProjectWorkflow::class)->whereNull('parent_workflow_id');
     }
 }

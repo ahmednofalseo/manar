@@ -302,6 +302,7 @@
             'status' => $task->status,
             'progress' => $task->progress ?? 0,
             'due_date' => $task->due_date ? $task->due_date->format('Y-m-d') : null,
+            'priority' => $task->priority ?? 'medium',
         ];
     })->values()->toJson();
 @endphp
@@ -335,7 +336,19 @@
                         @dragend="handleDragEnd($event)"
                     >
                         <div class="flex items-start justify-between mb-2">
-                            <h4 class="text-white font-semibold text-sm" x-text="task.title"></h4>
+                            <div class="flex items-center gap-2 flex-1">
+                                <!-- Priority Icon -->
+                                <div x-show="task.priority === 'high'" class="text-red-400" title="عاجل - مطلوب بسرعة">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <div x-show="task.priority === 'medium'" class="text-yellow-400" title="متوسطة">
+                                    <i class="fas fa-minus-circle"></i>
+                                </div>
+                                <div x-show="task.priority === 'low'" class="text-green-400" title="منخفضة">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <h4 class="text-white font-semibold text-sm flex-1" x-text="task.title"></h4>
+                            </div>
                             <div class="flex items-center gap-1">
                                 <a :href="'/tasks/' + task.id" class="text-primary-400 hover:text-primary-300 text-xs">
                                     <i class="fas fa-eye"></i>
@@ -387,7 +400,19 @@
                         @dragend="handleDragEnd($event)"
                     >
                         <div class="flex items-start justify-between mb-2">
-                            <h4 class="text-white font-semibold text-sm" x-text="task.title"></h4>
+                            <div class="flex items-center gap-2 flex-1">
+                                <!-- Priority Icon -->
+                                <div x-show="task.priority === 'high'" class="text-red-400" title="عاجل - مطلوب بسرعة">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <div x-show="task.priority === 'medium'" class="text-yellow-400" title="متوسطة">
+                                    <i class="fas fa-minus-circle"></i>
+                                </div>
+                                <div x-show="task.priority === 'low'" class="text-green-400" title="منخفضة">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <h4 class="text-white font-semibold text-sm flex-1" x-text="task.title"></h4>
+                            </div>
                             <div class="flex items-center gap-1">
                                 <a :href="'/tasks/' + task.id" class="text-primary-400 hover:text-primary-300 text-xs">
                                     <i class="fas fa-eye"></i>
@@ -439,7 +464,19 @@
                         @dragend="handleDragEnd($event)"
                     >
                         <div class="flex items-start justify-between mb-2">
-                            <h4 class="text-white font-semibold text-sm" x-text="task.title"></h4>
+                            <div class="flex items-center gap-2 flex-1">
+                                <!-- Priority Icon -->
+                                <div x-show="task.priority === 'high'" class="text-red-400" title="عاجل - مطلوب بسرعة">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <div x-show="task.priority === 'medium'" class="text-yellow-400" title="متوسطة">
+                                    <i class="fas fa-minus-circle"></i>
+                                </div>
+                                <div x-show="task.priority === 'low'" class="text-green-400" title="منخفضة">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <h4 class="text-white font-semibold text-sm flex-1" x-text="task.title"></h4>
+                            </div>
                             <div class="flex items-center gap-1">
                                 <a :href="'/tasks/' + task.id" class="text-primary-400 hover:text-primary-300 text-xs">
                                     <i class="fas fa-eye"></i>
@@ -491,7 +528,19 @@
                         @dragend="handleDragEnd($event)"
                     >
                         <div class="flex items-start justify-between mb-2">
-                            <h4 class="text-white font-semibold text-sm" x-text="task.title"></h4>
+                            <div class="flex items-center gap-2 flex-1">
+                                <!-- Priority Icon -->
+                                <div x-show="task.priority === 'high'" class="text-red-400" title="عاجل - مطلوب بسرعة">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <div x-show="task.priority === 'medium'" class="text-yellow-400" title="متوسطة">
+                                    <i class="fas fa-minus-circle"></i>
+                                </div>
+                                <div x-show="task.priority === 'low'" class="text-green-400" title="منخفضة">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <h4 class="text-white font-semibold text-sm flex-1" x-text="task.title"></h4>
+                            </div>
                             <div class="flex items-center gap-1">
                                 <a :href="'/tasks/' + task.id" class="text-primary-400 hover:text-primary-300 text-xs">
                                     <i class="fas fa-eye"></i>
@@ -547,7 +596,25 @@
                         $status = $statusMap[$task->status] ?? ['text' => $task->status, 'class' => 'bg-gray-500/20 text-gray-400'];
                     @endphp
                     <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
-                        <td class="py-3 text-white text-sm font-semibold">{{ $task->title }}</td>
+                        <td class="py-3">
+                            <div class="flex items-center gap-2">
+                                <!-- Priority Icon -->
+                                @if($task->priority === 'high')
+                                <div class="text-red-400" title="عاجل - مطلوب بسرعة">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                @elseif($task->priority === 'medium')
+                                <div class="text-yellow-400" title="متوسطة">
+                                    <i class="fas fa-minus-circle"></i>
+                                </div>
+                                @else
+                                <div class="text-green-400" title="منخفضة">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                @endif
+                                <span class="text-white text-sm font-semibold">{{ $task->title }}</span>
+                            </div>
+                        </td>
                         <td class="py-3 text-gray-300 text-sm">{{ $task->project->name ?? 'غير محدد' }}</td>
                         <td class="py-3 text-gray-300 text-sm">{{ $task->assignee->name ?? 'غير محدد' }}</td>
                         <td class="py-3 text-gray-300 text-sm">{{ $task->projectStage->stage_name ?? 'غير محدد' }}</td>
@@ -646,6 +713,7 @@ function tasksData(initialTasks) {
                 progress: task.progress || 0,
                 hasAttachment: false,
                 due_date: task.due_date || null,
+                priority: task.priority || 'medium',
             };
         }),
         getTasksByStatus(status) {

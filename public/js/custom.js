@@ -1,7 +1,12 @@
-// Toggle Password Visibility
+// Toggle Password Visibility (kept for backward compatibility)
 function togglePasswordVisibility(inputId, iconId) {
     const passwordInput = document.getElementById(inputId);
     const toggleIcon = document.getElementById(iconId);
+    
+    if (!passwordInput || !toggleIcon) {
+        console.warn('Password toggle: Input or icon not found', { inputId, iconId });
+        return;
+    }
     
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
@@ -57,12 +62,37 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize password toggle buttons
     const passwordToggleButtons = document.querySelectorAll('[data-toggle-password]');
     passwordToggleButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             const inputId = this.getAttribute('data-input-id');
             const iconId = this.getAttribute('data-icon-id');
-            togglePasswordVisibility(inputId, iconId);
+            if (inputId && iconId) {
+                togglePasswordVisibility(inputId, iconId);
+            }
         });
     });
+    
+    // Also support direct onclick for backward compatibility
+    window.togglePasswordVisibility = function(inputId, iconId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleIcon = document.getElementById(iconId);
+        
+        if (!passwordInput || !toggleIcon) {
+            console.warn('Password toggle: Input or icon not found', { inputId, iconId });
+            return;
+        }
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    };
 });
 
 // Language Toggle

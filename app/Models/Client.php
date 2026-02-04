@@ -44,6 +44,14 @@ class Client extends Model
     }
 
     /**
+     * المستندات المرتبطة
+     */
+    public function documents()
+    {
+        return $this->hasMany(Document::class);
+    }
+
+    /**
      * الملاحظات
      */
     public function notes()

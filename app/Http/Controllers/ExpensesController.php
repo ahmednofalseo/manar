@@ -361,11 +361,7 @@ class ExpensesController extends Controller
         DB::beginTransaction();
         try {
             Storage::disk('public')->delete($attachment->file_path);
-            $attachment->delete();
-
-            DB::commit();
-
-            return back()->with('success', 'تم حذف المرفق بنجاح');
+            $attachment->delete();            DB::commit();            return back()->with('success', 'تم حذف المرفق بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'حدث خطأ أثناء حذف المرفق: ' . $e->getMessage());

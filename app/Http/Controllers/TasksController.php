@@ -30,7 +30,7 @@ class TasksController extends Controller
         // تطبيق فلاتر الصلاحيات - المستخدم يرى المهام المخصصة له فقط
         if (!$user->hasRole('super_admin')) {
             // للمستخدمين العاديين: يروا المهام المسندة إليهم أو المهام في المشاريع التي هم مديرين عليها أو أعضاء في فريقها
-            $projectIds = Project::where('is_hidden', false) // إخفاء المشاريع المخفية
+            $projectIds = Project::where('is_hidden', false) // إخفاء المشاريع المخفية للمستخدمين العاديين فقط
                 ->where(function($q) use ($user) {
                     $q->where('project_manager_id', $user->id)
                       ->orWhereJsonContains('team_members', (string)$user->id)
@@ -92,7 +92,7 @@ class TasksController extends Controller
         
         // تطبيق نفس فلاتر الصلاحيات على KPIs
         if (!$user->hasRole('super_admin')) {
-            $projectIds = Project::where('is_hidden', false) // إخفاء المشاريع المخفية
+            $projectIds = Project::where('is_hidden', false) // إخفاء المشاريع المخفية للمستخدمين العاديين فقط
                 ->where(function($q) use ($user) {
                     $q->where('project_manager_id', $user->id)
                       ->orWhereJsonContains('team_members', (string)$user->id)
@@ -134,7 +134,11 @@ class TasksController extends Controller
         // ========== الإحصائيات الجديدة ==========
         
         // 1. نسبة إنجاز المشاريع (متوسط نسبة التقدم)
-        $projectsQuery = Project::query()->where('is_hidden', false); // إخفاء المشاريع المخفية
+        $projectsQuery = Project::query();
+        if (!$user->hasRole('super_admin')) {
+            // للمستخدمين العاديين: إخفاء المشاريع المخفية
+            $projectsQuery->where('is_hidden', false);
+        }
         if ($user->hasRole('project_manager')) {
             $projectsQuery->where('project_manager_id', $user->id)
                 ->orWhereHas('teamUsers', function($q) use ($user) {

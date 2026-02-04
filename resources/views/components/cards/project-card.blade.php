@@ -38,16 +38,16 @@
     if ($project->end_date) {
         $today = now();
         $endDate = \Carbon\Carbon::parse($project->end_date);
+        // استخدام diffInDays مع false للحصول على الفرق الموقع (سالب إذا انتهى التاريخ)
         $daysUntilEnd = $today->diffInDays($endDate, false);
         
         // عدد المهام غير المكتملة (استخدام العلاقة المحملة مسبقاً)
         $incompleteTasks = $project->tasks ? $project->tasks->whereNotIn('status', ['done', 'rejected'])->count() : 0;
         
         if ($daysUntilEnd < 0 && $incompleteTasks > 0) {
-            // متأخر
-            $projectStatus = 'danger';
-            $daysDelay = abs($daysUntilEnd);
-            $statusMessage = __('Delayed') . ': ' . $daysDelay . ' ' . ($daysDelay == 1 ? __('day') : __('days'));
+            // متأخر - تقريب إلى عدد صحيح
+            $daysDelay = (int) floor(abs($daysUntilEnd));
+            $statusMessage = 'متأخر: ' . $daysDelay . ' ' . ($daysDelay == 1 ? 'يوم' : 'أيام');
         } elseif ($daysUntilEnd <= 7 && $daysUntilEnd >= 0 && $incompleteTasks > 0) {
             // قريب من الانتهاء
             $projectStatus = 'warning';

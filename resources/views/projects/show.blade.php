@@ -100,6 +100,33 @@
                 @endif
             </button>
             <button 
+                @click="activeTab = 'workflow'"
+                :class="activeTab === 'workflow' ? 'border-b-2 border-primary-400 text-primary-400' : 'text-gray-400 hover:text-white'"
+                class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
+            >
+                <i class="fas fa-sitemap"></i>
+                المسار
+                @if($project->workflows && $project->workflows->count() > 0)
+                <span class="bg-[#1db8f8]/20 text-[#1db8f8] px-2 py-0.5 rounded text-xs">{{ $project->workflows->count() }}</span>
+                @endif
+            </button>
+            @if(\App\Helpers\PermissionHelper::hasPermission('documents.view'))
+            <button 
+                @click="activeTab = 'documents'"
+                :class="activeTab === 'documents' ? 'border-b-2 border-primary-400 text-primary-400' : 'text-gray-400 hover:text-white'"
+                class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
+            >
+                <i class="fas fa-file-alt"></i>
+                المستندات
+                @php
+                    $documentsCount = $project->documents ? $project->documents->count() : 0;
+                @endphp
+                @if($documentsCount > 0)
+                <span class="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs">{{ $documentsCount }}</span>
+                @endif
+            </button>
+            @endif
+            <button 
                 @click="activeTab = 'tasks'"
                 :class="activeTab === 'tasks' ? 'border-b-2 border-primary-400 text-primary-400' : 'text-gray-400 hover:text-white'"
                 class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
@@ -170,6 +197,18 @@
     <div x-show="activeTab === 'stages'" class="space-y-4 md:space-y-6">
         @include('projects.tabs.stages')
     </div>
+
+    <!-- Workflow Tab -->
+    <div x-show="activeTab === 'workflow'" class="space-y-4 md:space-y-6">
+        @include('projects.tabs.workflow')
+    </div>
+
+    @if(\App\Helpers\PermissionHelper::hasPermission('documents.view'))
+    <!-- Documents Tab -->
+    <div x-show="activeTab === 'documents'" class="space-y-4 md:space-y-6">
+        @include('projects.tabs.documents')
+    </div>
+    @endif
 
     <!-- Tasks Tab -->
     <div x-show="activeTab === 'tasks'" class="space-y-4 md:space-y-6">

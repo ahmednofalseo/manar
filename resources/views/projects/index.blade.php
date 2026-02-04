@@ -73,64 +73,64 @@
 
         <!-- Filters Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
-            <div>
+            <div class="select-wrapper">
                 <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('City') }}</label>
-                <select x-model="city" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">{{ __('All Cities') }}</option>
-                    <option value="الرياض">الرياض</option>
-                    <option value="جدة">جدة</option>
-                    <option value="الدمام">الدمام</option>
-                    <option value="مكة">مكة</option>
-                    <option value="المدينة">المدينة</option>
+                <select x-model="city" class="w-full bg-[#173343]/90 border-2 border-white/30 rounded-lg px-3 md:px-4 py-2 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#1db8f8] focus:border-[#1db8f8] transition-all duration-200 text-sm md:text-base" style="background-color: rgba(23, 51, 67, 0.9); color: #ffffff; font-weight: 600; max-width: 100%;">
+                    <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ __('All Cities') }}</option>
+                    <option value="الرياض" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">الرياض</option>
+                    <option value="جدة" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">جدة</option>
+                    <option value="الدمام" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">الدمام</option>
+                    <option value="مكة" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">مكة</option>
+                    <option value="المدينة" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">المدينة</option>
                 </select>
             </div>
 
-            <div>
+            <div class="select-wrapper">
                 <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('District') }}</label>
-                <select x-model="district" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">{{ __('All Districts') }}</option>
-                    <option value="العليا">العليا</option>
-                    <option value="النخيل">النخيل</option>
-                    <option value="الملك فهد">الملك فهد</option>
-                    <option value="المرسلات">المرسلات</option>
+                <select x-model="district" class="w-full bg-[#173343]/90 border-2 border-white/30 rounded-lg px-3 md:px-4 py-2 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#1db8f8] focus:border-[#1db8f8] transition-all duration-200 text-sm md:text-base" style="background-color: rgba(23, 51, 67, 0.9); color: #ffffff; font-weight: 600; max-width: 100%;">
+                    <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ __('All Districts') }}</option>
+                    <option value="العليا" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">العليا</option>
+                    <option value="النخيل" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">النخيل</option>
+                    <option value="الملك فهد" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">الملك فهد</option>
+                    <option value="المرسلات" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">المرسلات</option>
                 </select>
             </div>
 
-            <div>
+            <div class="select-wrapper">
                 <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Owner') }}</label>
-                <select x-model="owner" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">{{ __('All Owners') }}</option>
-                    <option value="أحمد محمد">أحمد محمد</option>
-                    <option value="سارة علي">سارة علي</option>
-                    <option value="خالد مطر">خالد مطر</option>
+                <select x-model="owner" class="w-full bg-[#173343]/90 border-2 border-white/30 rounded-lg px-3 md:px-4 py-2 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#1db8f8] focus:border-[#1db8f8] transition-all duration-200 text-sm md:text-base" style="background-color: rgba(23, 51, 67, 0.9); color: #ffffff; font-weight: 600; max-width: 100%;">
+                    <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ __('All Owners') }}</option>
+                    <option value="أحمد محمد" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">أحمد محمد</option>
+                    <option value="سارة علي" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">سارة علي</option>
+                    <option value="خالد مطر" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">خالد مطر</option>
                 </select>
             </div>
 
-            <div>
+            <div class="select-wrapper">
                 <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Project Type') }}</label>
-                <select x-model="type" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">{{ __('All Types') }}</option>
-                    <option value="تصميم">تصميم</option>
-                    <option value="تصميم وإشراف">تصميم وإشراف</option>
-                    <option value="إشراف">إشراف</option>
-                    <option value="تقرير فني">تقرير فني</option>
-                    <option value="تقرير دفاع مدني">تقرير دفاع مدني</option>
-                    <option value="تصميم دفاع مدني">تصميم دفاع مدني</option>
+                <select x-model="type" class="w-full bg-[#173343]/90 border-2 border-white/30 rounded-lg px-3 md:px-4 py-2 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#1db8f8] focus:border-[#1db8f8] transition-all duration-200 text-sm md:text-base" style="background-color: rgba(23, 51, 67, 0.9); color: #ffffff; font-weight: 600; max-width: 100%;">
+                    <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ __('All Types') }}</option>
+                    <option value="تصميم" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">تصميم</option>
+                    <option value="تصميم وإشراف" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">تصميم وإشراف</option>
+                    <option value="إشراف" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">إشراف</option>
+                    <option value="تقرير فني" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">تقرير فني</option>
+                    <option value="تقرير دفاع مدني" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">تقرير دفاع مدني</option>
+                    <option value="تصميم دفاع مدني" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">تصميم دفاع مدني</option>
                 </select>
             </div>
 
-            <div>
+            <div class="select-wrapper">
                 <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Status/Stage') }}</label>
-                <select x-model="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
-                    <option value="">{{ __('All Statuses') }}</option>
-                    <option value="قيد التنفيذ">قيد التنفيذ</option>
-                    <option value="مكتمل">مكتمل</option>
-                    <option value="متوقف">متوقف</option>
-                    <option value="معماري">معماري</option>
-                    <option value="إنشائي">إنشائي</option>
-                    <option value="كهربائي">كهربائي</option>
-                    <option value="ميكانيكي">ميكانيكي</option>
-                    <option value="تقديم للبلدية">تقديم للبلدية</option>
+                <select x-model="status" class="w-full bg-[#173343]/90 border-2 border-white/30 rounded-lg px-3 md:px-4 py-2 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#1db8f8] focus:border-[#1db8f8] transition-all duration-200 text-sm md:text-base" style="background-color: rgba(23, 51, 67, 0.9); color: #ffffff; font-weight: 600; max-width: 100%;">
+                    <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ __('All Statuses') }}</option>
+                    <option value="قيد التنفيذ" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">قيد التنفيذ</option>
+                    <option value="مكتمل" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">مكتمل</option>
+                    <option value="متوقف" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">متوقف</option>
+                    <option value="معماري" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">معماري</option>
+                    <option value="إنشائي" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">إنشائي</option>
+                    <option value="كهربائي" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">كهربائي</option>
+                    <option value="ميكانيكي" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">ميكانيكي</option>
+                    <option value="تقديم للبلدية" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">تقديم للبلدية</option>
                 </select>
             </div>
         </div>

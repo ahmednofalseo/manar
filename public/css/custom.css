@@ -438,3 +438,304 @@ header {
         -webkit-overflow-scrolling: touch;
     }
 }
+
+/* ============================================
+   SELECT DROPDOWN - COMPREHENSIVE FIX
+   Prevents overflow on all screens
+   High contrast for visibility
+   ============================================ */
+
+/* Base Select Styling - High Contrast & No Overflow */
+select {
+    /* Width & Overflow Control - CRITICAL */
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    
+    /* High Contrast Colors */
+    color: #ffffff !important;
+    background-color: #173343 !important;
+    border: 2px solid rgba(255, 255, 255, 0.5) !important;
+    font-weight: 700 !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    
+    /* Remove default appearance */
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    
+    /* Custom arrow */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 12px !important;
+    
+    /* Padding */
+    padding: 10px 40px 10px 12px !important;
+    border-radius: 8px !important;
+    
+    /* Position */
+    position: relative !important;
+}
+
+/* Select Hover State */
+select:hover {
+    border-color: #1db8f8 !important;
+    background-color: #1a3d52 !important;
+}
+
+/* Select Focus State */
+select:focus {
+    outline: none !important;
+    border-color: #1db8f8 !important;
+    border-width: 2px !important;
+    box-shadow: 0 0 0 3px rgba(29, 184, 248, 0.3) !important;
+    background-color: #1a3d52 !important;
+}
+
+/* RTL Support */
+[dir="rtl"] select {
+    background-position: left 12px center !important;
+    padding: 10px 12px 10px 40px !important;
+}
+
+/* Desktop adjustments */
+@media (min-width: 640px) {
+    select {
+        font-size: 0.875rem !important;
+        padding: 12px 40px 12px 16px !important;
+    }
+    
+    [dir="rtl"] select {
+        padding: 12px 16px 12px 40px !important;
+    }
+}
+
+select option {
+    background-color: #173343 !important;
+    color: #ffffff !important;
+    padding: 6px 10px !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    border: none !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    word-wrap: break-word !important;
+    line-height: 1.5 !important;
+}
+
+select option:hover,
+select option:focus {
+    background-color: #1db8f8 !important;
+    color: #ffffff !important;
+}
+
+select option:checked {
+    background-color: #1db8f8 !important;
+    color: #ffffff !important;
+}
+
+select:focus {
+    outline: none !important;
+    border-color: #1db8f8 !important;
+    box-shadow: 0 0 0 3px rgba(29, 184, 248, 0.2) !important;
+}
+
+/* Select Wrapper - Prevents Overflow */
+.select-wrapper {
+    position: relative;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    min-width: 0 !important;
+}
+
+.select-wrapper select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Fix for form containers - Only when they contain .select-wrapper */
+form .select-wrapper,
+.glass-card .select-wrapper {
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+/* Only fix grid columns that contain .select-wrapper */
+.grid .select-wrapper,
+.grid > div .select-wrapper {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+/* Force select to respect container width - but allow inline styles to override */
+select[name="service_id"]:not([style*="width"]),
+select[name="category_id"]:not([style*="width"]),
+select[name="parent_id"]:not([style*="width"]) {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Force all selects in w-full containers to respect width */
+.w-full > select,
+div[class*="w-full"] > select,
+.w-full select,
+div[class*="w-full"] select {
+    width: 100% !important;
+    max-width: 70% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    min-width: 0 !important;
+}
+
+/* Fix for labels */
+label {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    box-sizing: border-box !important;
+}
+
+/* Prevent dropdown from going outside viewport */
+select:focus {
+    position: relative;
+    z-index: 10;
+}
+
+/* Fix for long text in select options */
+select option {
+    max-width: 100vw !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* Mobile Responsive - Critical fixes */
+@media (max-width: 768px) {
+    /* All selects on mobile */
+    select {
+        font-size: 16px !important; /* Prevents zoom on iOS */
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 12px 40px 12px 16px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+    
+    [dir="rtl"] select {
+        padding: 12px 16px 12px 40px !important;
+    }
+    
+    /* Select wrapper on mobile */
+    .select-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+    
+    /* Grid items on mobile */
+    .grid .select-wrapper,
+    .grid > div .select-wrapper,
+    .grid > * {
+        min-width: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Select options on mobile */
+    select option {
+        max-width: calc(100vw - 32px) !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    
+    /* Prevent body scroll on mobile */
+    body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+    }
+}
+
+/* Grid layouts - Comprehensive fix */
+.grid .select-wrapper,
+.grid > div .select-wrapper,
+.grid > * .select-wrapper,
+.grid select,
+.grid > div select,
+.grid > * select {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+/* Container overflow fix - Only for containers with .select-wrapper */
+.max-w-4xl .select-wrapper,
+.max-w-6xl .select-wrapper,
+.max-w-2xl .select-wrapper,
+.max-w-3xl .select-wrapper,
+.max-w-5xl .select-wrapper,
+.max-w-7xl .select-wrapper,
+.max-w-full .select-wrapper,
+.container .select-wrapper {
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+/* Body and HTML - Only prevent horizontal scroll on mobile */
+@media (max-width: 768px) {
+    html,
+    body {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100vw;
+    }
+}
+
+/* Fix for long service names */
+select option {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    display: block !important;
+}
+
+/* ============================================
+   SELECT-SPECIFIC FIX - Only affects selects
+   Prevents select overflow without breaking layout
+   ============================================ */
+
+/* Universal select fix - Only for selects */
+select,
+select[class],
+select[id],
+select[name] {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}

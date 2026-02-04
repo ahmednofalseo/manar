@@ -29,18 +29,19 @@ class ProjectsController extends Controller
                 $q->whereIn('status', ['new', 'in_progress']);
             },
             'attachments' // إضافة attachments لتجنب N+1 في project-card
-        ])->where('is_hidden', false); // إخفاء المشاريع المخفية
+        ]);
 
         // تطبيق فلاتر الصلاحيات - المستخدم يرى المشاريع المخصصة له فقط
         if (!$user->hasRole('super_admin')) {
-            // للمستخدمين العاديين: يروا المشاريع التي هم مديرين عليها أو أعضاء في فريقها
+            // للمستخدمين العاديين: إخفاء المشاريع المخفية + يروا المشاريع التي هم مديرين عليها أو أعضاء في فريقها
+            $query->where('is_hidden', false); // إخفاء المشاريع المخفية للمستخدمين العاديين فقط
             $query->where(function($q) use ($user) {
                 $q->where('project_manager_id', $user->id)
                   ->orWhereJsonContains('team_members', (string)$user->id)
                   ->orWhereJsonContains('team_members', $user->id);
             });
         }
-        // Super Admin يرى الكل (لا فلاتر)
+        // Super Admin يرى الكل (بما في ذلك المشاريع المخفية - لا فلاتر)
 
         // الفلاتر
         if ($request->filled('search')) {
@@ -87,14 +88,17 @@ class ProjectsController extends Controller
         // KPIs (optimized - single query for counts)
         // Note: Using 'delayed_count' instead of 'delayed' as it's a MySQL reserved word
         // تطبيق نفس فلاتر الصلاحيات على KPIs
-        $kpisQuery = Project::query()->where('is_hidden', false); // إخفاء المشاريع المخفية
+        $kpisQuery = Project::query();
         if (!$user->hasRole('super_admin')) {
+            // للمستخدمين العاديين: إخفاء المشاريع المخفية
+            $kpisQuery->where('is_hidden', false);
             $kpisQuery->where(function($q) use ($user) {
                 $q->where('project_manager_id', $user->id)
                   ->orWhereJsonContains('team_members', (string)$user->id)
                   ->orWhereJsonContains('team_members', $user->id);
             });
         }
+        // Super Admin يرى الكل (بما في ذلك المشاريع المخفية)
         $kpis = $kpisQuery->selectRaw('
             COUNT(*) as total,
             SUM(CASE WHEN status = "قيد التنفيذ" THEN 1 ELSE 0 END) as active,
@@ -294,6 +298,10 @@ class ProjectsController extends Controller
             },
             'tasks.assignee',
             'tasks.projectStage',
+            'workflows.service',
+            'workflows.steps.assignedUser',
+            'documents.creator',
+            'documents.approver',
         ])->findOrFail($id);
 
         Gate::authorize('view', $project);

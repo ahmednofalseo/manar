@@ -134,7 +134,6 @@
                         data-input-id="password"
                         data-icon-id="password-toggle-icon"
                         class="password-toggle"
-                        onclick="togglePasswordVisibility('password', 'password-toggle-icon')"
                     >
                         <i id="password-toggle-icon" class="fas fa-eye"></i>
                     </button>
