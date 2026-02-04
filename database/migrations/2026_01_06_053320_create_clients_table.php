@@ -9,11 +9,12 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        if (Schema::hasTable('clients')) {
+            return;
+        }
+        
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
             $table->string('name'); // اسم العميل
