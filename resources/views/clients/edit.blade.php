@@ -111,11 +111,9 @@
                 <label class="block text-gray-300 text-sm mb-2">المدينة <span class="text-red-400">*</span></label>
                 <select name="city" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                     <option value="">اختر المدينة</option>
-                    <option value="الرياض" {{ old('city', $client->city) == 'الرياض' ? 'selected' : '' }}>الرياض</option>
-                    <option value="جدة" {{ old('city', $client->city) == 'جدة' ? 'selected' : '' }}>جدة</option>
-                    <option value="الدمام" {{ old('city', $client->city) == 'الدمام' ? 'selected' : '' }}>الدمام</option>
-                    <option value="مكة" {{ old('city', $client->city) == 'مكة' ? 'selected' : '' }}>مكة</option>
-                    <option value="المدينة" {{ old('city', $client->city) == 'المدينة' ? 'selected' : '' }}>المدينة</option>
+                    @foreach($cities as $city)
+                        <option value="{{ $city->name }}" {{ old('city', $client->city) == $city->name ? 'selected' : '' }}>{{ $city->name }}</option>
+                    @endforeach
                 </select>
                 @error('city')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>

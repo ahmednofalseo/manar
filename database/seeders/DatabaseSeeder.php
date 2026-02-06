@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
         // أولاً: إنشاء الأدوار والصلاحيات
         $this->call([
             RolesAndPermissionsSeeder::class,
+            DocumentTemplatesSeeder::class,
+            ProjectSettingsSeeder::class,
         ]);
 
         // إنشاء مستخدم الأدمن العام

@@ -356,9 +356,7 @@ class ExpensesController extends Controller
         $expense = Expense::findOrFail($id);
         $attachment = ExpenseAttachment::where('expense_id', $expense->id)->findOrFail($attachmentId);
 
-        Gate::authorize('update', $expense);
-
-        DB::beginTransaction();
+        Gate::authorize('update', $expense);        DB::beginTransaction();
         try {
             Storage::disk('public')->delete($attachment->file_path);
             $attachment->delete();            DB::commit();            return back()->with('success', 'تم حذف المرفق بنجاح');

@@ -7,6 +7,8 @@ use App\Models\DocumentTemplate;
 use App\Models\Project;
 use App\Models\Client;
 use App\Models\Service;
+use App\Models\QuotationItem;
+use App\Helpers\NumberToWords;
 use App\Http\Requests\StoreDocumentRequest;
 use App\Http\Requests\UpdateDocumentRequest;
 use App\Http\Requests\ApproveDocumentRequest;
@@ -16,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Mpdf\Mpdf;
 
 class DocumentsController extends Controller
 {
@@ -84,6 +87,14 @@ class DocumentsController extends Controller
         $type = $request->get('type', 'technical_report');
         $projectId = $request->get('project_id');
         $clientId = $request->get('client_id');
+        
+        // Convert to integer if exists
+        if ($clientId) {
+            $clientId = (int) $clientId;
+        }
+        if ($projectId) {
+            $projectId = (int) $projectId;
+        }
 
         $templates = DocumentTemplate::active()->ofType($type)->orderBy('order')->get();
         $projects = Project::orderBy('name')->get();
@@ -99,6 +110,39 @@ class DocumentsController extends Controller
             }
         }
 
+        // لعروض الأسعار، استخدم view منفصل
+        if ($type === 'quotation') {
+            // جلب بيانات المكتب من الإعدادات
+            $officeName = \App\Models\Setting::get('system_name', 'مكتب المنار للاستشارات الهندسية');
+            $officeLicense = \App\Models\Setting::get('office_license', '');
+            $officeAddress = \App\Models\Setting::get('office_address', '');
+            $officePhone = \App\Models\Setting::get('office_phone', '');
+            $officeEmail = \App\Models\Setting::get('office_email', '');
+            
+            // نص الشروط الافتراضي
+            $defaultTerms = '<p>1. هذا العرض ساري لمدة 30 يوم من تاريخه.</p>
+<p>2. السعر يشمل جميع الضرائب والرسوم المقررة.</p>
+<p>3. يتم الدفع حسب الاتفاق المذكور في العقد.</p>
+<p>4. جميع الأعمال تتم وفقاً للمواصفات والمخططات المعتمدة.</p>
+<p>5. يتحمل العميل أي تكاليف إضافية ناتجة عن تعديلات غير مذكورة في العرض.</p>';
+            
+            return view('documents.quotations.create', compact(
+                'type', 
+                'projects', 
+                'clients', 
+                'services', 
+                'projectId', 
+                'clientId', 
+                'project',
+                'officeName',
+                'officeLicense',
+                'officeAddress',
+                'officePhone',
+                'officeEmail',
+                'defaultTerms'
+            ));
+        }
+        
         return view('documents.create', compact('type', 'templates', 'projects', 'clients', 'services', 'projectId', 'clientId', 'project'));
     }
 
@@ -114,7 +158,13 @@ class DocumentsController extends Controller
             $data = $request->validated();
             $data['document_number'] = Document::generateDocumentNumber($data['type']);
             $data['created_by'] = auth()->id();
-            $data['status'] = 'draft';
+            $data['status'] = $data['status'] ?? 'draft';
+            
+            // Auto-generate title for quotations if not provided
+            if ($data['type'] === 'quotation' && empty($data['title'])) {
+                $client = Client::find($data['client_id']);
+                $data['title'] = 'عرض سعر - ' . ($client ? $client->name : 'عميل');
+            }
 
             // Auto-fill client from project if not provided
             if (!$data['client_id'] && $data['project_id']) {
@@ -124,14 +174,151 @@ class DocumentsController extends Controller
                 }
             }
 
+            // Handle quotation items if type is quotation
+            $items = [];
+            if ($data['type'] === 'quotation') {
+                // Check if items exist in request
+                if ($request->has('items') && $request->filled('items')) {
+                    $itemsJson = $request->input('items');
+                    if (is_string($itemsJson)) {
+                        $items = json_decode($itemsJson, true) ?: [];
+                    } else {
+                        $items = $itemsJson ?: [];
+                    }
+                }
+                
+                // Log for debugging
+                \Log::info('Quotation items received', [
+                    'items_count' => count($items),
+                    'items_json' => $request->input('items'),
+                    'items_decoded' => $items
+                ]);
+                
+                // Calculate totals
+                $subtotal = 0;
+                foreach ($items as $item) {
+                    $lineTotal = (float)($item['qty'] ?? 0) * (float)($item['unit_price'] ?? 0);
+                    $subtotal += $lineTotal;
+                }
+                
+                $data['subtotal'] = $subtotal;
+                
+                // Calculate discount
+                $discount = 0;
+                if ($request->filled('discount_type') && $request->filled('discount_value')) {
+                    $discountType = $request->input('discount_type');
+                    $discountValue = (float)$request->input('discount_value');
+                    if ($discountType === 'amount') {
+                        $discount = $discountValue;
+                    } elseif ($discountType === 'percent') {
+                        $discount = ($subtotal * $discountValue) / 100;
+                    }
+                }
+                $data['discount_type'] = $request->input('discount_type');
+                $data['discount_value'] = $request->input('discount_value');
+                
+                // Calculate VAT
+                $vatPercent = (float)($request->input('vat_percent') ?? 0);
+                $afterDiscount = $subtotal - $discount;
+                $vatAmount = ($afterDiscount * $vatPercent) / 100;
+                $data['vat_percent'] = $vatPercent;
+                $data['vat_amount'] = $vatAmount;
+                
+                // Calculate total
+                $total = $afterDiscount + $vatAmount;
+                $data['total_price'] = $total;
+                
+                // Convert total to words
+                $data['total_in_words'] = NumberToWords::convert($total);
+                
+                // Set content to null for quotations as it's structured
+                $data['content'] = null;
+            } else {
+                // For technical reports, ensure content is present
+                if (!isset($data['content'])) {
+                    $data['content'] = '';
+                }
+            }
+
             $document = Document::create($data);
+
+            // Save quotation items - only save valid items with names
+            if ($data['type'] === 'quotation') {
+                $savedItemsCount = 0;
+                if (!empty($items)) {
+                    foreach ($items as $index => $item) {
+                        // Skip empty items
+                        if (empty($item['item_name']) || trim($item['item_name']) === '') {
+                            continue;
+                        }
+                        
+                        $qty = (float)($item['qty'] ?? 1);
+                        $unitPrice = (float)($item['unit_price'] ?? 0);
+                        $lineTotal = $qty * $unitPrice;
+                        
+                        QuotationItem::create([
+                            'document_id' => $document->id,
+                            'item_name' => trim($item['item_name']),
+                            'description' => trim($item['description'] ?? ''),
+                            'qty' => $qty,
+                            'unit' => $item['unit'] ?? 'قطعة',
+                            'unit_price' => $unitPrice,
+                            'line_total' => round($lineTotal, 2),
+                            'position' => $item['position'] ?? $index,
+                        ]);
+                        $savedItemsCount++;
+                    }
+                }
+                
+                \Log::info('Quotation items saved', [
+                    'document_id' => $document->id,
+                    'items_received' => count($items),
+                    'items_saved' => $savedItemsCount
+                ]);
+            }
 
             DB::commit();
 
+            // Redirect based on type
+            if ($data['type'] === 'quotation') {
+                return redirect()->route('documents.show', $document)
+                    ->with('success', 'تم إنشاء عرض السعر بنجاح');
+            }
+            
             return redirect()->route('documents.edit', $document)
                 ->with('success', 'تم إنشاء المستند بنجاح');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            
+            // Return JSON if AJAX request
+            if (request()->expectsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'يرجى التحقق من البيانات المدخلة',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            
+            return back()->withInput()
+                ->withErrors($e->errors())
+                ->with('error', 'يرجى التحقق من البيانات المدخلة');
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error creating document', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+            
+            // Return JSON if AJAX request
+            if (request()->expectsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'حدث خطأ أثناء إنشاء المستند: ' . $e->getMessage(),
+                    'error' => $e->getMessage()
+                ], 422);
+            }
+            
             return back()->withInput()
                 ->with('error', 'حدث خطأ أثناء إنشاء المستند: ' . $e->getMessage());
         }
@@ -373,10 +560,15 @@ class DocumentsController extends Controller
                 ->with('error', 'يمكن تحميل PDF للتقارير المعتمدة فقط');
         }
 
-        $document->load(['project', 'client', 'service', 'creator', 'approver']);
+        $document->load(['project', 'client', 'service', 'creator', 'approver', 'quotationItems']);
 
         try {
-            // توليد PDF
+            // لعروض الأسعار، استخدم mPDF مع دعم العربية
+            if ($document->type === 'quotation') {
+                return $this->generateQuotationPdf($document);
+            }
+
+            // للتقارير الفنية، استخدم Dompdf
             $html = view('documents.pdf.document', compact('document'))->render();
 
             $options = new Options();
@@ -405,15 +597,54 @@ class DocumentsController extends Controller
     }
 
     /**
+     * توليد PDF لعرض السعر باستخدام mPDF
+     */
+    private function generateQuotationPdf(Document $document)
+    {
+        $html = view('documents.pdf.quotation', compact('document'))->render();
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'orientation' => 'P',
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 20,
+            'margin_bottom' => 20,
+            'margin_header' => 10,
+            'margin_footer' => 10,
+            'direction' => 'rtl',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'default_font' => 'dejavusans', // DejaVu Sans supports Arabic
+        ]);
+
+        $mpdf->WriteHTML($html);
+        
+        // حفظ PDF
+        $filename = 'documents/' . $document->document_number . '.pdf';
+        Storage::disk('public')->put($filename, $mpdf->Output('', 'S'));
+        $document->update(['pdf_path' => $filename]);
+
+        return $mpdf->Output("{$document->document_number}.pdf", 'I');
+    }
+
+    /**
      * معاينة PDF
      */
     public function previewPdf(Document $document)
     {
         Gate::authorize('view', $document);
 
-        $document->load(['project', 'client', 'service', 'creator', 'approver']);
+        $document->load(['project', 'client', 'service', 'creator', 'approver', 'quotationItems']);
 
         try {
+            // لعروض الأسعار، استخدم mPDF
+            if ($document->type === 'quotation') {
+                return $this->generateQuotationPdf($document);
+            }
+
+            // للتقارير الفنية، استخدم Dompdf
             $html = view('documents.pdf.document', compact('document'))->render();
 
             $options = new Options();

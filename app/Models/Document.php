@@ -27,12 +27,29 @@ class Document extends Model
         'total_price',
         'expires_at',
         'pdf_path',
+        // حقول عروض الأسعار المنظمة
+        'issue_date',
+        'valid_until',
+        'subtotal',
+        'discount_type',
+        'discount_value',
+        'vat_percent',
+        'vat_amount',
+        'total_in_words',
+        'terms_html',
+        'notes_internal',
     ];
 
     protected $casts = [
         'approved_at' => 'datetime',
         'expires_at' => 'date',
+        'issue_date' => 'date',
+        'valid_until' => 'date',
         'total_price' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'discount_value' => 'decimal:2',
+        'vat_percent' => 'decimal:2',
+        'vat_amount' => 'decimal:2',
     ];
 
     /**
@@ -65,6 +82,14 @@ class Document extends Model
     public function service()
     {
         return $this->belongsTo(Service::class);
+    }
+
+    /**
+     * بنود عرض السعر (للعروض فقط)
+     */
+    public function quotationItems()
+    {
+        return $this->hasMany(QuotationItem::class, 'document_id')->orderBy('position');
     }
 
     /**
@@ -152,16 +177,52 @@ class Document extends Model
     {
         $content = $content ?? $this->content;
         
+        if (empty($content)) {
+            return '';
+        }
+        
+        // جلب القيم مع التأكد من تحميل العلاقات
+        $clientName = 'غير محدد';
+        if ($this->relationLoaded('client') && $this->client) {
+            $clientName = $this->client->name;
+        } elseif ($this->client_id) {
+            $client = \App\Models\Client::find($this->client_id);
+            $clientName = $client ? $client->name : 'غير محدد';
+        }
+        
+        $projectName = 'غير محدد';
+        if ($this->relationLoaded('project') && $this->project) {
+            $projectName = $this->project->name;
+        } elseif ($this->project_id) {
+            $project = \App\Models\Project::find($this->project_id);
+            $projectName = $project ? $project->name : 'غير محدد';
+        }
+        
+        $serviceName = 'غير محدد';
+        if ($this->relationLoaded('service') && $this->service) {
+            $serviceName = $this->service->name;
+        } elseif ($this->service_id) {
+            $service = \App\Models\Service::find($this->service_id);
+            $serviceName = $service ? $service->name : 'غير محدد';
+        }
+        
+        $date = $this->created_at ? $this->created_at->format('Y-m-d') : date('Y-m-d');
+        $totalPrice = $this->total_price ? number_format($this->total_price, 2) . ' ر.س' : 'غير محدد';
+        
         $variables = [
-            '{{client_name}}' => $this->client->name ?? 'غير محدد',
-            '{{project_name}}' => $this->project->name ?? 'غير محدد',
-            '{{service_name}}' => $this->service->name ?? 'غير محدد',
-            '{{date}}' => $this->created_at->format('Y-m-d'),
-            '{{total_price}}' => $this->total_price ? number_format($this->total_price, 2) . ' ر.س' : 'غير محدد',
+            'client_name' => $clientName,
+            'project_name' => $projectName,
+            'service_name' => $serviceName,
+            'date' => $date,
+            'total_price' => $totalPrice,
         ];
         
+        // استبدال المتغيرات بكل الأشكال الممكنة: {{variable}} و @{{variable}}
         foreach ($variables as $key => $value) {
-            $content = str_replace($key, $value, $content);
+            // استبدال @{{variable}} أولاً
+            $content = str_replace('@{{' . $key . '}}', $value, $content);
+            // ثم استبدال {{variable}}
+            $content = str_replace('{{' . $key . '}}', $value, $content);
         }
         
         return $content;

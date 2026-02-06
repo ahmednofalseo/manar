@@ -188,7 +188,7 @@
                                 >
                                     <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">اختر العميل</option>
                                     @foreach($clients as $cli)
-                                    <option value="{{ $cli->id }}" {{ old('client_id', $clientId) == $cli->id ? 'selected' : '' }} style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ $cli->name }}</option>
+                                    <option value="{{ $cli->id }}" {{ old('client_id', $clientId ?? '') == $cli->id ? 'selected' : '' }} style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ $cli->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -259,12 +259,12 @@
                                 متغيرات
                             </button>
                             <div class="variables-menu" :class="{ 'show': showVariablesMenu }">
-                                <button type="button" @click="insertVariable('{{client_name}}')">اسم العميل</button>
-                                <button type="button" @click="insertVariable('{{project_name}}')">اسم المشروع</button>
-                                <button type="button" @click="insertVariable('{{service_name}}')">اسم الخدمة</button>
-                                <button type="button" @click="insertVariable('{{date}}')">التاريخ</button>
+                                <button type="button" @click="insertVariable('@{{client_name}}')">اسم العميل</button>
+                                <button type="button" @click="insertVariable('@{{project_name}}')">اسم المشروع</button>
+                                <button type="button" @click="insertVariable('@{{service_name}}')">اسم الخدمة</button>
+                                <button type="button" @click="insertVariable('@{{date}}')">التاريخ</button>
                                 @if($type === 'quotation')
-                                <button type="button" @click="insertVariable('{{total_price}}')">السعر الإجمالي</button>
+                                <button type="button" @click="insertVariable('@{{total_price}}')">السعر الإجمالي</button>
                                 @endif
                             </div>
                         </div>

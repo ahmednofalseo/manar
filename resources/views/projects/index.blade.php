@@ -77,11 +77,9 @@
                 <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('City') }}</label>
                 <select x-model="city" class="w-full bg-[#173343]/90 border-2 border-white/30 rounded-lg px-3 md:px-4 py-2 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#1db8f8] focus:border-[#1db8f8] transition-all duration-200 text-sm md:text-base" style="background-color: rgba(23, 51, 67, 0.9); color: #ffffff; font-weight: 600; max-width: 100%;">
                     <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ __('All Cities') }}</option>
-                    <option value="الرياض" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">الرياض</option>
-                    <option value="جدة" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">جدة</option>
-                    <option value="الدمام" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">الدمام</option>
-                    <option value="مكة" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">مكة</option>
-                    <option value="المدينة" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">المدينة</option>
+                    @foreach($cities as $cityName)
+                        <option value="{{ $cityName }}" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ $cityName }}</option>
+                    @endforeach
                 </select>
             </div>
 

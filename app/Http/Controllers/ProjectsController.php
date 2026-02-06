@@ -115,13 +115,17 @@ class ProjectsController extends Controller
 
         $projects = $query->latest()->paginate(12);
 
+        // جلب المدن من قاعدة البيانات للفلترة
+        $cities = \App\Models\City::active()->ordered()->pluck('name');
+
         return view('projects.index', compact(
             'projects',
             'totalProjects',
             'activeProjects',
             'completedProjects',
             'delayedProjects',
-            'totalValue'
+            'totalValue',
+            'cities'
         ));
     }
 
@@ -152,8 +156,13 @@ class ProjectsController extends Controller
 
         $clients = \App\Models\Client::where('status', 'active')->orderBy('name')->get();
         $selectedClientId = $request->get('client_id');
+        
+        // جلب أنواع المشاريع والمدن والمراحل من قاعدة البيانات
+        $projectTypes = \App\Models\ProjectType::active()->ordered()->get();
+        $cities = \App\Models\City::active()->ordered()->get();
+        $stages = \App\Models\StageSetting::active()->ordered()->get();
 
-        return view('projects.create', compact('projectManagers', 'engineers', 'clients', 'selectedClientId'));
+        return view('projects.create', compact('projectManagers', 'engineers', 'clients', 'selectedClientId', 'projectTypes', 'cities', 'stages'));
     }
 
     /**
@@ -344,8 +353,13 @@ class ProjectsController extends Controller
         }
 
         $clients = \App\Models\Client::where('status', 'active')->orderBy('name')->get();
+        
+        // جلب أنواع المشاريع والمدن والمراحل من قاعدة البيانات
+        $projectTypes = \App\Models\ProjectType::active()->ordered()->get();
+        $cities = \App\Models\City::active()->ordered()->get();
+        $stages = \App\Models\StageSetting::active()->ordered()->get();
 
-        return view('projects.edit', compact('project', 'projectManagers', 'engineers', 'clients'));
+        return view('projects.edit', compact('project', 'projectManagers', 'engineers', 'clients', 'projectTypes', 'cities', 'stages'));
     }
 
     /**

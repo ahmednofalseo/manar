@@ -129,14 +129,9 @@
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     >
                         <option value="">{{ __('Select Project Type') }}</option>
-                        <option value="تصميم" {{ old('type', $project->type) == 'تصميم' ? 'selected' : '' }}>{{ __('Design') }}</option>
-                        <option value="تصميم وإشراف" {{ old('type', $project->type) == 'تصميم وإشراف' ? 'selected' : '' }}>{{ __('Design & Supervision') }}</option>
-                        <option value="إشراف" {{ old('type', $project->type) == 'إشراف' ? 'selected' : '' }}>{{ __('Supervision') }}</option>
-                        <option value="تقرير فني" {{ old('type', $project->type) == 'تقرير فني' ? 'selected' : '' }}>{{ __('Technical Report') }}</option>
-                        <option value="تقرير دفاع مدني" {{ old('type', $project->type) == 'تقرير دفاع مدني' ? 'selected' : '' }}>{{ __('Civil Defense Report') }}</option>
-                        <option value="تصميم دفاع مدني" {{ old('type', $project->type) == 'تصميم دفاع مدني' ? 'selected' : '' }}>{{ __('Civil Defense Design') }}</option>
-                        <option value="تعديلات" {{ old('type', $project->type) == 'تعديلات' ? 'selected' : '' }}>{{ __('Modifications') }}</option>
-                        <option value="استشارات" {{ old('type', $project->type) == 'استشارات' ? 'selected' : '' }}>{{ __('Consultations') }}</option>
+                        @foreach($projectTypes as $projectType)
+                        <option value="{{ $projectType->name }}" {{ old('type', $project->type) == $projectType->name ? 'selected' : '' }}>{{ $projectType->name }}</option>
+                        @endforeach
                     </select>
                     @error('type')
                     <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
@@ -152,11 +147,9 @@
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     >
                         <option value="">{{ __('Select City') }}</option>
-                        <option value="الرياض" {{ old('city', $project->city) == 'الرياض' ? 'selected' : '' }}>{{ __('Riyadh') }}</option>
-                        <option value="جدة" {{ old('city', $project->city) == 'جدة' ? 'selected' : '' }}>{{ __('Jeddah') }}</option>
-                        <option value="الدمام" {{ old('city', $project->city) == 'الدمام' ? 'selected' : '' }}>{{ __('Dammam') }}</option>
-                        <option value="مكة" {{ old('city', $project->city) == 'مكة' ? 'selected' : '' }}>{{ __('Makkah') }}</option>
-                        <option value="المدينة" {{ old('city', $project->city) == 'المدينة' ? 'selected' : '' }}>{{ __('Madinah') }}</option>
+                        @foreach($cities as $city)
+                        <option value="{{ $city->name }}" {{ old('city', $project->city) == $city->name ? 'selected' : '' }}>{{ $city->name }}</option>
+                        @endforeach
                     </select>
                     @error('city')
                     <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
@@ -375,34 +368,21 @@
             </h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach($stages as $stage)
                 <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="معماري" {{ in_array('معماري', old('stages', $project->stages ?? [])) ? 'checked' : '' }} class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">{{ __('Architectural') }}</span>
+                    <input 
+                        type="checkbox" 
+                        name="stages[]" 
+                        value="{{ $stage->name }}" 
+                        {{ in_array($stage->name, old('stages', $project->stages ?? [])) ? 'checked' : '' }}
+                        class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500"
+                    >
+                    @if($stage->icon)
+                    <i class="{{ $stage->icon }} {{ $stage->color ? '' : 'text-primary-400' }}" style="{{ $stage->color ? 'color: ' . $stage->color : '' }}"></i>
+                    @endif
+                    <span class="text-white">{{ $stage->name }}</span>
                 </label>
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="إنشائي" {{ in_array('إنشائي', old('stages', $project->stages ?? [])) ? 'checked' : '' }} class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">{{ __('Structural') }}</span>
-                </label>
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="كهربائي" {{ in_array('كهربائي', old('stages', $project->stages ?? [])) ? 'checked' : '' }} class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">{{ __('Electrical') }}</span>
-                </label>
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="ميكانيكي" {{ in_array('ميكانيكي', old('stages', $project->stages ?? [])) ? 'checked' : '' }} class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">{{ __('Mechanical') }}</span>
-                </label>
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="صحي/بيئي" {{ in_array('صحي/بيئي', old('stages', $project->stages ?? [])) ? 'checked' : '' }} class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">{{ __('Sanitary/Environmental') }}</span>
-                </label>
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="تقديم للبلدية" {{ in_array('تقديم للبلدية', old('stages', $project->stages ?? [])) ? 'checked' : '' }} class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">{{ __('Municipality Submission') }}</span>
-                </label>
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="أخرى" {{ in_array('أخرى', old('stages', $project->stages ?? [])) ? 'checked' : '' }} class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">{{ __('Other') }}</span>
-                </label>
+                @endforeach
             </div>
         </div>
 

@@ -137,14 +137,9 @@
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     >
                         <option value="">اختر نوع المشروع</option>
-                        <option value="تصميم" {{ old('type') == 'تصميم' ? 'selected' : '' }}>تصميم</option>
-                        <option value="تصميم وإشراف" {{ old('type') == 'تصميم وإشراف' ? 'selected' : '' }}>تصميم وإشراف</option>
-                        <option value="إشراف" {{ old('type') == 'إشراف' ? 'selected' : '' }}>إشراف</option>
-                        <option value="تقرير فني" {{ old('type') == 'تقرير فني' ? 'selected' : '' }}>تقرير فني</option>
-                        <option value="تقرير دفاع مدني" {{ old('type') == 'تقرير دفاع مدني' ? 'selected' : '' }}>تقرير دفاع مدني</option>
-                        <option value="تصميم دفاع مدني" {{ old('type') == 'تصميم دفاع مدني' ? 'selected' : '' }}>تصميم دفاع مدني</option>
-                        <option value="تعديلات" {{ old('type') == 'تعديلات' ? 'selected' : '' }}>تعديلات</option>
-                        <option value="استشارات" {{ old('type') == 'استشارات' ? 'selected' : '' }}>استشارات</option>
+                        @foreach($projectTypes as $projectType)
+                        <option value="{{ $projectType->name }}" {{ old('type') == $projectType->name ? 'selected' : '' }}>{{ $projectType->name }}</option>
+                        @endforeach
                     </select>
                     @error('type')
                     <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
@@ -160,11 +155,9 @@
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     >
                         <option value="">اختر المدينة</option>
-                        <option value="الرياض" {{ old('city') == 'الرياض' ? 'selected' : '' }}>الرياض</option>
-                        <option value="جدة" {{ old('city') == 'جدة' ? 'selected' : '' }}>جدة</option>
-                        <option value="الدمام" {{ old('city') == 'الدمام' ? 'selected' : '' }}>الدمام</option>
-                        <option value="مكة" {{ old('city') == 'مكة' ? 'selected' : '' }}>مكة</option>
-                        <option value="المدينة" {{ old('city') == 'المدينة' ? 'selected' : '' }}>المدينة</option>
+                        @foreach($cities as $city)
+                        <option value="{{ $city->name }}" {{ old('city') == $city->name ? 'selected' : '' }}>{{ $city->name }}</option>
+                        @endforeach
                     </select>
                     @error('city')
                     <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
@@ -379,34 +372,21 @@
             </h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach($stages as $stage)
                 <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="معماري" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">معماري</span>
+                    <input 
+                        type="checkbox" 
+                        name="stages[]" 
+                        value="{{ $stage->name }}" 
+                        {{ in_array($stage->name, old('stages', [])) ? 'checked' : '' }}
+                        class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500"
+                    >
+                    @if($stage->icon)
+                    <i class="{{ $stage->icon }} {{ $stage->color ? '' : 'text-primary-400' }}" style="{{ $stage->color ? 'color: ' . $stage->color : '' }}"></i>
+                    @endif
+                    <span class="text-white">{{ $stage->name }}</span>
                 </label>
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="إنشائي" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">إنشائي</span>
-                </label>
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="كهربائي" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">كهربائي</span>
-                </label>
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="ميكانيكي" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">ميكانيكي</span>
-                </label>
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="صحي/بيئي" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">صحي/بيئي</span>
-                </label>
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="تقديم للبلدية" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">تقديم للبلدية</span>
-                </label>
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input type="checkbox" name="stages[]" value="أخرى" class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500">
-                    <span class="text-white">أخرى</span>
-                </label>
+                @endforeach
             </div>
         </div>
 

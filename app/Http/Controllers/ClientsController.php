@@ -58,8 +58,8 @@ class ClientsController extends Controller
         $activeClients = Client::where('status', 'active')->count();
         $inactiveClients = Client::where('status', 'inactive')->count();
 
-        // المدن للفلترة
-        $cities = Client::select('city')->distinct()->orderBy('city')->pluck('city');
+        // المدن للفلترة - من جدول المدن
+        $cities = \App\Models\City::active()->ordered()->pluck('name');
 
         // بيانات العملاء الجدد شهريًا (آخر 12 شهر)
         $newClientsByMonth = Client::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count')
@@ -100,7 +100,10 @@ class ClientsController extends Controller
     {
         Gate::authorize('create', Client::class);
 
-        return view('clients.create');
+        // جلب المدن من قاعدة البيانات
+        $cities = \App\Models\City::active()->ordered()->get();
+
+        return view('clients.create', compact('cities'));
     }
 
     /**
@@ -130,7 +133,14 @@ class ClientsController extends Controller
      */
     public function show(string $id)
     {
-        $client = Client::with(['projects', 'attachments.uploader', 'notes.creator'])
+        $client = Client::with([
+            'projects' => function($query) {
+                $query->latest('start_date');
+            },
+            'attachments.uploader', 
+            'notes.creator',
+            'documents'
+        ])
             ->withCount('projects')
             ->findOrFail($id);
 
@@ -148,7 +158,10 @@ class ClientsController extends Controller
 
         Gate::authorize('update', $client);
 
-        return view('clients.edit', compact('client'));
+        // جلب المدن من قاعدة البيانات
+        $cities = \App\Models\City::active()->ordered()->get();
+
+        return view('clients.edit', compact('client', 'cities'));
     }
 
     /**
@@ -230,14 +243,18 @@ class ClientsController extends Controller
 
         try {
             $uploadedFiles = [];
+            $attachmentNames = $request->input('attachment_names', []);
 
-            foreach ($request->file('attachments') as $file) {
+            foreach ($request->file('attachments') as $index => $file) {
                 $directory = "clients/{$client->id}/attachments";
                 $filePath = $file->store($directory, 'public');
 
+                // استخدام الاسم المخصص إذا كان موجوداً، وإلا استخدام اسم الملف الأصلي
+                $attachmentName = $attachmentNames[$index] ?? $file->getClientOriginalName();
+
                 $attachment = ClientAttachment::create([
                     'client_id' => $client->id,
-                    'name' => $file->getClientOriginalName(),
+                    'name' => $attachmentName,
                     'file_path' => $filePath,
                     'file_type' => $file->getMimeType(),
                     'file_size' => $file->getSize(),
@@ -580,9 +597,7 @@ class ClientsController extends Controller
                     'success' => true,
                     'message' => "تم حذف {$deleted} عميل بنجاح",
                 ]);
-            }
-
-            return back()->with('success', "تم حذف {$deleted} عميل بنجاح");
+            }            return back()->with('success', "تم حذف {$deleted} عميل بنجاح");
         } catch (\Exception $e) {
             DB::rollBack();            if ($request->expectsJson()) {
                 return response()->json([

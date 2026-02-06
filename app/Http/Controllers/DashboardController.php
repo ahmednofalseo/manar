@@ -224,8 +224,8 @@ class DashboardController extends Controller
 
         $recentClientActivities = $recentClientActivities->sortByDesc('time')->take(2);
 
-        // For filters dropdowns
-        $cities = Project::distinct()->pluck('city')->filter()->sort()->values();
+        // For filters dropdowns - استخدام المدن من قاعدة البيانات
+        $cities = \App\Models\City::active()->ordered()->pluck('name');
         $owners = Project::distinct()->pluck('owner')->filter()->sort()->values();
         $engineers = User::whereHas('roles', function($q) {
             $q->whereIn('name', ['engineer', 'project_manager']);

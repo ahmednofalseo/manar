@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\PermissionHelper;
+use Mpdf\Mpdf;
 
 class FinancialsController extends Controller
 {
@@ -295,14 +296,38 @@ class FinancialsController extends Controller
 
         Gate::authorize('view', $invoice);
 
+        return $this->generateInvoicePdf($invoice);
+    }
+
+    /**
+     * Generate invoice PDF using mPDF
+     */
+    private function generateInvoicePdf(Invoice $invoice)
+    {
+        // التأكد من تحميل جميع البيانات المطلوبة
+        $invoice->loadMissing(['project', 'client', 'payments']);
+        
         $html = view('financials.pdf.invoice', compact('invoice'))->render();
 
-        $dompdf = new \Dompdf\Dompdf();
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'orientation' => 'P',
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 20,
+            'margin_bottom' => 20,
+            'margin_header' => 10,
+            'margin_footer' => 10,
+            'direction' => 'rtl',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'default_font' => 'dejavusans', // DejaVu Sans supports Arabic
+        ]);
 
-        return $dompdf->stream("invoice-{$invoice->number}.pdf", ['Attachment' => false]);
+        $mpdf->WriteHTML($html);
+        
+        return $mpdf->Output("{$invoice->number}.pdf", 'I');
     }
 
     /**

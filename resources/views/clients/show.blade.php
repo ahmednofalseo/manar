@@ -159,6 +159,7 @@
                 مشروع جديد
             </a>
         </div>
+        @if($client->projects->count() > 0)
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead>
@@ -171,35 +172,39 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @foreach($client->projects as $project)
                     <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
-                        <td class="py-3 text-white text-sm font-semibold">مشروع فيلا رقم 1</td>
-                        <td class="py-3 text-gray-300 text-sm">تصميم وإشراف</td>
+                        <td class="py-3 text-white text-sm font-semibold">{{ $project->name }}</td>
+                        <td class="py-3 text-gray-300 text-sm">{{ $project->type ?? '-' }}</td>
                         <td class="py-3">
-                            <span class="bg-primary-400/20 text-primary-400 px-2 py-1 rounded text-xs font-semibold">قيد التنفيذ</span>
+                            @php
+                                $statusColors = [
+                                    'قيد التنفيذ' => 'bg-primary-400/20 text-primary-400',
+                                    'مكتمل' => 'bg-green-500/20 text-green-400',
+                                    'متوقف' => 'bg-yellow-500/20 text-yellow-400',
+                                    'ملغي' => 'bg-red-500/20 text-red-400',
+                                ];
+                                $statusColor = $statusColors[$project->status] ?? 'bg-gray-500/20 text-gray-400';
+                            @endphp
+                            <span class="{{ $statusColor }} px-2 py-1 rounded text-xs font-semibold">{{ $project->status ?? '-' }}</span>
                         </td>
-                        <td class="py-3 text-gray-300 text-sm">2025-01-20</td>
+                        <td class="py-3 text-gray-300 text-sm">{{ $project->start_date ? $project->start_date->format('Y-m-d') : '-' }}</td>
                         <td class="py-3">
-                            <a href="/projects/1" class="text-primary-400 hover:text-primary-300">
+                            <a href="{{ route('projects.show', $project->id) }}" class="text-primary-400 hover:text-primary-300">
                                 <i class="fas fa-eye"></i>
                             </a>
                         </td>
                     </tr>
-                    <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
-                        <td class="py-3 text-white text-sm font-semibold">مشروع مجمع سكني</td>
-                        <td class="py-3 text-gray-300 text-sm">تصميم</td>
-                        <td class="py-3">
-                            <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-semibold">مكتمل</span>
-                        </td>
-                        <td class="py-3 text-gray-300 text-sm">2024-11-15</td>
-                        <td class="py-3">
-                            <a href="/projects/2" class="text-primary-400 hover:text-primary-300">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                        </td>
-                    </tr>
+                    @endforeach
                 </tbody>
             </table>
         </div>
+        @else
+        <div class="text-center py-12 bg-white/5 rounded-lg">
+            <i class="fas fa-clipboard-list text-6xl text-gray-500 mb-4"></i>
+            <p class="text-gray-400 text-lg">لا توجد مشاريع مرتبطة بهذا العميل</p>
+        </div>
+        @endif
     </div>
 
     <!-- Attachments Tab -->
@@ -207,14 +212,10 @@
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold text-white">المرفقات</h3>
             @can('uploadAttachment', $client)
-            <form action="{{ route('clients.attachments.store', $client->id) }}" method="POST" enctype="multipart/form-data" class="inline">
-                @csrf
-                <input type="file" name="file" id="attachmentFile" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()">
-                <button type="button" onclick="document.getElementById('attachmentFile').click()" class="px-3 py-1 bg-primary-400/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
-                    <i class="fas fa-plus ml-1"></i>
-                    رفع ملف
-                </button>
-            </form>
+            <button type="button" @click="openAttachmentModal()" class="px-3 py-1 bg-primary-400/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
+                <i class="fas fa-plus ml-1"></i>
+                رفع ملف
+            </button>
             @endcan
         </div>
         @if($client->attachments->count() > 0)
@@ -313,6 +314,17 @@
                         <a href="{{ route('documents.preview-pdf', $document) }}" target="_blank" class="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-all duration-200 text-sm">
                             <i class="fas fa-file-pdf"></i>
                         </a>
+                        @can('delete', $document)
+                        @if($document->canBeDeleted())
+                        <form action="{{ route('documents.destroy', $document) }}" method="POST" class="inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المستند؟');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-all duration-200 text-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                        @endif
+                        @endcan
                     </div>
                 </div>
             </div>
@@ -332,13 +344,10 @@
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold text-white">ملاحظات العميل</h3>
             @can('addNote', $client)
-            <form action="{{ route('clients.notes.store', $client->id) }}" method="POST" class="inline">
-                @csrf
-                <button type="button" onclick="document.getElementById('noteModal').classList.remove('hidden')" class="px-3 py-1 bg-primary-400/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
-                    <i class="fas fa-plus ml-1"></i>
-                    إضافة ملاحظة
-                </button>
-            </form>
+            <button type="button" @click="openNotesModal()" class="px-3 py-1 bg-primary-400/20 hover:bg-primary-500/30 text-primary-400 rounded text-sm">
+                <i class="fas fa-plus ml-1"></i>
+                إضافة ملاحظة
+            </button>
             @endcan
         </div>
         @if($client->notes->count() > 0)

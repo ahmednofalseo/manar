@@ -31,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Gate::policy(\App\Models\WorkflowTemplate::class, \App\Policies\WorkflowTemplatePolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Document::class, \App\Policies\DocumentPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\DocumentTemplate::class, \App\Policies\DocumentTemplatePolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\ProjectType::class, \App\Policies\ProjectTypePolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\City::class, \App\Policies\CityPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\StageSetting::class, \App\Policies\StageSettingPolicy::class);
         
         // Register Observers
         \App\Models\Project::observe(\App\Observers\ProjectObserver::class);

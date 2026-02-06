@@ -43,17 +43,30 @@
             </div>
 
             <!-- Selected Files List -->
-            <div x-show="selectedFiles.length > 0" class="space-y-2">
+            <div x-show="selectedFiles.length > 0" class="space-y-3">
                 <template x-for="(file, index) in selectedFiles" :key="index">
-                    <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <i class="fas fa-file text-primary-400"></i>
-                            <span class="text-white text-sm" x-text="file.name"></span>
-                            <span class="text-gray-400 text-xs" x-text="formatFileSize(file.size)"></span>
+                    <div class="p-3 bg-white/5 rounded-lg space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3 flex-1">
+                                <i class="fas fa-file text-primary-400"></i>
+                                <div class="flex-1">
+                                    <span class="text-white text-sm" x-text="file.name"></span>
+                                    <span class="text-gray-400 text-xs mr-2" x-text="formatFileSize(file.size)"></span>
+                                </div>
+                            </div>
+                            <button type="button" @click="removeFile(index)" class="text-red-400 hover:text-red-300">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
-                        <button type="button" @click="removeFile(index)" class="text-red-400 hover:text-red-300">
-                            <i class="fas fa-times"></i>
-                        </button>
+                        <div>
+                            <label class="block text-gray-300 text-xs mb-1">اسم المرفق (اختياري)</label>
+                            <input 
+                                type="text" 
+                                x-model="file.customName"
+                                :placeholder="file.name"
+                                class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                            >
+                        </div>
                     </div>
                 </template>
             </div>
@@ -108,7 +121,9 @@ function clientAttachmentModal() {
             const files = Array.from(event.target.files);
             this.selectedFiles = files.map(file => ({
                 name: file.name,
-                size: file.size
+                size: file.size,
+                file: file,
+                customName: ''
             }));
         },
         removeFile(index) {
@@ -140,13 +155,13 @@ function clientAttachmentModal() {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
                 const formData = new FormData();
                 
-                // إضافة الملفات
-                const fileInput = document.getElementById('attachmentsInput');
-                if (fileInput && fileInput.files) {
-                    for (let i = 0; i < fileInput.files.length; i++) {
-                        formData.append('attachments[]', fileInput.files[i]);
+                // إضافة الملفات والأسماء المخصصة
+                this.selectedFiles.forEach((fileData, index) => {
+                    formData.append('attachments[]', fileData.file);
+                    if (fileData.customName && fileData.customName.trim()) {
+                        formData.append(`attachment_names[${index}]`, fileData.customName.trim());
                     }
-                }
+                });
                 
                 formData.append('_token', csrfToken);
 

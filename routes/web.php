@@ -218,9 +218,74 @@ Route::get('/users', function () {
     return redirect()->route('admin.users.index');
 })->name('users.index');
 
+// Settings Routes - Project Types, Cities, Stages
+Route::prefix('settings')->name('settings.')->middleware('auth')->group(function () {
+    // Project Types
+    Route::resource('project-types', App\Http\Controllers\ProjectTypesController::class)->names([
+        'index' => 'project-types.index',
+        'create' => 'project-types.create',
+        'store' => 'project-types.store',
+        'show' => 'project-types.show',
+        'edit' => 'project-types.edit',
+        'update' => 'project-types.update',
+        'destroy' => 'project-types.destroy',
+    ]);
+    
+    // Cities
+    Route::resource('cities', App\Http\Controllers\CitiesController::class)->names([
+        'index' => 'cities.index',
+        'create' => 'cities.create',
+        'store' => 'cities.store',
+        'show' => 'cities.show',
+        'edit' => 'cities.edit',
+        'update' => 'cities.update',
+        'destroy' => 'cities.destroy',
+    ]);
+    
+    // Project Stages
+    Route::resource('project-stages', App\Http\Controllers\ProjectStagesController::class)->names([
+        'index' => 'project-stages.index',
+        'create' => 'project-stages.create',
+        'store' => 'project-stages.store',
+        'show' => 'project-stages.show',
+        'edit' => 'project-stages.edit',
+        'update' => 'project-stages.update',
+        'destroy' => 'project-stages.destroy',
+    ]);
+});
+
 Route::get('/settings', function () {
     return redirect('/dashboard')->with('info', 'صفحة الإعدادات قيد التطوير');
 })->name('settings.index');
+
+// API Routes for Quotations
+Route::prefix('api')->name('api.')->middleware('auth')->group(function () {
+    Route::get('/convert-number-to-words', function (\Illuminate\Http\Request $request) {
+        $number = (float) $request->get('number', 0);
+        $words = \App\Helpers\NumberToWords::convert($number);
+        return response()->json(['words' => $words]);
+    })->name('convert-number-to-words');
+    
+    Route::get('/clients/{id}', function ($id) {
+        $client = \App\Models\Client::findOrFail($id);
+        return response()->json([
+            'id' => $client->id,
+            'name' => $client->name,
+            'phone' => $client->phone,
+            'email' => $client->email,
+            'address' => $client->address,
+        ]);
+    })->name('clients.show');
+    
+    Route::get('/projects/{id}', function ($id) {
+        $project = \App\Models\Project::findOrFail($id);
+        return response()->json([
+            'id' => $project->id,
+            'name' => $project->name,
+            'client_id' => $project->client_id,
+        ]);
+    })->name('projects.show');
+});
 
 // Services Routes
 Route::prefix('services')->name('services.')->middleware('auth')->group(function () {

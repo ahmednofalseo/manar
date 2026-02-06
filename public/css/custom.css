@@ -345,16 +345,39 @@ body {
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.8) !important;
     pointer-events: none;
+    z-index: 5;
+    transition: color 0.2s;
+}
+
+[dir="ltr"] .input-icon-wrapper .icon {
+    right: auto;
+    left: 15px;
+}
+
+.input-icon-wrapper input:focus ~ .icon,
+.input-icon-wrapper input:not(:placeholder-shown) ~ .icon {
+    color: rgba(255, 255, 255, 1) !important;
 }
 
 .input-icon-wrapper input {
     padding-right: 45px;
 }
 
+[dir="ltr"] .input-icon-wrapper input {
+    padding-right: 12px;
+    padding-left: 45px;
+}
+
 .input-icon-wrapper.password-input input {
     padding-left: 45px;
+    padding-right: 45px;
+}
+
+[dir="ltr"] .input-icon-wrapper.password-input input {
+    padding-left: 45px;
+    padding-right: 45px;
 }
 
 .password-toggle {
@@ -363,13 +386,25 @@ body {
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.8) !important;
     z-index: 10;
     transition: color 0.2s;
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+[dir="ltr"] .password-toggle {
+    left: auto;
+    right: 15px;
 }
 
 .password-toggle:hover {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 1) !important;
+}
+
+.input-icon-wrapper input:focus ~ .password-toggle {
+    color: rgba(255, 255, 255, 1) !important;
 }
 
 /* Dashboard Styles */

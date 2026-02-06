@@ -37,11 +37,11 @@
         <p class="text-gray-400 text-sm">تاريخ الإصدار: 2025-11-01</p>
     </div>
     <div class="flex items-center gap-3">
-        <a href="{{ route('financials.edit', $id) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
+        <a href="{{ route('financials.edit', $invoice->id) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
             <i class="fas fa-edit ml-2"></i>
             {{ __('Edit') }}
         </a>
-        <a href="{{ route('financials.pdf', $id) }}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
+        <a href="{{ route('financials.pdf', $invoice->id) }}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
             <i class="fas fa-file-pdf {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
             {{ __('Download') }} PDF
         </a>
@@ -127,13 +127,17 @@
         <!-- Monthly Payments Chart -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
             <h3 class="text-lg font-bold text-white mb-4">تحليل الدفعات الشهرية</h3>
-            <canvas id="paymentsChart" height="200"></canvas>
+            <div style="position: relative; height: 250px; width: 100%;">
+                <canvas id="paymentsChart"></canvas>
+            </div>
         </div>
 
         <!-- Payment Methods Chart -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
             <h3 class="text-lg font-bold text-white mb-4">طرق الدفع</h3>
-            <canvas id="paymentMethodsChart" height="200"></canvas>
+            <div style="position: relative; height: 250px; width: 100%;">
+                <canvas id="paymentMethodsChart"></canvas>
+            </div>
         </div>
 
         <!-- Overdue Invoices -->
@@ -290,7 +294,7 @@ function paymentsData() {
         },
         openPaymentModal() {
             // Trigger event to open modal
-            window.dispatchEvent(new CustomEvent('open-payment-modal', { detail: { invoiceId: '{{ $id }}' } }));
+            window.dispatchEvent(new CustomEvent('open-payment-modal', { detail: { invoiceId: '{{ $invoice->id }}' } }));
         },
         editPayment(id) {
             alert('تعديل دفعة #' + id);
@@ -304,86 +308,167 @@ function paymentsData() {
 }
 
 // Initialize Charts
-document.addEventListener('DOMContentLoaded', function() {
+function initCharts() {
+    // Wait for Chart.js to be available
+    if (typeof Chart === 'undefined') {
+        // Retry after a short delay
+        setTimeout(initCharts, 100);
+        return;
+    }
+    
+    // Initialize charts
+    initChartsInternal();
+}
+
+function initChartsInternal() {
+
     // Monthly Payments Line Chart
     const paymentsCtx = document.getElementById('paymentsChart');
     if (paymentsCtx) {
-        new Chart(paymentsCtx, {
-            type: 'line',
-            data: {
-                labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
-                datasets: [{
-                    label: 'المبالغ المحصلة',
-                    data: [45000, 52000, 48000, 61000, 55000, 67000],
-                    borderColor: '#1db8f8',
-                    backgroundColor: 'rgba(29, 184, 248, 0.1)',
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+        try {
+            const paymentsData = @json($invoice->payments ?? []);
+            const monthlyData = {};
+            
+            // Group payments by month
+            paymentsData.forEach(payment => {
+                if (payment.paid_at) {
+                    const month = new Date(payment.paid_at).toLocaleDateString('ar-SA', { month: 'long' });
+                    monthlyData[month] = (monthlyData[month] || 0) + parseFloat(payment.amount || 0);
+                }
+            });
+            
+            const labels = Object.keys(monthlyData);
+            const data = Object.values(monthlyData);
+            
+            // If no data, use default
+            if (labels.length === 0) {
+                labels.push('{{ now()->format('F') }}');
+                data.push({{ $invoice->paid_amount ?? 0 }});
+            }
+            
+            new Chart(paymentsCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'المبالغ المحصلة',
+                        data: data,
+                        borderColor: '#1db8f8',
+                        backgroundColor: 'rgba(29, 184, 248, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            color: '#9ca3af'
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
                         }
                     },
-                    x: {
-                        ticks: {
-                            color: '#9ca3af'
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#9ca3af',
+                                callback: function(value) {
+                                    return new Intl.NumberFormat('ar-SA').format(value) + ' ر.س';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
                         },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                        x: {
+                            ticks: {
+                                color: '#9ca3af'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Error creating payments chart:', error);
+        }
     }
 
     // Payment Methods Doughnut Chart
     const methodsCtx = document.getElementById('paymentMethodsChart');
     if (methodsCtx) {
-        new Chart(methodsCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['تحويل بنكي', 'نقدي', 'شيك', 'إلكتروني'],
-                datasets: [{
-                    data: [40, 30, 20, 10],
-                    backgroundColor: [
-                        '#1db8f8',
-                        '#10b981',
-                        '#f59e0b',
-                        '#8b5cf6'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#9ca3af',
-                            padding: 15
+        try {
+            const paymentsData = @json($invoice->payments ?? []);
+            const methodCounts = {};
+            
+            // Count payments by method
+            paymentsData.forEach(payment => {
+                const method = payment.method || 'transfer';
+                methodCounts[method] = (methodCounts[method] || 0) + 1;
+            });
+            
+            const methodLabels = {
+                'transfer': 'تحويل بنكي',
+                'cash': 'نقدي',
+                'check': 'شيك',
+                'electronic': 'إلكتروني'
+            };
+            
+            const labels = Object.keys(methodCounts).map(key => methodLabels[key] || key);
+            const data = Object.values(methodCounts);
+            
+            // If no data, show placeholder
+            if (labels.length === 0) {
+                labels.push('لا توجد دفعات');
+                data.push(1);
+            }
+            
+            new Chart(methodsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#1db8f8',
+                            '#10b981',
+                            '#f59e0b',
+                            '#8b5cf6',
+                            '#ef4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#9ca3af',
+                                padding: 15,
+                                font: {
+                                    size: 11
+                                }
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Error creating payment methods chart:', error);
+        }
     }
-});
+}
+
+// Start initialization
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCharts);
+} else {
+    initCharts();
+}
 </script>
 @endpush
 
