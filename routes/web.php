@@ -210,7 +210,7 @@ Route::prefix('admin/users')->name('admin.users.')->group(function () {
     Route::delete('/{id}', [App\Http\Controllers\UsersController::class, 'destroy'])->name('destroy');
     Route::post('/{id}/toggle', [App\Http\Controllers\UsersController::class, 'toggle'])->name('toggle');
     Route::post('/{id}/reset-password', [App\Http\Controllers\UsersController::class, 'resetPassword'])->name('reset-password');
-    Route::post('/{id}/roles', [App\Http\Controllers\UsersController::class, 'updateRoles'])->name('roles.update');
+    Route::post('/{id}/roles', [App\Http\Controllers\UsersController::class, 'updateRoles'])->name('user.roles.update');
 });
 
 // Legacy route
