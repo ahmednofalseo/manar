@@ -33,7 +33,7 @@
                 <label class="block text-gray-300 text-sm mb-2">كلمة المرور الجديدة <span class="text-red-400">*</span></label>
                 <div class="relative">
                     <input 
-                        type="password" 
+                        :type="showPassword ? 'text' : 'password'"
                         x-model="form.password"
                         required
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 pr-12 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
@@ -48,7 +48,7 @@
             <div>
                 <label class="block text-gray-300 text-sm mb-2">تأكيد كلمة المرور <span class="text-red-400">*</span></label>
                 <input 
-                    type="password" 
+                    :type="showPassword ? 'text' : 'password'"
                     x-model="form.password_confirmation"
                     required
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
@@ -93,10 +93,11 @@
                 </button>
                 <button 
                     type="submit"
-                    class="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200"
+                    :disabled="saving"
+                    class="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 disabled:opacity-50"
                 >
                     <i class="fas fa-save ml-2"></i>
-                    حفظ
+                    <span x-text="saving ? 'جاري الحفظ...' : 'حفظ'"></span>
                 </button>
             </div>
         </form>
@@ -111,6 +112,7 @@
 function userResetPasswordModal() {
     return {
         isOpen: false,
+        saving: false,
         showPassword: false,
         generatedPassword: '',
         form: {
@@ -129,6 +131,7 @@ function userResetPasswordModal() {
         },
         close() {
             this.isOpen = false;
+            this.saving = false;
             this.form = {
                 password: '',
                 password_confirmation: '',
@@ -139,10 +142,6 @@ function userResetPasswordModal() {
         },
         togglePasswordVisibility() {
             this.showPassword = !this.showPassword;
-            const input = document.querySelector('#userResetPasswordModal input[type="password"]');
-            if (input) {
-                input.type = this.showPassword ? 'text' : 'password';
-            }
         },
         generatePassword() {
             const length = 12;
@@ -165,21 +164,45 @@ function userResetPasswordModal() {
                 this.form.password_confirmation = this.generatedPassword;
             }
         },
-        submit() {
+        async submit() {
             if (this.form.password !== this.form.password_confirmation) {
                 alert('كلمات المرور غير متطابقة');
                 return;
             }
-
             if (this.form.password.length < 8) {
                 alert('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
                 return;
             }
-
-            // TODO: Submit via AJAX
-            console.log('Resetting password for user:', this.form.userId);
-            alert('تم إعادة ضبط كلمة المرور بنجاح');
-            this.close();
+            this.saving = true;
+            const url = `/admin/users/${this.form.userId}/reset-password`;
+            const fd = new FormData();
+            fd.append('password', this.form.password);
+            fd.append('password_confirmation', this.form.password_confirmation);
+            fd.append('_token', document.querySelector('meta[name="csrf-token"]')?.content || '');
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: fd
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.success !== false) {
+                    this.close();
+                    alert(data.message || 'تم إعادة ضبط كلمة المرور بنجاح');
+                    window.location.reload();
+                } else {
+                    alert(data.message || data.errors?.password?.[0] || 'حدث خطأ أثناء التحديث');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('حدث خطأ في الاتصال');
+            } finally {
+                this.saving = false;
+            }
         }
     }
 }

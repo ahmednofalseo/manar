@@ -376,6 +376,10 @@ class UsersController extends Controller
         $user->password = Hash::make($request->password);
         $user->save();
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'تم إعادة ضبط كلمة المرور بنجاح']);
+        }
+
         return back()->with('success', 'تم إعادة ضبط كلمة المرور بنجاح');
     }
 

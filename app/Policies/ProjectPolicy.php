@@ -28,13 +28,13 @@ class ProjectPolicy
             return true;
         }
 
-        // Check permission
-        if (!PermissionHelper::hasPermission('projects.view') && 
-            !PermissionHelper::hasPermission('projects.manage')) {
-            return false;
+        // صلاحية عرض المشاريع تسمح بعرض أي مشروع
+        if (PermissionHelper::hasPermission('projects.view') || 
+            PermissionHelper::hasPermission('projects.manage')) {
+            return true;
         }
 
-        // User can view if they are manager or team member
+        // أو إذا كان مدير المشروع أو عضو في الفريق
         return $project->project_manager_id == $user->id ||
                (is_array($project->team_members) && in_array($user->id, $project->team_members));
     }
@@ -59,13 +59,13 @@ class ProjectPolicy
             return true;
         }
 
-        // Check permission
-        if (!PermissionHelper::hasPermission('projects.edit') && 
-            !PermissionHelper::hasPermission('projects.manage')) {
-            return false;
+        // صلاحية تعديل المشاريع تسمح بتعديل أي مشروع
+        if (PermissionHelper::hasPermission('projects.edit') || 
+            PermissionHelper::hasPermission('projects.manage')) {
+            return true;
         }
 
-        // User can update if they are manager or team member
+        // أو إذا كان مدير المشروع أو عضو في الفريق
         return $project->project_manager_id == $user->id ||
                (is_array($project->team_members) && in_array($user->id, $project->team_members));
     }
@@ -80,14 +80,17 @@ class ProjectPolicy
             return true;
         }
 
-        // Check permission
-        if (!PermissionHelper::hasPermission('projects.delete') && 
-            !PermissionHelper::hasPermission('projects.manage')) {
-            return false;
+        // صلاحية إدارة كاملة تسمح بحذف أي مشروع
+        if (PermissionHelper::hasPermission('projects.manage')) {
+            return true;
         }
 
-        // User can delete if they are manager
-        return $project->project_manager_id == $user->id;
+        // صلاحية الحذف + مدير المشروع
+        if (PermissionHelper::hasPermission('projects.delete')) {
+            return $project->project_manager_id == $user->id;
+        }
+
+        return false;
     }
 
     /**
