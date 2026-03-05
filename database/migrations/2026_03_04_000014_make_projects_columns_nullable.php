@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (DB::getDriverName() !== 'mysql') {
+        if (DB::getDriverName() !== 'mysql' || !Schema::hasTable('projects')) {
             return;
         }
 
@@ -23,13 +24,19 @@ return new class extends Migration
         $enumCols = ['target_group' => "ENUM('all_people','adults','children','students','women','men') NULL"];
 
         foreach ($bigintCols as $col) {
-            DB::statement("ALTER TABLE projects MODIFY COLUMN `{$col}` BIGINT UNSIGNED NULL");
+            if (Schema::hasColumn('projects', $col)) {
+                DB::statement("ALTER TABLE projects MODIFY COLUMN `{$col}` BIGINT UNSIGNED NULL");
+            }
         }
         foreach ($tinyintCols as $col) {
-            DB::statement("ALTER TABLE projects MODIFY COLUMN `{$col}` TINYINT(1) NULL");
+            if (Schema::hasColumn('projects', $col)) {
+                DB::statement("ALTER TABLE projects MODIFY COLUMN `{$col}` TINYINT(1) NULL");
+            }
         }
         foreach ($enumCols as $col => $def) {
-            DB::statement("ALTER TABLE projects MODIFY COLUMN `{$col}` {$def}");
+            if (Schema::hasColumn('projects', $col)) {
+                DB::statement("ALTER TABLE projects MODIFY COLUMN `{$col}` {$def}");
+            }
         }
     }
 
