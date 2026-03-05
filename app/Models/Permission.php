@@ -9,6 +9,7 @@ class Permission extends Model
 {
     protected $fillable = [
         'name',
+        'guard_name',
         'display_name',
         'group',
     ];
@@ -19,5 +20,13 @@ class Permission extends Model
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'permission_role');
+    }
+
+    /**
+     * Get the users that have this permission directly.
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'permission_user');
     }
 }

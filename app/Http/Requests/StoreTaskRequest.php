@@ -12,9 +12,19 @@ class StoreTaskRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Only managers and admins can create tasks
-        return auth()->user()->hasRole('super_admin') 
-            || auth()->user()->hasRole('project_manager');
+        return auth()->user()->can('create', \App\Models\Task::class);
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $data = $this->all();
+        if (isset($data['project_stage_id']) && $data['project_stage_id'] === '') {
+            $data['project_stage_id'] = null;
+            $this->merge($data);
+        }
     }
 
     /**

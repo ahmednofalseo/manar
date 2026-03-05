@@ -251,7 +251,7 @@ class TasksController extends Controller
         try {
             $task = Task::create([
                 'project_id' => $request->project_id,
-                'project_stage_id' => $request->project_stage_id,
+                'project_stage_id' => $request->filled('project_stage_id') ? $request->project_stage_id : null,
                 'assignee_id' => $request->assignee_id,
                 'created_by' => Auth::id(),
                 'title' => $request->title,

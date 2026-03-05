@@ -107,6 +107,8 @@
                     name="project_stage_id" 
                     x-ref="stageSelect"
                     x-model="selectedStageId"
+                    x-ref="stageSelect"
+                    x-effect="updateStageOptions()"
                     class="w-full bg-white/5 border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 @error('project_stage_id') border-red-500 bg-red-500/10 focus:ring-red-500/40 @else border-white/10 focus:ring-primary-400/40 @enderror"
                 >
                     <option value="">{{ __('Select Stage') }} ({{ __('Optional') }})</option>
@@ -124,6 +126,7 @@
                 <x-users-dropdown 
                     name="assignee_id" 
                     :selected="old('assignee_id')"
+                    :roleFilter="['engineer', 'project_manager']"
                     required 
                     placeholder="{{ __('Select Assignee') }}"
                 />
@@ -219,7 +222,7 @@
                 <select name="status" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                     <option value="new" selected>جديد</option>
                     <option value="in_progress">قيد التنفيذ</option>
-                    <option value="completed">منجز</option>
+                    <option value="done">منجز</option>
                     <option value="rejected">مرفوض</option>
                 </select>
             </div>
@@ -285,8 +288,27 @@ function taskForm() {
     return {
         selectedFiles: [],
         selectedProjectId: @if(old('project_id', $selectedProjectId)){{ old('project_id', $selectedProjectId) }}@else null @endif,
-        selectedStageId: @if(old('project_stage_id')){{ old('project_stage_id') }}@else null @endif,
+        selectedStageId: {{ json_encode(old('project_stage_id')) }},
         projectStages: [],
+        updateStageOptions() {
+            const select = this.$refs.stageSelect;
+            if (!select) return;
+            const currentVal = this.selectedStageId;
+            while (select.options.length > 1) select.remove(1);
+            this.projectStages.forEach(stage => {
+                const opt = document.createElement('option');
+                opt.value = stage.id;
+                opt.textContent = stage.stage_name;
+                select.appendChild(opt);
+            });
+            const validStage = currentVal && this.projectStages.some(s => s.id == currentVal);
+            if (validStage) {
+                select.value = String(currentVal);
+            } else {
+                select.value = '';
+                if (this.selectedStageId) this.selectedStageId = '';
+            }
+        },
         init() {
             // تحميل المراحل للمشروع المحدد مسبقاً
             if (this.selectedProjectId) {

@@ -8,7 +8,11 @@
                     $systemLogo = \App\Helpers\SettingsHelper::systemLogo();
                 @endphp
                 @if($systemLogo)
-                    <img src="{{ $systemLogo }}" alt="{{ $systemName }}" class="h-12 w-auto object-contain flex-shrink-0">
+                    <img src="{{ $systemLogo }}" alt="{{ $systemName }}" class="h-12 w-auto object-contain flex-shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="flex items-center gap-3 flex-shrink-0" style="display:none">
+                        <i class="fas fa-tower-cell text-2xl text-primary-400"></i>
+                        <h1 class="text-xl font-bold text-white truncate">{{ $systemName }}</h1>
+                    </div>
                 @else
                     <i class="fas fa-tower-cell text-2xl text-primary-400 flex-shrink-0"></i>
                     <h1 class="text-xl font-bold text-white truncate">{{ $systemName }}</h1>

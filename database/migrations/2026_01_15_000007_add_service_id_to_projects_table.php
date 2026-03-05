@@ -11,8 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('projects', 'service_id')) {
+            return;
+        }
         Schema::table('projects', function (Blueprint $table) {
-            $table->foreignId('service_id')->nullable()->after('type')->constrained('services')->nullOnDelete();
+            $column = $table->foreignId('service_id')->nullable()->constrained('services')->nullOnDelete();
+            if (Schema::hasColumn('projects', 'type')) {
+                $column->after('type');
+            }
         });
     }
 

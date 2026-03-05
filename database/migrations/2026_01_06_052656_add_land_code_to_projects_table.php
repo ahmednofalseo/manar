@@ -18,9 +18,15 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('projects', 'land_code')) {
+            return;
+        }
         Schema::table('projects', function (Blueprint $table) {
-            // إضافة حقل land_code بعد land_number
-            $table->string('land_code')->nullable()->after('land_number');
+            if (Schema::hasColumn('projects', 'land_number')) {
+                $table->string('land_code')->nullable()->after('land_number');
+            } else {
+                $table->string('land_code')->nullable();
+            }
         });
     }
 
@@ -29,8 +35,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('projects', function (Blueprint $table) {
-            $table->dropColumn('land_code');
-        });
+        if (Schema::hasColumn('projects', 'land_code')) {
+            Schema::table('projects', function (Blueprint $table) {
+                $table->dropColumn('land_code');
+            });
+        }
     }
 };

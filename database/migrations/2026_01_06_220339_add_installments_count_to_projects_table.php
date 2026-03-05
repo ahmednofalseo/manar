@@ -11,8 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('projects', 'installments_count')) {
+            return;
+        }
         Schema::table('projects', function (Blueprint $table) {
-            $table->integer('installments_count')->default(1)->after('value');
+            if (Schema::hasColumn('projects', 'value')) {
+                $table->integer('installments_count')->default(1)->after('value');
+            } else {
+                $table->integer('installments_count')->default(1);
+            }
         });
     }
 

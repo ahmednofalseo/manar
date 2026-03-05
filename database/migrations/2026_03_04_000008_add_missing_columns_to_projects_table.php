@@ -8,18 +8,20 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     * Add progress column to projects table if missing.
      */
     public function up(): void
     {
-        if (Schema::hasColumn('projects', 'is_hidden')) {
+        if (Schema::hasColumn('projects', 'progress')) {
             return;
         }
+
         Schema::table('projects', function (Blueprint $table) {
-            $column = $table->boolean('is_hidden')->default(false);
             if (Schema::hasColumn('projects', 'status')) {
-                $column->after('status');
+                $table->integer('progress')->default(0)->after('status');
+            } else {
+                $table->integer('progress')->default(0);
             }
-            $table->index('is_hidden');
         });
     }
 
@@ -28,9 +30,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('projects', function (Blueprint $table) {
-            $table->dropIndex(['is_hidden']);
-            $table->dropColumn('is_hidden');
-        });
+        if (Schema::hasColumn('projects', 'progress')) {
+            Schema::table('projects', function (Blueprint $table) {
+                $table->dropColumn('progress');
+            });
+        }
     }
 };

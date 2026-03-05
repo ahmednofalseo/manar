@@ -22,6 +22,18 @@ class UpdateTaskRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $data = $this->all();
+        if (isset($data['project_stage_id']) && $data['project_stage_id'] === '') {
+            $data['project_stage_id'] = null;
+            $this->merge($data);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>

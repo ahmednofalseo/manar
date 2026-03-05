@@ -13,33 +13,67 @@ return new class extends Migration
     {
         Schema::table('documents', function (Blueprint $table) {
             // حقول إضافية لعروض الأسعار المنظمة
-            $table->date('issue_date')->nullable()->after('expires_at'); // تاريخ الإصدار
-            $table->date('valid_until')->nullable()->after('issue_date'); // صالح حتى
-            
+            if (!Schema::hasColumn('documents', 'issue_date')) {
+                $column = $table->date('issue_date')->nullable();
+                if (Schema::hasColumn('documents', 'expires_at')) {
+                    $column->after('expires_at');
+                }
+            }
+            if (!Schema::hasColumn('documents', 'valid_until')) {
+                $column = $table->date('valid_until')->nullable();
+                if (Schema::hasColumn('documents', 'issue_date')) {
+                    $column->after('issue_date');
+                }
+            }
+
             // الحقول المالية (إذا لم تكن موجودة)
             if (!Schema::hasColumn('documents', 'subtotal')) {
-                $table->decimal('subtotal', 15, 2)->nullable()->after('total_price'); // الإجمالي الفرعي
+                $column = $table->decimal('subtotal', 15, 2)->nullable();
+                if (Schema::hasColumn('documents', 'total_price')) {
+                    $column->after('total_price');
+                }
             }
             if (!Schema::hasColumn('documents', 'discount_type')) {
-                $table->enum('discount_type', ['amount', 'percent'])->nullable()->after('subtotal'); // نوع الخصم
+                $column = $table->enum('discount_type', ['amount', 'percent'])->nullable();
+                if (Schema::hasColumn('documents', 'subtotal')) {
+                    $column->after('subtotal');
+                }
             }
             if (!Schema::hasColumn('documents', 'discount_value')) {
-                $table->decimal('discount_value', 15, 2)->nullable()->after('discount_type'); // قيمة الخصم
+                $column = $table->decimal('discount_value', 15, 2)->nullable();
+                if (Schema::hasColumn('documents', 'discount_type')) {
+                    $column->after('discount_type');
+                }
             }
             if (!Schema::hasColumn('documents', 'vat_percent')) {
-                $table->decimal('vat_percent', 5, 2)->nullable()->after('discount_value'); // نسبة الضريبة
+                $column = $table->decimal('vat_percent', 5, 2)->nullable();
+                if (Schema::hasColumn('documents', 'discount_value')) {
+                    $column->after('discount_value');
+                }
             }
             if (!Schema::hasColumn('documents', 'vat_amount')) {
-                $table->decimal('vat_amount', 15, 2)->nullable()->after('vat_percent'); // مبلغ الضريبة
+                $column = $table->decimal('vat_amount', 15, 2)->nullable();
+                if (Schema::hasColumn('documents', 'vat_percent')) {
+                    $column->after('vat_percent');
+                }
             }
             if (!Schema::hasColumn('documents', 'total_in_words')) {
-                $table->string('total_in_words')->nullable()->after('total_price'); // الإجمالي بالحروف
+                $column = $table->string('total_in_words')->nullable();
+                if (Schema::hasColumn('documents', 'total_price')) {
+                    $column->after('total_price');
+                }
             }
             if (!Schema::hasColumn('documents', 'terms_html')) {
-                $table->longText('terms_html')->nullable()->after('content'); // الشروط والأحكام (HTML)
+                $column = $table->longText('terms_html')->nullable();
+                if (Schema::hasColumn('documents', 'content')) {
+                    $column->after('content');
+                }
             }
             if (!Schema::hasColumn('documents', 'notes_internal')) {
-                $table->text('notes_internal')->nullable()->after('terms_html'); // ملاحظات داخلية
+                $column = $table->text('notes_internal')->nullable();
+                if (Schema::hasColumn('documents', 'terms_html')) {
+                    $column->after('terms_html');
+                }
             }
         });
     }

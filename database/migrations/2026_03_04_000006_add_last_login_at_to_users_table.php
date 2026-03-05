@@ -9,20 +9,16 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    /**
-     * Run the migrations.
-     * 
-     * إضافة حقل لرفع ملف شهادة مزاولة المهنة للموظف
-     */
     public function up(): void
     {
-        if (Schema::hasColumn('users', 'practice_license_file')) {
+        if (Schema::hasColumn('users', 'last_login_at')) {
             return;
         }
+
         Schema::table('users', function (Blueprint $table) {
-            $column = $table->string('practice_license_file')->nullable();
-            if (Schema::hasColumn('users', 'practice_license_no')) {
-                $column->after('practice_license_no');
+            $column = $table->timestamp('last_login_at')->nullable();
+            if (Schema::hasColumn('users', 'updated_at')) {
+                $column->after('updated_at');
             }
         });
     }
@@ -33,7 +29,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('practice_license_file');
+            $table->dropColumn('last_login_at');
         });
     }
 };

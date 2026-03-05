@@ -13,37 +13,39 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
+        $roleDefaults = ['guard_name' => 'web'];
+
         // Create or get Roles
         $superAdmin = Role::firstOrCreate(
             ['name' => 'super_admin'],
-            [
+            array_merge($roleDefaults, [
                 'display_name' => 'الأدمن العام',
                 'description' => 'صلاحيات كاملة على جميع الوحدات'
-            ]
+            ])
         );
 
         $projectManager = Role::firstOrCreate(
             ['name' => 'project_manager'],
-            [
+            array_merge($roleDefaults, [
                 'display_name' => 'مدير المشروع',
                 'description' => 'إدارة المشاريع والمهام والفريق'
-            ]
+            ])
         );
 
         $engineer = Role::firstOrCreate(
             ['name' => 'engineer'],
-            [
+            array_merge($roleDefaults, [
                 'display_name' => 'مهندس/فني',
                 'description' => 'إدارة المهام المسندة والمشاريع المرتبطة'
-            ]
+            ])
         );
 
         $adminStaff = Role::firstOrCreate(
             ['name' => 'admin_staff'],
-            [
+            array_merge($roleDefaults, [
                 'display_name' => 'الإداري',
                 'description' => 'إدارة العملاء والفواتير والمصروفات'
-            ]
+            ])
         );
 
         // Create Permissions
@@ -128,7 +130,7 @@ class RolesAndPermissionsSeeder extends Seeder
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(
                 ['name' => $permission['name']],
-                $permission
+                array_merge($permission, ['guard_name' => 'web'])
             );
         }
 

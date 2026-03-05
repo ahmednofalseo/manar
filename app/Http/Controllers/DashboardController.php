@@ -34,7 +34,9 @@ class DashboardController extends Controller
         // Filter projects based on role
         if ($user->hasRole('engineer') || $user->hasRole('admin_staff')) {
             // للمستخدمين العاديين: إخفاء المشاريع المخفية
-            $projectQuery->where('is_hidden', false);
+            if (\Illuminate\Support\Facades\Schema::hasColumn('projects', 'is_hidden')) {
+                $projectQuery->where('is_hidden', false);
+            }
             $projectQuery->where(function($q) use ($user) {
                 $q->where('project_manager_id', $user->id)
                   ->orWhereJsonContains('team_members', (string)$user->id)
@@ -43,7 +45,9 @@ class DashboardController extends Controller
             $taskQuery->where('assignee_id', $user->id);
         } elseif ($user->hasRole('project_manager')) {
             // للمديرين: إخفاء المشاريع المخفية
-            $projectQuery->where('is_hidden', false);
+            if (\Illuminate\Support\Facades\Schema::hasColumn('projects', 'is_hidden')) {
+                $projectQuery->where('is_hidden', false);
+            }
             $projectIds = Project::where('project_manager_id', $user->id)
                 ->orWhereHas('teamUsers', function($q) use ($user) {
                     $q->where('users.id', $user->id);
@@ -59,11 +63,11 @@ class DashboardController extends Controller
             $projectQuery->where('city', $request->city);
         }
 
-        if ($request->filled('owner')) {
+        if ($request->filled('owner') && \Illuminate\Support\Facades\Schema::hasColumn('projects', 'owner')) {
             $projectQuery->where('owner', 'like', "%{$request->owner}%");
         }
 
-        if ($request->filled('status')) {
+        if ($request->filled('status') && \Illuminate\Support\Facades\Schema::hasColumn('projects', 'status')) {
             $projectQuery->where('status', $request->status);
         }
 
@@ -81,7 +85,9 @@ class DashboardController extends Controller
 
         // KPIs
         $totalProjects = $projectQuery->count();
-        $avgProgress = $projectQuery->avg('progress') ?? 0;
+        $avgProgress = \Illuminate\Support\Facades\Schema::hasColumn('projects', 'progress')
+            ? ($projectQuery->avg('progress') ?? 0)
+            : 0;
 
         $totalTasks = $taskQuery->count();
         $tasksInProgress = $taskQuery->where('status', 'in_progress')->count();
@@ -174,18 +180,14 @@ class DashboardController extends Controller
             ->values();
 
         // Project Status Distribution for Chart (optimized - single query)
-        $projectStatusDistribution = Project::select('status', DB::raw('count(*) as count'))
-            ->whereIn('status', ['مكتمل', 'قيد التنفيذ', 'متوقف'])
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
-        
-        // Ensure all statuses exist in array
-        $projectStatusDistribution = array_merge([
-            'مكتمل' => 0,
-            'قيد التنفيذ' => 0,
-            'متوقف' => 0,
-        ], $projectStatusDistribution);
+        $projectStatusDistribution = ['مكتمل' => 0, 'قيد التنفيذ' => 0, 'متوقف' => 0];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('projects', 'status')) {
+            $projectStatusDistribution = array_merge($projectStatusDistribution, Project::select('status', DB::raw('count(*) as count'))
+                ->whereIn('status', ['مكتمل', 'قيد التنفيذ', 'متوقف'])
+                ->groupBy('status')
+                ->pluck('count', 'status')
+                ->toArray());
+        }
 
         // Recent Client Activities
         $recentClientActivities = collect();
@@ -225,11 +227,17 @@ class DashboardController extends Controller
         $recentClientActivities = $recentClientActivities->sortByDesc('time')->take(2);
 
         // For filters dropdowns - استخدام المدن من قاعدة البيانات
-        $cities = \App\Models\City::active()->ordered()->pluck('name');
-        $owners = Project::distinct()->pluck('owner')->filter()->sort()->values();
+        $cities = \Illuminate\Support\Facades\Schema::hasColumn('cities', 'name')
+            ? \App\Models\City::active()->ordered()->pluck('name')
+            : collect();
+        $owners = \Illuminate\Support\Facades\Schema::hasColumn('projects', 'owner')
+            ? Project::distinct()->pluck('owner')->filter()->sort()->values()
+            : collect();
+        $orderCol = \Illuminate\Support\Facades\Schema::hasColumn('users', 'name')
+            ? 'name' : (\Illuminate\Support\Facades\Schema::hasColumn('users', 'fullname') ? 'fullname' : 'id');
         $engineers = User::whereHas('roles', function($q) {
             $q->whereIn('name', ['engineer', 'project_manager']);
-        })->orderBy('name')->get();
+        })->orderBy($orderCol)->get();
 
         // User-specific data (for non-admin users)
         // Check if user is admin BEFORE applying filters

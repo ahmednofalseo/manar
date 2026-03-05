@@ -16,7 +16,11 @@ use Illuminate\Support\Facades\Auth;
                     $systemLogo = \App\Helpers\SettingsHelper::systemLogo();
                 @endphp
                 @if($systemLogo)
-                    <img src="{{ $systemLogo }}" alt="{{ $systemName }}" class="h-12 w-auto object-contain">
+                    <img src="{{ $systemLogo }}" alt="{{ $systemName }}" class="h-12 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+                    <span class="inline-flex items-center gap-2" style="display:none">
+                        <i class="fas fa-tower-cell text-primary-400 text-xl"></i>
+                        <span class="text-white font-bold text-lg">{{ $systemName }}</span>
+                    </span>
                 @else
                     <i class="fas fa-tower-cell text-primary-400 text-xl"></i>
                     <span class="text-white font-bold text-lg">{{ $systemName }}</span>

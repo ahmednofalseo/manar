@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('projects')) {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
             $table->string('name'); // اسم المشروع
@@ -59,8 +60,10 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+        }
 
         // جدول المراحل التفصيلية
+        if (!Schema::hasTable('project_stages')) {
         Schema::create('project_stages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
@@ -72,8 +75,10 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
         });
+        }
 
         // جدول المرفقات
+        if (!Schema::hasTable('project_attachments')) {
         Schema::create('project_attachments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
@@ -85,8 +90,10 @@ return new class extends Migration
             $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
+        }
 
         // جدول الأطراف الثالثة
+        if (!Schema::hasTable('project_third_parties')) {
         Schema::create('project_third_parties', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
@@ -95,6 +102,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
         });
+        }
     }
 
     /**

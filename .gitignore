@@ -26,3 +26,4 @@ Thumbs.db
 
 # قاعدة البيانات (بيانات محلية)
 manara_nofal.sql
+*.sql

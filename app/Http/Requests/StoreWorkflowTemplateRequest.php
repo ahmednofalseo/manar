@@ -49,6 +49,21 @@ class StoreWorkflowTemplateRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $steps = $this->input('steps', []);
+        foreach ($steps as $index => $step) {
+            if (isset($step['expected_outputs']) && is_string($step['expected_outputs'])) {
+                $decoded = json_decode($step['expected_outputs'], true);
+                $steps[$index]['expected_outputs'] = is_array($decoded) ? $decoded : null;
+            }
+        }
+        $this->merge(['steps' => $steps]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      */
     public function rules(): array

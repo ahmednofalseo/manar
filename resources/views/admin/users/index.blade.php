@@ -111,7 +111,7 @@
 </div>
 
 <!-- Filters Bar -->
-<div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6" x-data="userFilters()">
+<form method="GET" action="{{ route('admin.users.index') }}" class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6" x-data="userFilters()">
     <div class="space-y-4">
         <!-- Search Bar -->
         <div class="relative">
@@ -207,6 +207,8 @@
             'nationalId' => $user->national_id ?? '',
             'jobTitle' => $user->job_title ?? '',
             'roles' => $user->roles->pluck('display_name')->toArray(),
+            'roleNames' => $user->roles->pluck('name')->toArray(),
+            'permissionNames' => $user->directPermissions->pluck('name')->toArray(),
             'status' => $user->status,
             'lastLogin' => $user->last_login_at ? $user->last_login_at->format('Y-m-d H:i') : null,
             'avatar' => $user->avatar ? asset('storage/' . $user->avatar) : null,
@@ -266,7 +268,9 @@
                             <div class="flex items-center gap-3">
                                 <img :src="user.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&background=1db8f8&color=fff&size=40'" 
                                      :alt="user.name" 
-                                     class="w-10 h-10 rounded-full">
+                                     :data-name="user.name"
+                                     class="w-10 h-10 rounded-full"
+                                     onerror="this.src='https://ui-avatars.com/api/?name='+encodeURIComponent(this.dataset.name||'')+'&background=1db8f8&color=fff&size=40'">
                                 <div>
                                     <p class="text-white text-sm font-semibold" x-text="user.name"></p>
                                 </div>
@@ -299,7 +303,7 @@
                                 <a :href="'/admin/users/' + user.id + '/edit'" class="text-blue-400 hover:text-blue-300" :title="'{{ __('Edit') }}'">
                                     <i class="fas fa-pen"></i>
                                 </a>
-                                <button @click="openRolesModal(user.id)" class="text-purple-400 hover:text-purple-300" :title="'{{ __('Roles & Permissions') }}'">
+                                <button @click="openRolesModal(user)" class="text-purple-400 hover:text-purple-300" :title="'{{ __('Roles & Permissions') }}'">
                                     <i class="fas fa-user-shield"></i>
                                 </button>
                                 <button @click="openResetPasswordModal(user.id)" class="text-yellow-400 hover:text-yellow-300" :title="'{{ __('Reset Password') }}'">
@@ -334,7 +338,9 @@
                     <div class="flex items-center gap-3">
                         <img :src="user.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&background=1db8f8&color=fff&size=48'" 
                              :alt="user.name" 
-                             class="w-12 h-12 rounded-full">
+                             :data-name="user.name"
+                             class="w-12 h-12 rounded-full"
+                             onerror="this.src='https://ui-avatars.com/api/?name='+encodeURIComponent(this.dataset.name||'')+'&background=1db8f8&color=fff&size=48'">
                         <div>
                             <h3 class="text-white font-semibold mb-1" x-text="user.name"></h3>
                             <p class="text-gray-400 text-sm" x-text="user.jobTitle"></p>
@@ -376,7 +382,7 @@
                         <a :href="'/admin/users/' + user.id + '/edit'" class="text-blue-400 hover:text-blue-300">
                             <i class="fas fa-pen"></i>
                         </a>
-                        <button @click="openRolesModal(user.id)" class="text-purple-400 hover:text-purple-300">
+                        <button @click="openRolesModal(user)" class="text-purple-400 hover:text-purple-300">
                             <i class="fas fa-user-shield"></i>
                         </button>
                     </div>
@@ -426,8 +432,14 @@ function usersData(initialUsers) {
         toggleAll() {
             // TODO: Implement toggle all
         },
-        openRolesModal(id) {
-            window.dispatchEvent(new CustomEvent('open-user-roles-modal', { detail: { userId: id } }));
+        openRolesModal(user) {
+            window.dispatchEvent(new CustomEvent('open-user-roles-modal', {
+                detail: {
+                    userId: user.id,
+                    roleNames: user.roleNames || [],
+                    permissionNames: user.permissionNames || []
+                }
+            }));
         },
         openResetPasswordModal(id) {
             window.dispatchEvent(new CustomEvent('open-user-reset-password-modal', { detail: { userId: id } }));

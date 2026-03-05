@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasColumn('projects', 'is_hidden')) {
+        if (Schema::hasColumn('projects', 'deleted_at')) {
             return;
         }
+
         Schema::table('projects', function (Blueprint $table) {
-            $column = $table->boolean('is_hidden')->default(false);
-            if (Schema::hasColumn('projects', 'status')) {
-                $column->after('status');
-            }
-            $table->index('is_hidden');
+            $table->softDeletes();
         });
     }
 
@@ -29,8 +26,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('projects', function (Blueprint $table) {
-            $table->dropIndex(['is_hidden']);
-            $table->dropColumn('is_hidden');
+            $table->dropSoftDeletes();
         });
     }
 };

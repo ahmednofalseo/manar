@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Project;
@@ -23,7 +24,7 @@ class UsersController extends Controller
     {
         Gate::authorize('viewAny', User::class);
 
-        $query = User::with('roles')->latest();
+        $query = User::with(['roles', 'directPermissions'])->latest();
 
         // البحث
         if ($request->filled('search')) {
@@ -385,19 +386,34 @@ class UsersController extends Controller
     {
         $request->validate([
             'roles' => ['required', 'array', 'min:1'],
-            'roles.*' => ['exists:roles,id'],
+            'roles.*' => ['string', 'exists:roles,name'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', 'exists:permissions,name'],
         ], [
             'roles.required' => 'يجب اختيار دور واحد على الأقل',
             'roles.array' => 'الأدوار يجب أن تكون مصفوفة',
             'roles.min' => 'يجب اختيار دور واحد على الأقل',
             'roles.*.exists' => 'أحد الأدوار المختارة غير موجود',
+            'permissions.*.exists' => 'أحد الصلاحيات المختارة غير موجود',
         ]);
 
         $user = User::findOrFail($id);
 
         Gate::authorize('update', $user);
 
-        $user->roles()->sync($request->roles);
+        // Sync roles by name
+        $roleIds = Role::whereIn('name', $request->roles)->pluck('id')->toArray();
+        $user->roles()->sync($roleIds);
+
+        // Sync user-specific permissions
+        $permissionIds = $request->filled('permissions')
+            ? Permission::whereIn('name', $request->permissions)->pluck('id')->toArray()
+            : [];
+        $user->directPermissions()->sync($permissionIds);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'تم تحديث الأدوار والصلاحيات بنجاح']);
+        }
 
         return back()->with('success', 'تم تحديث الأدوار والصلاحيات بنجاح');
     }

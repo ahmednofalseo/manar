@@ -84,12 +84,11 @@
                 <select 
                     name="project_stage_id" 
                     x-model="selectedStageId"
+                    x-ref="stageSelect"
+                    x-effect="updateStageOptions()"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                 >
                     <option value="">اختر المرحلة (اختياري)</option>
-                    <template x-for="stage in projectStages" :key="stage.id">
-                        <option :value="stage.id" x-text="stage.stage_name" :selected="stage.id == {{ old('project_stage_id', $task->project_stage_id ?? 'null') }}"></option>
-                    </template>
                 </select>
                 @error('project_stage_id')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -101,6 +100,7 @@
                 <x-users-dropdown 
                     name="assignee_id" 
                     :selected="old('assignee_id', $task->assignee_id)"
+                    :roleFilter="['engineer', 'project_manager']"
                     required 
                     placeholder="اختر المهندس / الموظف"
                 />
@@ -250,6 +250,25 @@ function taskForm(initialProjects, initialProjectId, initialStageId) {
         selectedProjectId: initialProjectId || null,
         selectedStageId: initialStageId || null,
         projectStages: [],
+        updateStageOptions() {
+            const select = this.$refs?.stageSelect;
+            if (!select) return;
+            const currentVal = this.selectedStageId;
+            while (select.options.length > 1) select.remove(1);
+            this.projectStages.forEach(stage => {
+                const opt = document.createElement('option');
+                opt.value = stage.id;
+                opt.textContent = stage.stage_name;
+                select.appendChild(opt);
+            });
+            const validStage = currentVal && this.projectStages.some(s => s.id == currentVal);
+            if (validStage) {
+                select.value = String(currentVal);
+            } else {
+                select.value = '';
+                if (this.selectedStageId) this.selectedStageId = '';
+            }
+        },
         init() {
             // تحميل المراحل للمشروع المحدد مسبقاً
             if (this.selectedProjectId) {

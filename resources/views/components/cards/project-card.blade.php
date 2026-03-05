@@ -83,7 +83,22 @@
     <!-- Header -->
     <div class="flex items-start justify-between mb-4">
         <div class="flex-1">
-            <h3 class="text-lg md:text-xl font-bold text-white mb-1">{{ $project->name }}</h3>
+            <div class="flex items-center gap-2 mb-1">
+                <h3 class="text-lg md:text-xl font-bold text-white">{{ $project->name }}</h3>
+                @if(\Illuminate\Support\Facades\Schema::hasColumn('projects', 'is_hidden'))
+                    @if($project->is_hidden)
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs" title="مخفي">
+                            <i class="fas fa-eye-slash"></i>
+                            <span>مخفي</span>
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-green-500/20 text-green-400 text-xs">
+                            <i class="fas fa-eye"></i>
+                            <span>المشروع ظاهر</span>
+                        </span>
+                    @endif
+                @endif
+            </div>
             <p class="text-gray-400 text-xs md:text-sm">{{ $project->project_number ?? 'غير محدد' }}</p>
         </div>
         <span class="px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap {{ $typeColor }}">

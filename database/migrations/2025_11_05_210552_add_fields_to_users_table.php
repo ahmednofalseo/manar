@@ -12,14 +12,54 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('phone')->nullable()->after('email');
-            $table->string('national_id')->nullable()->after('phone');
-            $table->string('job_title')->nullable()->after('national_id');
-            $table->string('practice_license_no')->nullable()->after('job_title');
-            $table->date('engineer_rank_expiry')->nullable()->after('practice_license_no');
-            $table->enum('status', ['active', 'suspended'])->default('active')->after('engineer_rank_expiry');
-            $table->string('avatar')->nullable()->after('status');
-            $table->timestamp('last_login_at')->nullable()->after('avatar');
+            if (!Schema::hasColumn('users', 'phone')) {
+                $column = $table->string('phone')->nullable();
+                if (Schema::hasColumn('users', 'email')) {
+                    $column->after('email');
+                }
+            }
+            if (!Schema::hasColumn('users', 'national_id')) {
+                $column = $table->string('national_id')->nullable();
+                if (Schema::hasColumn('users', 'phone')) {
+                    $column->after('phone');
+                }
+            }
+            if (!Schema::hasColumn('users', 'job_title')) {
+                $column = $table->string('job_title')->nullable();
+                if (Schema::hasColumn('users', 'national_id')) {
+                    $column->after('national_id');
+                }
+            }
+            if (!Schema::hasColumn('users', 'practice_license_no')) {
+                $column = $table->string('practice_license_no')->nullable();
+                if (Schema::hasColumn('users', 'job_title')) {
+                    $column->after('job_title');
+                }
+            }
+            if (!Schema::hasColumn('users', 'engineer_rank_expiry')) {
+                $column = $table->date('engineer_rank_expiry')->nullable();
+                if (Schema::hasColumn('users', 'practice_license_no')) {
+                    $column->after('practice_license_no');
+                }
+            }
+            if (!Schema::hasColumn('users', 'status')) {
+                $column = $table->enum('status', ['active', 'suspended'])->default('active');
+                if (Schema::hasColumn('users', 'engineer_rank_expiry')) {
+                    $column->after('engineer_rank_expiry');
+                }
+            }
+            if (!Schema::hasColumn('users', 'avatar')) {
+                $column = $table->string('avatar')->nullable();
+                if (Schema::hasColumn('users', 'status')) {
+                    $column->after('status');
+                }
+            }
+            if (!Schema::hasColumn('users', 'last_login_at')) {
+                $column = $table->timestamp('last_login_at')->nullable();
+                if (Schema::hasColumn('users', 'avatar')) {
+                    $column->after('avatar');
+                }
+            }
         });
     }
 

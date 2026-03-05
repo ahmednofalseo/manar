@@ -1,7 +1,14 @@
-@props(['name' => 'user_id', 'selected' => null, 'required' => false, 'placeholder' => 'اختر الموظف', 'multiple' => false, 'class' => ''])
+@props(['name' => 'user_id', 'selected' => null, 'required' => false, 'placeholder' => 'اختر الموظف', 'multiple' => false, 'class' => '', 'roleFilter' => null])
 
 @php
-    $users = \App\Models\User::where('status', 'active')->orderBy('name')->get();
+    $query = \App\Models\User::query();
+    if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'status')) {
+        $query->where('status', 'active');
+    }
+    if ($roleFilter) {
+        $query->whereHas('roles', fn($q) => $q->whereIn('name', (array) $roleFilter));
+    }
+    $users = $query->orderBy('name')->get();
     $hasError = $errors->has($name);
 @endphp
 

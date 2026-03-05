@@ -15,13 +15,22 @@ return new class extends Migration
         Schema::table('settings', function (Blueprint $table) {
             // إضافة الأعمدة المفقودة إذا لم تكن موجودة
             if (!Schema::hasColumn('settings', 'type')) {
-                $table->string('type')->default('text')->after('value');
+                $column = $table->string('type')->default('text');
+                if (Schema::hasColumn('settings', 'value')) {
+                    $column->after('value');
+                }
             }
             if (!Schema::hasColumn('settings', 'group')) {
-                $table->string('group')->default('general')->after('type');
+                $column = $table->string('group')->default('general');
+                if (Schema::hasColumn('settings', 'type')) {
+                    $column->after('type');
+                }
             }
             if (!Schema::hasColumn('settings', 'description')) {
-                $table->text('description')->nullable()->after('group');
+                $column = $table->text('description')->nullable();
+                if (Schema::hasColumn('settings', 'group')) {
+                    $column->after('group');
+                }
             }
         });
 

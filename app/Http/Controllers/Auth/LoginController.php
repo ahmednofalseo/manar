@@ -41,10 +41,12 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            // تحديث last_login_at
+            // تحديث last_login_at (إن وُجد العمود)
             $user = Auth::user();
-            $user->last_login_at = now();
-            $user->save();
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'last_login_at')) {
+                $user->last_login_at = now();
+                $user->save();
+            }
 
             return redirect()->intended(route('dashboard.index'));
         }

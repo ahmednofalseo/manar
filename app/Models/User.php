@@ -73,6 +73,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the permissions assigned directly to the user (user-specific overrides).
+     */
+    public function directPermissions()
+    {
+        return $this->belongsToMany(Permission::class, 'permission_user');
+    }
+
+    /**
      * Check if user has a specific role.
      */
     public function hasRole($role)
@@ -98,9 +106,25 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Check if user has a specific permission.
+     * Checks: 1) Direct user permissions, 2) Permissions from roles.
      */
     public function hasPermission($permission)
     {
+        // Super admin has all permissions
+        if ($this->hasRole('super_admin')) {
+            return true;
+        }
+        // Direct user-specific permission
+        if (is_string($permission)) {
+            if ($this->directPermissions->contains('name', $permission)) {
+                return true;
+            }
+        } else {
+            if ($this->directPermissions->contains('id', $permission->id)) {
+                return true;
+            }
+        }
+        // Permission from roles
         foreach ($this->roles as $role) {
             if ($role->hasPermission($permission)) {
                 return true;
