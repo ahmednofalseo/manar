@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentMethod;
 use App\Events\PaymentCreated;
+use App\Helpers\PermissionHelper;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
@@ -17,7 +18,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use App\Helpers\PermissionHelper;
 use Mpdf\Mpdf;
 
 class FinancialsController extends Controller
@@ -28,7 +28,7 @@ class FinancialsController extends Controller
     public function index(Request $request)
     {
         // التحقق من الصلاحية
-        if (!PermissionHelper::hasPermission('financials.view') && !PermissionHelper::hasPermission('financials.manage')) {
+        if (! PermissionHelper::hasPermission('financials.view') && ! PermissionHelper::hasPermission('financials.manage')) {
             abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة');
         }
         Gate::authorize('viewAny', Invoice::class);
@@ -38,14 +38,14 @@ class FinancialsController extends Controller
         // Filters
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('number', 'like', "%{$search}%")
-                  ->orWhereHas('client', function($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('project', function($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('client', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('project', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -106,7 +106,7 @@ class FinancialsController extends Controller
     public function create()
     {
         // التحقق من الصلاحية
-        if (!PermissionHelper::hasPermission('financials.create') && !PermissionHelper::hasPermission('financials.manage')) {
+        if (! PermissionHelper::hasPermission('financials.create') && ! PermissionHelper::hasPermission('financials.manage')) {
             abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة');
         }
         Gate::authorize('create', Invoice::class);
@@ -123,7 +123,7 @@ class FinancialsController extends Controller
     public function store(StoreInvoiceRequest $request)
     {
         // التحقق من الصلاحية
-        if (!PermissionHelper::hasPermission('financials.create') && !PermissionHelper::hasPermission('financials.manage')) {
+        if (! PermissionHelper::hasPermission('financials.create') && ! PermissionHelper::hasPermission('financials.manage')) {
             abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة');
         }
         Gate::authorize('create', Invoice::class);
@@ -154,7 +154,7 @@ class FinancialsController extends Controller
                     Payment::create([
                         'invoice_id' => $invoice->id,
                         'payment_no' => Payment::generatePaymentNumber(),
-                        'amount' => $i === $request->installments_count 
+                        'amount' => $i === $request->installments_count
                             ? $request->total_amount - ($installmentAmount * ($request->installments_count - 1))
                             : $installmentAmount,
                         'paid_at' => $issueDate->copy()->addDays(round($daysBetween * $i)),
@@ -168,10 +168,12 @@ class FinancialsController extends Controller
             DB::commit();
 
             return redirect()->route('financials.show', $invoice->id)
-                ->with('success', 'تم إنشاء الفاتورة بنجاح');
+                ->with('success', __('Invoice created successfully'));
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'حدث خطأ أثناء إنشاء الفاتورة: ' . $e->getMessage());
+            \Log::error('Error creating invoice: '.$e->getMessage(), ['exception' => $e]);
+
+            return back()->withInput()->with('error', __('An error occurred while creating the invoice'));
         }
     }
 
@@ -181,7 +183,7 @@ class FinancialsController extends Controller
     public function show(string $id)
     {
         // التحقق من الصلاحية
-        if (!PermissionHelper::hasPermission('financials.view') && !PermissionHelper::hasPermission('financials.manage')) {
+        if (! PermissionHelper::hasPermission('financials.view') && ! PermissionHelper::hasPermission('financials.manage')) {
             abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة');
         }
         $invoice = Invoice::with(['project', 'client', 'payments.creator'])->findOrFail($id);
@@ -197,7 +199,7 @@ class FinancialsController extends Controller
     public function edit(string $id)
     {
         // التحقق من الصلاحية
-        if (!PermissionHelper::hasPermission('financials.edit') && !PermissionHelper::hasPermission('financials.manage')) {
+        if (! PermissionHelper::hasPermission('financials.edit') && ! PermissionHelper::hasPermission('financials.manage')) {
             abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة');
         }
         $invoice = Invoice::findOrFail($id);
@@ -216,7 +218,7 @@ class FinancialsController extends Controller
     public function update(UpdateInvoiceRequest $request, string $id)
     {
         // التحقق من الصلاحية
-        if (!PermissionHelper::hasPermission('financials.edit') && !PermissionHelper::hasPermission('financials.manage')) {
+        if (! PermissionHelper::hasPermission('financials.edit') && ! PermissionHelper::hasPermission('financials.manage')) {
             abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة');
         }
         $invoice = Invoice::findOrFail($id);
@@ -245,7 +247,8 @@ class FinancialsController extends Controller
                 ->with('success', 'تم تحديث الفاتورة بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'حدث خطأ أثناء تحديث الفاتورة: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'حدث خطأ أثناء تحديث الفاتورة: '.$e->getMessage());
         }
     }
 
@@ -255,7 +258,7 @@ class FinancialsController extends Controller
     public function destroy(string $id)
     {
         // التحقق من الصلاحية
-        if (!PermissionHelper::hasPermission('financials.delete') && !PermissionHelper::hasPermission('financials.manage')) {
+        if (! PermissionHelper::hasPermission('financials.delete') && ! PermissionHelper::hasPermission('financials.manage')) {
             abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة');
         }
         $invoice = Invoice::findOrFail($id);
@@ -279,7 +282,8 @@ class FinancialsController extends Controller
                 ->with('success', 'تم حذف الفاتورة بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'حدث خطأ أثناء حذف الفاتورة: ' . $e->getMessage());
+
+            return back()->with('error', 'حدث خطأ أثناء حذف الفاتورة: '.$e->getMessage());
         }
     }
 
@@ -289,7 +293,7 @@ class FinancialsController extends Controller
     public function generatePdf(string $id)
     {
         // التحقق من الصلاحية
-        if (!PermissionHelper::hasPermission('financials.view') && !PermissionHelper::hasPermission('financials.manage')) {
+        if (! PermissionHelper::hasPermission('financials.view') && ! PermissionHelper::hasPermission('financials.manage')) {
             abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة');
         }
         $invoice = Invoice::with(['project', 'client', 'payments'])->findOrFail($id);
@@ -306,7 +310,7 @@ class FinancialsController extends Controller
     {
         // التأكد من تحميل جميع البيانات المطلوبة
         $invoice->loadMissing(['project', 'client', 'payments']);
-        
+
         $html = view('financials.pdf.invoice', compact('invoice'))->render();
 
         $mpdf = new Mpdf([
@@ -326,7 +330,7 @@ class FinancialsController extends Controller
         ]);
 
         $mpdf->WriteHTML($html);
-        
+
         return $mpdf->Output("{$invoice->number}.pdf", 'I');
     }
 
@@ -336,7 +340,7 @@ class FinancialsController extends Controller
     public function storePayment(StorePaymentRequest $request, string $id)
     {
         // التحقق من الصلاحية
-        if (!PermissionHelper::hasPermission('financials.view') && !PermissionHelper::hasPermission('financials.manage')) {
+        if (! PermissionHelper::hasPermission('financials.view') && ! PermissionHelper::hasPermission('financials.manage')) {
             abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة');
         }
         $invoice = Invoice::findOrFail($id);
@@ -371,13 +375,15 @@ class FinancialsController extends Controller
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['success' => true, 'message' => 'تم إضافة الدفعة بنجاح']);
             }
+
             return back()->with('success', 'تم إضافة الدفعة بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
             if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء إضافة الدفعة: ' . $e->getMessage()], 422);
+                return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء إضافة الدفعة: '.$e->getMessage()], 422);
             }
-            return back()->withInput()->with('error', 'حدث خطأ أثناء إضافة الدفعة: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'حدث خطأ أثناء إضافة الدفعة: '.$e->getMessage());
         }
     }
 
@@ -387,7 +393,7 @@ class FinancialsController extends Controller
     public function updatePaymentStatus(UpdatePaymentStatusRequest $request, string $id, string $paymentId)
     {
         // التحقق من الصلاحية
-        if (!PermissionHelper::hasPermission('financials.view') && !PermissionHelper::hasPermission('financials.manage')) {
+        if (! PermissionHelper::hasPermission('financials.view') && ! PermissionHelper::hasPermission('financials.manage')) {
             abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة');
         }
         $invoice = Invoice::findOrFail($id);
@@ -409,7 +415,8 @@ class FinancialsController extends Controller
             return back()->with('success', 'تم تحديث حالة الدفعة بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'حدث خطأ أثناء تحديث حالة الدفعة: ' . $e->getMessage());
+
+            return back()->with('error', 'حدث خطأ أثناء تحديث حالة الدفعة: '.$e->getMessage());
         }
     }
 }

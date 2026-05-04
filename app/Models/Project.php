@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,12 +13,15 @@ class Project extends Model
 
     protected $fillable = [
         'name',
+        'name_en',
         'project_number',
         'type',
         'service_id',
         'city',
         'district',
+        'district_en',
         'owner',
+        'owner_en',
         'client_id',
         'value',
         'installments_count',
@@ -38,6 +42,20 @@ class Project extends Model
         'end_date',
         'is_hidden',
     ];
+
+    /**
+     * الاسم المعروض حسب اللغة (إنجليزي مع وجود name_en).
+     */
+    protected function displayName(): Attribute
+    {
+        return Attribute::get(function () {
+            if (app()->getLocale() === 'en' && filled($this->name_en)) {
+                return $this->name_en;
+            }
+
+            return $this->name ?? '';
+        });
+    }
 
     protected $casts = [
         'stages' => 'array',
@@ -138,10 +156,10 @@ class Project extends Model
         $lastProject = self::whereYear('created_at', $year)
             ->orderBy('id', 'desc')
             ->first();
-        
+
         $number = $lastProject ? ((int) substr($lastProject->project_number ?? '0', -4)) + 1 : 1;
-        
-        return 'PRJ-' . $year . '-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+
+        return 'PRJ-'.$year.'-'.str_pad($number, 4, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -149,7 +167,7 @@ class Project extends Model
      */
     public function calculateProgress(): int
     {
-        if (!$this->stages || empty($this->stages)) {
+        if (! $this->stages || empty($this->stages)) {
             return 0;
         }
 
@@ -157,6 +175,7 @@ class Project extends Model
         $totalTasks = $this->tasks()->count();
         if ($totalTasks > 0) {
             $completedTasks = $this->tasks()->where('status', 'done')->count();
+
             return round(($completedTasks / $totalTasks) * 100);
         }
 
@@ -175,7 +194,7 @@ class Project extends Model
     public function calculateStageProgress($stageId): int
     {
         $stage = $this->projectStages()->find($stageId);
-        if (!$stage) {
+        if (! $stage) {
             return 0;
         }
 
@@ -185,6 +204,7 @@ class Project extends Model
         }
 
         $completedTasks = $tasks->where('status', 'done')->count();
+
         return round(($completedTasks / $tasks->count()) * 100);
     }
 
@@ -218,5 +238,10 @@ class Project extends Model
     public function mainWorkflow()
     {
         return $this->hasOne(ProjectWorkflow::class)->whereNull('parent_workflow_id');
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->status === 'مكتمل';
     }
 }

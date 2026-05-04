@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'إدارة المدن - ' . \App\Helpers\SettingsHelper::systemName())
-@section('page-title', 'إدارة المدن')
+@section('title', __('Cities Management') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('Cities Management'))
 
 @push('styles')
 <style>
@@ -47,18 +47,18 @@
 <!-- Header Actions -->
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
     <div>
-        <h1 class="text-2xl md:text-3xl font-bold text-white">إدارة المدن</h1>
-        <p class="text-gray-400 text-sm mt-1">إدارة المدن المستخدمة في النظام</p>
+        <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('Cities Management') }}</h1>
+        <p class="text-gray-400 text-sm mt-1">{{ __('Cities management subtitle') }}</p>
     </div>
     <div class="flex items-center gap-3 w-full sm:w-auto">
         <a href="{{ route('admin.settings.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-arrow-right ml-2"></i>
-            رجوع
+            <i class="fas fa-arrow-right {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Back') }}
         </a>
         @can('create', \App\Models\City::class)
         <a href="{{ route('settings.cities.create') }}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-            <i class="fas fa-plus ml-2"></i>
-            إضافة مدينة جديدة
+            <i class="fas fa-plus {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Add new city') }}
         </a>
         @endcan
     </div>
@@ -70,12 +70,12 @@
     <div class="overflow-x-auto">
         <table class="w-full">
             <thead>
-                <tr class="text-right border-b border-white/10">
-                    <th class="text-gray-400 text-sm font-normal pb-3 px-4">الترتيب</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3 px-4">اسم المدينة</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3 px-4">الكود</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3 px-4">الحالة</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3 px-4">الإجراءات</th>
+                <tr class="text-start border-b border-white/10">
+                    <th class="text-gray-400 text-sm font-normal pb-3 px-4">{{ __('Order') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3 px-4">{{ __('City name') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3 px-4">{{ __('Code') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3 px-4">{{ __('Status') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3 px-4">{{ __('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -86,7 +86,7 @@
                     <td class="py-3 px-4 text-gray-300 text-sm">{{ $city->code ?? '-' }}</td>
                     <td class="py-3 px-4">
                         <span class="inline-block px-3 py-1 rounded-lg text-xs font-semibold {{ $city->is_active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400' }}">
-                            {{ $city->is_active ? 'نشط' : 'غير نشط' }}
+                            {{ $city->is_active ? __('Active') : __('Inactive') }}
                         </span>
                     </td>
                     <td class="py-3 px-4">
@@ -97,7 +97,7 @@
                             </a>
                             @endcan
                             @can('delete', $city)
-                            <form action="{{ route('settings.cities.destroy', $city) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذه المدينة؟')" class="inline">
+                            <form action="{{ route('settings.cities.destroy', $city) }}" method="POST" onsubmit="return confirm(@json(__('Confirm delete city')))" class="inline">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-all duration-200 text-sm">
@@ -115,11 +115,11 @@
     @else
     <div class="text-center py-12">
         <i class="fas fa-city text-6xl text-gray-500 mb-4"></i>
-        <p class="text-gray-400 text-lg">لا توجد مدن</p>
+        <p class="text-gray-400 text-lg">{{ __('No cities yet') }}</p>
         @can('create', \App\Models\City::class)
         <a href="{{ route('settings.cities.create') }}" class="mt-4 inline-block px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200">
-            <i class="fas fa-plus ml-2"></i>
-            إضافة مدينة جديدة
+            <i class="fas fa-plus {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Add new city') }}
         </a>
         @endcan
     </div>

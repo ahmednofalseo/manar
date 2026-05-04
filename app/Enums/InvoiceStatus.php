@@ -11,17 +11,17 @@ enum InvoiceStatus: string
 
     public function label(): string
     {
-        return match($this) {
-            self::UNPAID => 'غير مدفوعة',
-            self::PARTIAL => 'جزئية',
-            self::PAID => 'مدفوعة',
-            self::OVERDUE => 'متأخرة',
+        return match ($this) {
+            self::UNPAID => __('Unpaid'),
+            self::PARTIAL => __('Partial'),
+            self::PAID => __('Paid'),
+            self::OVERDUE => __('Overdue'),
         };
     }
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::UNPAID => 'red',
             self::PARTIAL => 'yellow',
             self::PAID => 'green',

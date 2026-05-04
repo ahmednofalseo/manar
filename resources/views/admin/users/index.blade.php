@@ -201,7 +201,7 @@
     $usersJson = $users->map(function($user) {
         return [
             'id' => $user->id,
-            'name' => $user->name,
+            'name' => $user->display_name,
             'email' => $user->email,
             'phone' => $user->phone ?? '',
             'nationalId' => $user->national_id ?? '',

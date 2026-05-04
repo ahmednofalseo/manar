@@ -295,7 +295,7 @@
     $tasksJson = $tasks->map(function($task) {
         return [
             'id' => $task->id,
-            'title' => $task->title,
+            'title' => $task->display_title,
             'project' => $task->project ? ['name' => $task->project->name] : null,
             'assignee' => $task->assignee ? ['name' => $task->assignee->name] : null,
             'project_stage' => $task->projectStage ? ['stage_name' => $task->projectStage->stage_name] : null,
@@ -612,7 +612,7 @@
                                     <i class="fas fa-arrow-down"></i>
                                 </div>
                                 @endif
-                                <span class="text-white text-sm font-semibold">{{ $task->title }}</span>
+                                <span class="text-white text-sm font-semibold">{{ $task->display_title }}</span>
                             </div>
                         </td>
                         <td class="py-3 text-gray-300 text-sm">{{ $task->project->name ?? 'غير محدد' }}</td>

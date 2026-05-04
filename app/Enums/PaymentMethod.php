@@ -11,11 +11,11 @@ enum PaymentMethod: string
 
     public function label(): string
     {
-        return match($this) {
-            self::CASH => 'نقدي',
-            self::TRANSFER => 'تحويل بنكي',
-            self::CHECK => 'شيك',
-            self::ELECTRONIC => 'إلكتروني',
+        return match ($this) {
+            self::CASH => __('Payment method cash'),
+            self::TRANSFER => __('Payment method bank transfer'),
+            self::CHECK => __('Payment method check'),
+            self::ELECTRONIC => __('Payment method electronic'),
         };
     }
 }

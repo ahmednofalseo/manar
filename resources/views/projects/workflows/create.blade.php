@@ -35,7 +35,7 @@
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div class="w-full sm:w-auto">
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-white break-words">إضافة مسار جديد</h1>
-            <p class="text-gray-400 text-sm mt-1 break-words">{{ $project->name }}</p>
+            <p class="text-gray-400 text-sm mt-1 break-words">{{ $project->display_name }}</p>
         </div>
         <a href="{{ route('projects.workflows.index', $project) }}" class="px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm sm:text-base whitespace-nowrap">
             <i class="fas fa-arrow-right ml-2"></i>

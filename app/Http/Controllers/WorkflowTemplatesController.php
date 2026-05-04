@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreWorkflowTemplateRequest;
-use App\Models\WorkflowTemplate;
-use App\Models\WorkflowStep;
 use App\Models\Service;
+use App\Models\WorkflowStep;
+use App\Models\WorkflowTemplate;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class WorkflowTemplatesController extends Controller
 {
@@ -41,16 +41,16 @@ class WorkflowTemplatesController extends Controller
 
         $serviceId = $request->get('service_id');
         $services = Service::where('is_active', true)->orderBy('name')->get();
-        
+
         $departments = [
-            'معماري' => 'معماري',
-            'إنشائي' => 'إنشائي',
-            'كهربائي' => 'كهربائي',
-            'ميكانيكي' => 'ميكانيكي',
-            'مساحي' => 'مساحي',
-            'دفاع_مدني' => 'دفاع مدني',
-            'بلدي' => 'بلدي',
-            'أخرى' => 'أخرى',
+            'معماري' => __('Dept architectural'),
+            'إنشائي' => __('Dept structural'),
+            'كهربائي' => __('Dept electrical'),
+            'ميكانيكي' => __('Dept mechanical'),
+            'مساحي' => __('Dept surveying'),
+            'دفاع_مدني' => __('Dept civil defense'),
+            'بلدي' => __('Dept municipal'),
+            'أخرى' => __('Dept other'),
         ];
 
         return view('workflow-templates.create', compact('services', 'serviceId', 'departments'));
@@ -79,11 +79,12 @@ class WorkflowTemplatesController extends Controller
             DB::commit();
 
             return redirect()->route('workflow-templates.index')
-                ->with('success', 'تم إنشاء قالب المسار بنجاح');
+                ->with('success', __('Workflow template created successfully'));
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->withInput()
-                ->with('error', 'حدث خطأ أثناء إنشاء القالب: ' . $e->getMessage());
+                ->with('error', __('Workflow template create error', ['message' => $e->getMessage()]));
         }
     }
 
@@ -108,16 +109,16 @@ class WorkflowTemplatesController extends Controller
 
         $workflowTemplate->load('steps');
         $services = Service::where('is_active', true)->orderBy('name')->get();
-        
+
         $departments = [
-            'معماري' => 'معماري',
-            'إنشائي' => 'إنشائي',
-            'كهربائي' => 'كهربائي',
-            'ميكانيكي' => 'ميكانيكي',
-            'مساحي' => 'مساحي',
-            'دفاع_مدني' => 'دفاع مدني',
-            'بلدي' => 'بلدي',
-            'أخرى' => 'أخرى',
+            'معماري' => __('Dept architectural'),
+            'إنشائي' => __('Dept structural'),
+            'كهربائي' => __('Dept electrical'),
+            'ميكانيكي' => __('Dept mechanical'),
+            'مساحي' => __('Dept surveying'),
+            'دفاع_مدني' => __('Dept civil defense'),
+            'بلدي' => __('Dept municipal'),
+            'أخرى' => __('Dept other'),
         ];
 
         return view('workflow-templates.edit', compact('workflowTemplate', 'services', 'departments'));
@@ -149,11 +150,12 @@ class WorkflowTemplatesController extends Controller
             DB::commit();
 
             return redirect()->route('workflow-templates.index')
-                ->with('success', 'تم تحديث قالب المسار بنجاح');
+                ->with('success', __('Workflow template updated successfully'));
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->withInput()
-                ->with('error', 'حدث خطأ أثناء تحديث القالب: ' . $e->getMessage());
+                ->with('error', __('Workflow template update error', ['message' => $e->getMessage()]));
         }
     }
 
@@ -167,12 +169,12 @@ class WorkflowTemplatesController extends Controller
         // التحقق من وجود مسارات مشاريع مرتبطة
         if ($workflowTemplate->projectWorkflows()->count() > 0) {
             return redirect()->route('workflow-templates.index')
-                ->with('error', 'لا يمكن حذف القالب لوجود مسارات مشاريع مرتبطة به');
+                ->with('error', __('Workflow template cannot delete in use'));
         }
 
         $workflowTemplate->delete();
 
         return redirect()->route('workflow-templates.index')
-            ->with('success', 'تم حذف القالب بنجاح');
+            ->with('success', __('Workflow template deleted successfully'));
     }
 }

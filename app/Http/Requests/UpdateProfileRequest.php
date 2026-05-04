@@ -3,8 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UpdateProfileRequest extends FormRequest
 {
@@ -24,7 +24,7 @@ class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         $user = $this->user();
-        
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
@@ -45,15 +45,15 @@ class UpdateProfileRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'الاسم مطلوب',
-            'email.required' => 'البريد الإلكتروني مطلوب',
-            'email.email' => 'البريد الإلكتروني غير صحيح',
-            'email.unique' => 'البريد الإلكتروني مستخدم بالفعل',
-            'password.min' => 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
-            'password.confirmed' => 'تأكيد كلمة المرور غير متطابق',
-            'current_password.required_with' => 'كلمة المرور الحالية مطلوبة لتغيير كلمة المرور',
-            'avatar.image' => 'الصورة الشخصية يجب أن تكون صورة',
-            'avatar.max' => 'حجم الصورة يجب أن يكون أقل من 2 ميجابايت',
+            'name.required' => __('Profile validation name required'),
+            'email.required' => __('Profile validation email required'),
+            'email.email' => __('Profile validation email invalid'),
+            'email.unique' => __('Profile validation email unique'),
+            'password.min' => __('Profile validation password min'),
+            'password.confirmed' => __('Profile validation password confirmed'),
+            'current_password.required_with' => __('Profile validation current password required with'),
+            'avatar.image' => __('Profile validation avatar image'),
+            'avatar.max' => __('Profile validation avatar max'),
         ];
     }
 
@@ -68,8 +68,8 @@ class UpdateProfileRequest extends FormRequest
         $validator->after(function ($validator) {
             // التحقق من كلمة المرور الحالية
             if ($this->filled('password') && $this->filled('current_password')) {
-                if (!Hash::check($this->current_password, $this->user()->password)) {
-                    $validator->errors()->add('current_password', 'كلمة المرور الحالية غير صحيحة');
+                if (! Hash::check($this->current_password, $this->user()->password)) {
+                    $validator->errors()->add('current_password', __('Profile validation current password incorrect'));
                 }
             }
         });

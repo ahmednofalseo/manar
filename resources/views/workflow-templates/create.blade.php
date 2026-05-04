@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'إنشاء قالب مسار - ' . \App\Helpers\SettingsHelper::systemName())
-@section('page-title', 'إنشاء قالب مسار')
+@section('title', __('Create workflow template') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('Create workflow template'))
 
 @push('styles')
 <style>
@@ -39,10 +39,10 @@
 <div x-data="workflowBuilder()" class="max-w-6xl mx-auto">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl md:text-3xl font-bold text-white">إنشاء قالب مسار جديد</h1>
+        <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('Create new workflow template') }}</h1>
         <a href="{{ route('workflow-templates.index') }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-            <i class="fas fa-arrow-right ml-2"></i>
-            رجوع
+            <i class="fas fa-arrow-right {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Back') }}
         </a>
     </div>
 
@@ -53,10 +53,10 @@
         <div class="space-y-6">
             <!-- Template Info -->
             <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-                <h2 class="text-xl font-bold text-white mb-4">معلومات القالب</h2>
+                <h2 class="text-xl font-bold text-white mb-4">{{ __('Template information') }}</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="select-wrapper">
-                        <label class="block text-gray-300 text-sm mb-2">الخدمة <span class="text-red-400">*</span></label>
+                        <label class="block text-gray-300 text-sm mb-2">{{ __('Service') }} <span class="text-red-400">*</span></label>
                         <select 
                             name="service_id" 
                             x-model="serviceId"
@@ -64,7 +64,7 @@
                             class="w-full bg-[#173343]/90 border-2 border-white/30 rounded-lg px-4 py-3 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#1db8f8] focus:border-[#1db8f8] transition-all duration-200"
                             style="background-color: rgba(23, 51, 67, 0.9); color: #ffffff; font-weight: 600; max-width: 100%;"
                         >
-                            <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">اختر الخدمة</option>
+                            <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ __('Select service') }}</option>
                             @foreach($services as $service)
                             <option value="{{ $service->id }}" {{ old('service_id', $serviceId) == $service->id ? 'selected' : '' }} style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">
                                 {{ $service->name }}
@@ -77,14 +77,14 @@
                     </div>
 
                     <div>
-                        <label class="block text-gray-300 text-sm mb-2">اسم القالب <span class="text-red-400">*</span></label>
+                        <label class="block text-gray-300 text-sm mb-2">{{ __('Template name') }} <span class="text-red-400">*</span></label>
                         <input 
                             type="text" 
                             name="name" 
                             x-model="templateName"
                             required
                             class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                            placeholder="مثال: مسار تصميم كامل"
+                            placeholder="{{ __('Template name placeholder') }}"
                         >
                         @error('name')
                         <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
@@ -92,13 +92,13 @@
                     </div>
 
                     <div class="md:col-span-2">
-                        <label class="block text-gray-300 text-sm mb-2">الوصف</label>
+                        <label class="block text-gray-300 text-sm mb-2">{{ __('Description') }}</label>
                         <textarea 
                             name="description" 
                             x-model="templateDescription"
                             rows="2"
                             class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                            placeholder="وصف مختصر للقالب..."
+                            placeholder="{{ __('Template description placeholder') }}"
                         ></textarea>
                     </div>
 
@@ -111,7 +111,7 @@
                                 x-model="isDefault"
                                 class="w-5 h-5 rounded border-white/10 bg-white/5 text-primary-500 focus:ring-primary-400/40"
                             >
-                            <span class="text-gray-300">قالب افتراضي</span>
+                            <span class="text-gray-300">{{ __('Default template') }}</span>
                         </label>
                         <label class="flex items-center gap-3 cursor-pointer">
                             <input 
@@ -119,10 +119,9 @@
                                 name="is_active" 
                                 value="1"
                                 x-model="isActive"
-                                checked
                                 class="w-5 h-5 rounded border-white/10 bg-white/5 text-primary-500 focus:ring-primary-400/40"
                             >
-                            <span class="text-gray-300">نشط</span>
+                            <span class="text-gray-300">{{ __('Active') }}</span>
                         </label>
                     </div>
                 </div>
@@ -131,14 +130,14 @@
             <!-- Steps Builder -->
             <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold text-white">خطوات المسار</h2>
+                    <h2 class="text-xl font-bold text-white">{{ __('Workflow steps') }}</h2>
                     <button 
                         type="button"
                         @click="addStep()"
                         class="px-4 py-2 bg-[#1db8f8] hover:bg-[#1db8f8]/80 text-white rounded-lg transition-all duration-200"
                     >
-                        <i class="fas fa-plus ml-2"></i>
-                        إضافة خطوة
+                        <i class="fas fa-plus {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                        {{ __('Add step') }}
                     </button>
                 </div>
 
@@ -152,23 +151,23 @@
                                 <div class="flex-1 space-y-4">
                                     <div class="flex items-center gap-3">
                                         <i class="fas fa-grip-vertical text-gray-400 cursor-move"></i>
-                                        <span class="text-[#1db8f8] font-bold" x-text="'خطوة ' + (index + 1)"></span>
+                                        <span class="text-[#1db8f8] font-bold" x-text="stepTitle(index)"></span>
                                     </div>
 
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-gray-300 text-sm mb-2">اسم الخطوة <span class="text-red-400">*</span></label>
+                                            <label class="block text-gray-300 text-sm mb-2">{{ __('Step name') }} <span class="text-red-400">*</span></label>
                                             <input 
                                                 type="text" 
                                                 x-model="step.name"
                                                 required
                                                 class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm"
-                                                placeholder="مثال: التصميم المعماري"
+                                                placeholder="{{ __('Step name placeholder') }}"
                                             >
                                         </div>
 
                                         <div class="select-wrapper">
-                                            <label class="block text-gray-300 text-sm mb-2">القسم <span class="text-red-400">*</span></label>
+                                            <label class="block text-gray-300 text-sm mb-2">{{ __('Department') }} <span class="text-red-400">*</span></label>
                                             <select 
                                                 x-model="step.department"
                                                 required
@@ -182,7 +181,7 @@
                                         </div>
 
                                         <div>
-                                            <label class="block text-gray-300 text-sm mb-2">المدة بالأيام <span class="text-red-400">*</span></label>
+                                            <label class="block text-gray-300 text-sm mb-2">{{ __('Duration in days') }} <span class="text-red-400">*</span></label>
                                             <input 
                                                 type="number" 
                                                 x-model.number="step.duration"
@@ -195,7 +194,7 @@
                                         </div>
 
                                         <div>
-                                            <label class="block text-gray-300 text-sm mb-2">الترتيب</label>
+                                            <label class="block text-gray-300 text-sm mb-2">{{ __('Order') }}</label>
                                             <input 
                                                 type="number" 
                                                 x-model.number="step.order"
@@ -204,17 +203,17 @@
                                                 class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm opacity-60 cursor-not-allowed"
                                                 :value="index"
                                             >
-                                            <p class="text-xs text-gray-400 mt-1">سيتم تحديث الترتيب تلقائياً عند السحب</p>
+                                            <p class="text-xs text-gray-400 mt-1">{{ __('Order updates on drag hint') }}</p>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-gray-300 text-sm mb-2">الوصف</label>
+                                        <label class="block text-gray-300 text-sm mb-2">{{ __('Description') }}</label>
                                         <textarea 
                                             x-model="step.description"
                                             rows="2"
                                             class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm"
-                                            placeholder="وصف الخطوة..."
+                                            placeholder="{{ __('Step description placeholder') }}"
                                         ></textarea>
                                     </div>
 
@@ -226,20 +225,19 @@
                                                 class="w-4 h-4 rounded border-white/10 bg-white/5 text-primary-500 focus:ring-primary-400/40"
                                             >
                                             <span class="text-gray-300 text-sm">
-                                                <i class="fas fa-sitemap ml-1 text-[#1db8f8]"></i>
-                                                يمكن تنفيذها بالتوازي
+                                                <i class="fas fa-sitemap {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }} text-[#1db8f8]"></i>
+                                                {{ __('Can run in parallel') }}
                                             </span>
                                         </label>
                                         <label class="flex items-center gap-2 cursor-pointer">
                                             <input 
                                                 type="checkbox" 
                                                 x-model="step.is_required"
-                                                checked
                                                 class="w-4 h-4 rounded border-white/10 bg-white/5 text-primary-500 focus:ring-primary-400/40"
                                             >
                                             <span class="text-gray-300 text-sm">
-                                                <i class="fas fa-check-circle ml-1 text-green-400"></i>
-                                                خطوة مطلوبة
+                                                <i class="fas fa-check-circle {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }} text-green-400"></i>
+                                                {{ __('Required workflow step') }}
                                             </span>
                                         </label>
                                         <label class="flex items-center gap-2 cursor-pointer">
@@ -249,8 +247,8 @@
                                                 class="w-4 h-4 rounded border-white/10 bg-white/5 text-primary-500 focus:ring-primary-400/40"
                                             >
                                             <span class="text-gray-300 text-sm">
-                                                <i class="fas fa-check-double ml-1 text-yellow-400"></i>
-                                                تتطلب موافقة
+                                                <i class="fas fa-check-double {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }} text-yellow-400"></i>
+                                                {{ __('Requires approval') }}
                                             </span>
                                         </label>
                                         <label class="flex items-center gap-2 cursor-pointer">
@@ -260,8 +258,8 @@
                                                 class="w-4 h-4 rounded border-white/10 bg-white/5 text-primary-500 focus:ring-primary-400/40"
                                             >
                                             <span class="text-gray-300 text-sm">
-                                                <i class="fas fa-file-upload ml-1 text-blue-400"></i>
-                                                تتطلب ملفات
+                                                <i class="fas fa-file-upload {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }} text-blue-400"></i>
+                                                {{ __('Requires files') }}
                                             </span>
                                         </label>
                                     </div>
@@ -282,7 +280,7 @@
 
                     <div x-show="steps.length === 0" class="text-center py-8 text-gray-400">
                         <i class="fas fa-inbox text-4xl mb-2"></i>
-                        <p>لا توجد خطوات. اضغط "إضافة خطوة" لبدء البناء</p>
+                        <p>{{ __('No workflow steps hint') }}</p>
                     </div>
                 </div>
             </div>
@@ -304,7 +302,7 @@
             <!-- Actions -->
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
                 <a href="{{ route('workflow-templates.index') }}" class="px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
-                    إلغاء
+                    {{ __('Cancel') }}
                 </a>
                 <button 
                     type="submit" 
@@ -312,9 +310,9 @@
                     :class="(steps.length === 0 || loading) ? 'opacity-50 cursor-not-allowed' : ''"
                     class="px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200"
                 >
-                    <i class="fas fa-save ml-2"></i>
-                    <span x-show="!loading">حفظ القالب</span>
-                    <span x-show="loading">جاري الحفظ...</span>
+                    <i class="fas fa-save {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                    <span x-show="!loading">{{ __('Save workflow template') }}</span>
+                    <span x-show="loading">{{ __('Saving') }}</span>
                 </button>
             </div>
         </div>
@@ -322,8 +320,24 @@
 </div>
 
 @push('scripts')
+@php
+    $wfI18n = [
+        'confirmDeleteStep' => __('Confirm delete workflow step'),
+        'atLeastOneStep' => __('Workflow add at least one step'),
+        'selectService' => __('Workflow select service alert'),
+        'templateNameRequired' => __('Workflow template name required alert'),
+        'stepNameRequired' => __('Workflow step name required alert'),
+        'stepDepartmentRequired' => __('Workflow step department required alert'),
+        'stepDurationRequired' => __('Workflow step duration required alert'),
+        'saveError' => __('Workflow save error'),
+        'stepPrefix' => __('Step'),
+        'defaultDepartment' => array_key_first($departments),
+    ];
+@endphp
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
+const wfI18n = @json($wfI18n);
+
 function workflowBuilder() {
     return {
         serviceId: '{{ old("service_id", $serviceId ?? "") }}',
@@ -335,8 +349,11 @@ function workflowBuilder() {
         loading: false,
         sortableInstance: null,
 
+        stepTitle(index) {
+            return wfI18n.stepPrefix + ' ' + (index + 1);
+        },
+
         init() {
-            // Initialize Sortable after a short delay to ensure DOM is ready
             this.$nextTick(() => {
                 if (this.steps.length > 0) {
                     this.initSortable();
@@ -348,7 +365,7 @@ function workflowBuilder() {
             const newStep = {
                 name: '',
                 description: '',
-                department: 'معماري',
+                department: wfI18n.defaultDepartment || 'معماري',
                 duration: 7,
                 order: this.steps.length,
                 is_parallel: false,
@@ -364,14 +381,12 @@ function workflowBuilder() {
         },
 
         removeStep(index) {
-            if (confirm('هل أنت متأكد من حذف هذه الخطوة؟')) {
+            if (confirm(wfI18n.confirmDeleteStep)) {
                 this.steps.splice(index, 1);
-                // Update orders
                 this.steps.forEach((step, i) => {
                     step.order = i;
                 });
                 
-                // Reinitialize Sortable after removal
                 this.$nextTick(() => {
                     this.initSortable();
                 });
@@ -382,7 +397,6 @@ function workflowBuilder() {
             const container = document.getElementById('steps-container');
             if (!container) return;
 
-            // Destroy existing Sortable instance if any
             if (this.sortableInstance) {
                 this.sortableInstance.destroy();
             }
@@ -391,13 +405,11 @@ function workflowBuilder() {
                 animation: 150,
                 handle: '.fa-grip-vertical',
                 onEnd: (evt) => {
-                    // Reorder steps array
                     const oldIndex = evt.oldIndex;
                     const newIndex = evt.newIndex;
                     const movedStep = this.steps.splice(oldIndex, 1)[0];
                     this.steps.splice(newIndex, 0, movedStep);
                     
-                    // Update orders after drag
                     this.steps.forEach((step, i) => {
                         step.order = i;
                     });
@@ -409,49 +421,42 @@ function workflowBuilder() {
             event.preventDefault();
             
             if (this.steps.length === 0) {
-                alert('يجب إضافة خطوة واحدة على الأقل');
+                alert(wfI18n.atLeastOneStep);
                 return false;
             }
 
-            // Validate service
             if (!this.serviceId || this.serviceId === '') {
-                alert('يرجى اختيار الخدمة');
+                alert(wfI18n.selectService);
                 return false;
             }
 
-            // Validate template name
             if (!this.templateName || (typeof this.templateName === 'string' && this.templateName.trim() === '')) {
-                alert('يرجى إدخال اسم القالب');
+                alert(wfI18n.templateNameRequired);
                 return false;
             }
 
-            // Validate all steps
             for (let i = 0; i < this.steps.length; i++) {
                 const step = this.steps[i];
                 
-                // Trim and check name
                 if (!step.name || (typeof step.name === 'string' && step.name.trim() === '')) {
-                    alert(`يرجى إدخال اسم الخطوة ${i + 1}`);
+                    alert(wfI18n.stepNameRequired.replace('%s', String(i + 1)));
                     return false;
                 }
                 
-                // Check department
                 if (!step.department || (typeof step.department === 'string' && step.department.trim() === '')) {
-                    alert(`يرجى اختيار القسم للخطوة ${i + 1}`);
+                    alert(wfI18n.stepDepartmentRequired.replace('%s', String(i + 1)));
                     return false;
                 }
                 
-                // Check duration - convert to number and check if valid
                 let duration = step.duration;
                 if (typeof duration === 'string') {
                     duration = parseInt(duration, 10);
                 }
                 if (typeof duration !== 'number' || isNaN(duration) || duration < 1) {
-                    alert(`يرجى إدخال مدة صحيحة (أكبر من 0) للخطوة ${i + 1}`);
+                    alert(wfI18n.stepDurationRequired.replace('%s', String(i + 1)));
                     return false;
                 }
                 
-                // Update step with trimmed values and numeric duration
                 if (typeof step.name === 'string') {
                     step.name = step.name.trim();
                 }
@@ -459,17 +464,15 @@ function workflowBuilder() {
                 step.order = i;
             }
 
-            // Show loading state
             this.loading = true;
             
-            // Submit form - use requestSubmit to ensure all handlers run, or native submit
             const form = event.target;
             try {
                 form.submit();
             } catch (e) {
                 this.loading = false;
                 console.error('Form submit error:', e);
-                alert('حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.');
+                alert(wfI18n.saveError);
             }
         }
     }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateProfileRequest;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +15,7 @@ class ProfileController extends Controller
     public function edit()
     {
         $user = Auth::user();
+
         return view('profile.edit', compact('user'));
     }
 
@@ -46,7 +46,7 @@ class ProfileController extends Controller
         }
 
         // تحديث كلمة المرور إذا تم إدخالها
-        if (!empty($data['password'])) {
+        if (! empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         } else {
             unset($data['password']);
@@ -56,6 +56,6 @@ class ProfileController extends Controller
         $user->update($data);
 
         return redirect()->route('profile.edit')
-            ->with('success', 'تم تحديث بياناتك الشخصية بنجاح');
+            ->with('success', __('Profile updated successfully'));
     }
 }

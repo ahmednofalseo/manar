@@ -33,7 +33,7 @@
 <!-- Header Actions -->
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
     <div>
-        <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">{{ $task->title }}</h1>
+        <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">{{ $task->display_title }}</h1>
         <p class="text-gray-400 text-sm">تاريخ الإنشاء: {{ $task->created_at->format('Y-m-d') }}</p>
     </div>
     <div class="flex items-center gap-3">
@@ -311,14 +311,14 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
     <!-- Description -->
     <div class="lg:col-span-2 glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-        <h2 class="text-xl font-bold text-white mb-4">وصف المهمة</h2>
+        <h2 class="text-xl font-bold text-white mb-4">{{ __('Task Description') }}</h2>
         <p class="text-gray-300 leading-relaxed">
-            {{ $task->description ?? 'لا يوجد وصف للمهمة' }}
+            {{ $task->display_description ?: __('No task description') }}
         </p>
-        @if($task->manager_notes)
+        @if($task->display_manager_notes)
         <div class="mt-4 pt-4 border-t border-white/10">
-            <h3 class="text-lg font-bold text-white mb-2">ملاحظات مدير المشروع</h3>
-            <p class="text-gray-300 text-sm">{{ $task->manager_notes }}</p>
+            <h3 class="text-lg font-bold text-white mb-2">{{ __('Manager Notes') }}</h3>
+            <p class="text-gray-300 text-sm">{{ $task->display_manager_notes }}</p>
         </div>
         @endif
     </div>

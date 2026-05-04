@@ -1,14 +1,23 @@
 @php
     $workflows = $project->workflows ?? collect();
+    $workflowDeptLabels = [
+        'معماري' => __('Dept architectural'),
+        'إنشائي' => __('Dept structural'),
+        'كهربائي' => __('Dept electrical'),
+        'ميكانيكي' => __('Dept mechanical'),
+        'مساحي' => __('Dept surveying'),
+        'دفاع_مدني' => __('Dept civil defense'),
+        'بلدي' => __('Dept municipal'),
+        'أخرى' => __('Dept other'),
+    ];
 @endphp
 
 <div x-data="workflowTab()">
     @if($workflows->count() > 0)
-    <!-- Workflows Tabs -->
     <div class="glass-card rounded-xl md:rounded-2xl mb-4 md:mb-6">
         <div class="border-b border-white/10 flex flex-wrap overflow-x-auto">
             @foreach($workflows as $index => $workflow)
-            <button 
+            <button
                 @click="activeWorkflow = {{ $workflow->id }}"
                 :class="activeWorkflow === {{ $workflow->id }} ? 'border-b-2 border-primary-400 text-primary-400' : 'text-gray-400 hover:text-white'"
                 class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
@@ -16,7 +25,7 @@
                 <i class="fas fa-sitemap"></i>
                 {{ $workflow->name }}
                 @if($workflow->is_parallel)
-                <span class="bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded text-xs">متوازي</span>
+                <span class="bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded text-xs">{{ __('Workflow parallel badge') }}</span>
                 @endif
                 <span class="bg-primary-400/20 text-primary-400 px-2 py-0.5 rounded text-xs">{{ $workflow->progress }}%</span>
             </button>
@@ -24,10 +33,8 @@
         </div>
     </div>
 
-    <!-- Workflow Content -->
     @foreach($workflows as $workflow)
     <div x-show="activeWorkflow === {{ $workflow->id }}" class="space-y-6">
-        <!-- Workflow Header -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
@@ -41,11 +48,11 @@
                     <div class="flex items-center gap-4 mt-3 text-sm">
                         <span class="text-gray-400">
                             <i class="fas fa-calendar ml-1"></i>
-                            البدء: {{ $workflow->start_date ? $workflow->start_date->format('Y-m-d') : 'غير محدد' }}
+                            {{ __('Workflow start label') }}: {{ $workflow->start_date ? $workflow->start_date->format('Y-m-d') : __('Not specified') }}
                         </span>
                         <span class="text-gray-400">
                             <i class="fas fa-calendar-check ml-1"></i>
-                            الانتهاء المتوقع: {{ $workflow->expected_end_date ? $workflow->expected_end_date->format('Y-m-d') : 'غير محدد' }}
+                            {{ __('Workflow expected end label') }}: {{ $workflow->expected_end_date ? $workflow->expected_end_date->format('Y-m-d') : __('Not specified') }}
                         </span>
                     </div>
                 </div>
@@ -56,21 +63,20 @@
                     @can('update', $project)
                     <a href="{{ route('projects.workflows.show', [$project, $workflow]) }}" class="px-4 py-2 bg-[#1db8f8] hover:bg-[#1db8f8]/80 text-white rounded-lg transition-all duration-200">
                         <i class="fas fa-cog ml-2"></i>
-                        إدارة
+                        {{ __('Manage') }}
                     </a>
                     @endcan
                 </div>
             </div>
         </div>
 
-        <!-- Steps Timeline -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
             <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-bold text-white">خطوات المسار</h3>
+                <h3 class="text-lg font-bold text-white">{{ __('Workflow steps section title') }}</h3>
                 @can('update', $project)
                 <a href="{{ route('projects.workflows.show', [$project, $workflow]) }}" class="px-3 py-2 bg-[#1db8f8]/20 hover:bg-[#1db8f8]/30 text-[#1db8f8] rounded-lg transition-all duration-200 text-sm">
                     <i class="fas fa-cog ml-1"></i>
-                    إدارة المسار
+                    {{ __('Manage workflow') }}
                 </a>
                 @endcan
             </div>
@@ -87,13 +93,13 @@
                                     <h4 class="text-lg font-bold text-white">{{ $step->name }}</h4>
                                     <span class="bg-{{ $step->status === 'completed' ? 'green' : ($step->status === 'in_progress' ? 'yellow' : ($step->status === 'blocked' ? 'red' : 'blue')) }}-500/20 text-{{ $step->status === 'completed' ? 'green' : ($step->status === 'in_progress' ? 'yellow' : ($step->status === 'blocked' ? 'red' : 'blue')) }}-400 px-2 py-0.5 rounded text-xs whitespace-nowrap">
                                         @if($step->status === 'completed')
-                                        <i class="fas fa-check-circle ml-1"></i> مكتمل
+                                        <i class="fas fa-check-circle ml-1"></i> {{ __('Workflow step completed') }}
                                         @elseif($step->status === 'in_progress')
-                                        <i class="fas fa-spinner fa-spin ml-1"></i> قيد التنفيذ
+                                        <i class="fas fa-spinner fa-spin ml-1"></i> {{ __('Workflow step in progress') }}
                                         @elseif($step->status === 'blocked')
-                                        <i class="fas fa-ban ml-1"></i> معطل
+                                        <i class="fas fa-ban ml-1"></i> {{ __('Workflow step blocked') }}
                                         @else
-                                        <i class="fas fa-clock ml-1"></i> معلق
+                                        <i class="fas fa-clock ml-1"></i> {{ __('Workflow step pending') }}
                                         @endif
                                     </span>
                                 </div>
@@ -103,11 +109,11 @@
                                 <div class="flex flex-wrap items-center gap-4 text-sm">
                                     <span class="text-gray-400 flex items-center gap-1">
                                         <i class="fas fa-building text-[#1db8f8]"></i>
-                                        {{ $step->department }}
+                                        {{ $workflowDeptLabels[$step->department] ?? $step->department }}
                                     </span>
                                     <span class="text-gray-400 flex items-center gap-1">
                                         <i class="fas fa-clock text-yellow-400"></i>
-                                        {{ $step->duration_days }} يوم
+                                        {{ $step->duration_days }} {{ __('Days unit') }}
                                     </span>
                                     @if($step->assignedUser)
                                     <span class="text-gray-400 flex items-center gap-1">
@@ -118,19 +124,19 @@
                                     @if($step->expected_end_date)
                                     <span class="text-gray-400 flex items-center gap-1">
                                         <i class="fas fa-calendar text-blue-400"></i>
-                                        متوقع: {{ $step->expected_end_date->format('Y-m-d') }}
+                                        {{ __('Expected short') }}: {{ $step->expected_end_date->format('Y-m-d') }}
                                     </span>
                                     @endif
                                     @if($step->actual_completion_date)
                                     <span class="text-green-400 flex items-center gap-1">
                                         <i class="fas fa-check text-green-400"></i>
-                                        اكتمل: {{ $step->actual_completion_date->format('Y-m-d') }}
+                                        {{ __('Completed short') }}: {{ $step->actual_completion_date->format('Y-m-d') }}
                                     </span>
                                     @endif
                                     @if($step->delay_days > 0)
                                     <span class="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-xs flex items-center gap-1">
                                         <i class="fas fa-exclamation-triangle"></i>
-                                        تأخير {{ $step->delay_days }} يوم
+                                        {{ __('Delayed by days count', ['count' => $step->delay_days]) }}
                                     </span>
                                     @endif
                                 </div>
@@ -144,14 +150,13 @@
     </div>
     @endforeach
     @else
-    <!-- Empty State -->
     <div class="glass-card rounded-xl md:rounded-2xl p-12 text-center">
         <i class="fas fa-sitemap text-6xl text-gray-500 mb-4"></i>
-        <p class="text-gray-400 text-lg mb-4">لا توجد مسارات لهذا المشروع</p>
+        <p class="text-gray-400 text-lg mb-4">{{ __('No workflows for project') }}</p>
         @can('update', $project)
         <a href="{{ route('projects.workflows.create', $project) }}" class="inline-block px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200">
             <i class="fas fa-plus ml-2"></i>
-            إضافة مسار جديد
+            {{ __('Add workflow') }}
         </a>
         @endcan
     </div>
@@ -171,9 +176,9 @@
         top: 0;
         bottom: 0;
         width: 3px;
-        background: linear-gradient(to bottom, 
-            rgba(29, 184, 248, 0.3) 0%, 
-            rgba(29, 184, 248, 0.5) 50%, 
+        background: linear-gradient(to bottom,
+            rgba(29, 184, 248, 0.3) 0%,
+            rgba(29, 184, 248, 0.5) 50%,
             rgba(29, 184, 248, 0.3) 100%);
         border-radius: 2px;
     }
@@ -210,12 +215,12 @@
         box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
     }
     @keyframes pulse {
-        0%, 100% { 
-            opacity: 1; 
+        0%, 100% {
+            opacity: 1;
             transform: scale(1);
         }
-        50% { 
-            opacity: 0.7; 
+        50% {
+            opacity: 0.7;
             transform: scale(1.1);
         }
     }

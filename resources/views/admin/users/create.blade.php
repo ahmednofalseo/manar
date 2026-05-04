@@ -34,14 +34,29 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
                 <label class="block text-gray-300 text-sm mb-2">{{ __('Full Name') }} <span class="text-red-400">*</span></label>
-                <input 
-                    type="text" 
-                    name="name" 
+                <input
+                    type="text"
+                    name="name"
                     required
+                    value="{{ old('name') }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                     placeholder="{{ __('Example: Mohammed Ahmed Al-Ali') }}"
                 >
                 @error('name')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Full Name (English)') }}</label>
+                <input
+                    type="text"
+                    name="name_en"
+                    value="{{ old('name_en') }}"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    placeholder="{{ __('Employee name English placeholder') }}"
+                >
+                @error('name_en')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
                 @enderror
             </div>

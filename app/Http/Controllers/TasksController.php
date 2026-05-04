@@ -2,23 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Task;
-use App\Models\Project;
-use App\Models\User;
-use App\Models\TaskAttachment;
+use App\Events\TaskCommented;
+use App\Events\TaskCreated;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
-use App\Events\TaskCreated;
-use App\Events\TaskCommented;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\TaskAttachment;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class TasksController extends Controller
 {
-
     /**
      * Display a listing of tasks.
      */
@@ -28,18 +27,18 @@ class TasksController extends Controller
         $query = Task::with(['project', 'projectStage', 'assignee'])->whereNotNull('project_id');
 
         // تطبيق فلاتر الصلاحيات - المستخدم يرى المهام المخصصة له فقط
-        if (!$user->hasRole('super_admin')) {
+        if (! $user->hasRole('super_admin')) {
             // للمستخدمين العاديين: يروا المهام المسندة إليهم أو المهام في المشاريع التي هم مديرين عليها أو أعضاء في فريقها
             $projectIds = Project::where('is_hidden', false) // إخفاء المشاريع المخفية للمستخدمين العاديين فقط
-                ->where(function($q) use ($user) {
+                ->where(function ($q) use ($user) {
                     $q->where('project_manager_id', $user->id)
-                      ->orWhereJsonContains('team_members', (string)$user->id)
-                      ->orWhereJsonContains('team_members', $user->id);
+                        ->orWhereJsonContains('team_members', (string) $user->id)
+                        ->orWhereJsonContains('team_members', $user->id);
                 })->pluck('id');
-            
-            $query->where(function($q) use ($user, $projectIds) {
+
+            $query->where(function ($q) use ($user, $projectIds) {
                 $q->where('assignee_id', $user->id) // المهام المسندة مباشرة للمستخدم
-                  ->orWhereIn('project_id', $projectIds); // المهام في مشاريعه
+                    ->orWhereIn('project_id', $projectIds); // المهام في مشاريعه
             });
         }
         // Super Admin يرى الكل (لا فلاتر)
@@ -47,12 +46,12 @@ class TasksController extends Controller
         // الفلاتر
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhereHas('project', function($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('project', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -62,7 +61,7 @@ class TasksController extends Controller
 
         if ($request->filled('project_stage_id')) {
             // البحث بالاسم (stage_name)
-            $query->whereHas('projectStage', function($q) use ($request) {
+            $query->whereHas('projectStage', function ($q) use ($request) {
                 $q->where('stage_name', $request->project_stage_id);
             });
         }
@@ -89,22 +88,22 @@ class TasksController extends Controller
 
         // KPIs - استخدام نفس قاعدة الاستعلام مع فلاتر الصلاحيات
         $baseQuery = Task::query()->whereNotNull('project_id');
-        
+
         // تطبيق نفس فلاتر الصلاحيات على KPIs
-        if (!$user->hasRole('super_admin')) {
+        if (! $user->hasRole('super_admin')) {
             $projectIds = Project::where('is_hidden', false) // إخفاء المشاريع المخفية للمستخدمين العاديين فقط
-                ->where(function($q) use ($user) {
+                ->where(function ($q) use ($user) {
                     $q->where('project_manager_id', $user->id)
-                      ->orWhereJsonContains('team_members', (string)$user->id)
-                      ->orWhereJsonContains('team_members', $user->id);
+                        ->orWhereJsonContains('team_members', (string) $user->id)
+                        ->orWhereJsonContains('team_members', $user->id);
                 })->pluck('id');
-            
-            $baseQuery->where(function($q) use ($user, $projectIds) {
+
+            $baseQuery->where(function ($q) use ($user, $projectIds) {
                 $q->where('assignee_id', $user->id)
-                  ->orWhereIn('project_id', $projectIds);
+                    ->orWhereIn('project_id', $projectIds);
             });
         }
-        
+
         $totalTasks = (clone $baseQuery)->count();
         $inProgressTasks = (clone $baseQuery)->where('status', 'in_progress')->count();
         $completedTasks = (clone $baseQuery)->where('status', 'done')->count();
@@ -117,14 +116,14 @@ class TasksController extends Controller
         $projects = Project::select('id', 'name', 'project_number')
             ->with('projectStages:id,project_id,stage_name')
             ->get();
-        
+
         $engineers = User::select('id', 'name')
-            ->whereHas('roles', function($q) {
+            ->whereHas('roles', function ($q) {
                 $q->whereIn('name', ['engineer', 'project_manager']);
             })
             ->orderBy('name')
             ->get();
-        
+
         // الحصول على جميع المراحل المميزة (تحسين - select فقط الحقول المطلوبة)
         $stages = \App\Models\ProjectStage::select('stage_name')
             ->distinct()
@@ -132,57 +131,57 @@ class TasksController extends Controller
             ->pluck('stage_name');
 
         // ========== الإحصائيات الجديدة ==========
-        
+
         // 1. نسبة إنجاز المشاريع (متوسط نسبة التقدم)
         $projectsQuery = Project::query();
-        if (!$user->hasRole('super_admin')) {
+        if (! $user->hasRole('super_admin')) {
             // للمستخدمين العاديين: إخفاء المشاريع المخفية
             $projectsQuery->where('is_hidden', false);
         }
         if ($user->hasRole('project_manager')) {
             $projectsQuery->where('project_manager_id', $user->id)
-                ->orWhereHas('teamUsers', function($q) use ($user) {
+                ->orWhereHas('teamUsers', function ($q) use ($user) {
                     $q->where('users.id', $user->id);
                 });
         }
         $totalProjects = $projectsQuery->count();
-        $averageProjectProgress = $totalProjects > 0 
-            ? round($projectsQuery->avg('progress') ?? 0) 
+        $averageProjectProgress = $totalProjects > 0
+            ? round($projectsQuery->avg('progress') ?? 0)
             : 0;
 
         // 2. أفضل 5 مهندسين (حسب عدد المهام المنجزة ونسبة الإنجاز)
-        $topEngineers = User::whereHas('roles', function($q) {
+        $topEngineers = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['engineer', 'project_manager']);
         })
-        ->withCount([
-            'assignedTasks as completed_tasks_count' => function($query) {
-                $query->where('status', 'done');
-            },
-            'assignedTasks as total_tasks_count'
-        ])
-        ->whereHas('assignedTasks')
-        ->get()
-        ->map(function($engineer) {
-            $totalTasks = $engineer->total_tasks_count ?? 0;
-            $completedTasks = $engineer->completed_tasks_count ?? 0;
-            $completionRate = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
-            
-            return [
-                'id' => $engineer->id,
-                'name' => $engineer->name,
-                'job_title' => $engineer->job_title,
-                'avatar' => $engineer->avatar,
-                'completed_tasks' => $completedTasks,
-                'total_tasks' => $totalTasks,
-                'completion_rate' => $completionRate,
-            ];
-        })
-        ->sortByDesc(function($engineer) {
-            // ترتيب حسب نسبة الإنجاز أولاً، ثم عدد المهام المنجزة
-            return [$engineer['completion_rate'], $engineer['completed_tasks']];
-        })
-        ->take(5)
-        ->values();
+            ->withCount([
+                'assignedTasks as completed_tasks_count' => function ($query) {
+                    $query->where('status', 'done');
+                },
+                'assignedTasks as total_tasks_count',
+            ])
+            ->whereHas('assignedTasks')
+            ->get()
+            ->map(function ($engineer) {
+                $totalTasks = $engineer->total_tasks_count ?? 0;
+                $completedTasks = $engineer->completed_tasks_count ?? 0;
+                $completionRate = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
+
+                return [
+                    'id' => $engineer->id,
+                    'name' => $engineer->name,
+                    'job_title' => $engineer->job_title,
+                    'avatar' => $engineer->avatar,
+                    'completed_tasks' => $completedTasks,
+                    'total_tasks' => $totalTasks,
+                    'completion_rate' => $completionRate,
+                ];
+            })
+            ->sortByDesc(function ($engineer) {
+                // ترتيب حسب نسبة الإنجاز أولاً، ثم عدد المهام المنجزة
+                return [$engineer['completion_rate'], $engineer['completed_tasks']];
+            })
+            ->take(5)
+            ->values();
 
         // 3. عدد المهام حسب المرحلة
         $tasksByStatus = [
@@ -197,23 +196,23 @@ class TasksController extends Controller
         $completedProjects = (clone $projectsQuery)->where('status', 'مكتمل')->count();
         $inProgressProjects = (clone $projectsQuery)->where('status', 'قيد التنفيذ')->count();
         $delayedProjects = (clone $projectsQuery)->where('status', 'متوقف')->count();
-        
+
         // 2. بيانات أفضل المهندسين للـ Chart
-        $topEngineersForChart = $topEngineers->map(function($engineer) {
+        $topEngineersForChart = $topEngineers->map(function ($engineer) {
             return [
                 'name' => $engineer['name'],
-                'completed_tasks' => $engineer['completed_tasks']
+                'completed_tasks' => $engineer['completed_tasks'],
             ];
         });
 
         return view('tasks.index', compact(
-            'tasks', 
-            'projects', 
-            'engineers', 
-            'stages', 
-            'totalTasks', 
-            'inProgressTasks', 
-            'completedTasks', 
+            'tasks',
+            'projects',
+            'engineers',
+            'stages',
+            'totalTasks',
+            'inProgressTasks',
+            'completedTasks',
             'overdueTasks',
             'averageProjectProgress',
             'topEngineers',
@@ -233,7 +232,7 @@ class TasksController extends Controller
         Gate::authorize('create', Task::class);
 
         $projects = Project::with('projectStages')->get();
-        $engineers = User::whereHas('roles', function($q) {
+        $engineers = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['engineer', 'project_manager']);
         })->get();
 
@@ -255,20 +254,23 @@ class TasksController extends Controller
                 'assignee_id' => $request->assignee_id,
                 'created_by' => Auth::id(),
                 'title' => $request->title,
+                'title_en' => filled($request->title_en) ? $request->title_en : null,
                 'description' => $request->description,
+                'description_en' => filled($request->description_en) ? $request->description_en : null,
                 'manager_notes' => $request->manager_notes,
+                'manager_notes_en' => filled($request->manager_notes_en) ? $request->manager_notes_en : null,
                 'priority' => $request->priority ?? 'medium',
                 'start_date' => $request->start_date,
                 'due_date' => $request->due_date,
                 'progress' => $request->progress ?? 0,
-                'status' => 'new',
+                'status' => $request->input('status', 'new'),
             ]);
 
             // معالجة المرفقات
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
                     $filePath = $file->store('task-attachments', 'public');
-                    
+
                     TaskAttachment::create([
                         'task_id' => $task->id,
                         'name' => $file->getClientOriginalName(),
@@ -292,10 +294,12 @@ class TasksController extends Controller
             DB::commit();
 
             return redirect()->route('tasks.show', $task->id)
-                ->with('success', 'تم إنشاء المهمة بنجاح');
+                ->with('success', __('Task created successfully'));
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'حدث خطأ أثناء إنشاء المهمة: ' . $e->getMessage());
+            \Log::error('Error creating task: '.$e->getMessage(), ['exception' => $e]);
+
+            return back()->withInput()->with('error', __('An error occurred while creating the task'));
         }
     }
 
@@ -307,11 +311,11 @@ class TasksController extends Controller
         $task = Task::with([
             'project.teamUsers',
             'projectStage.tasks.assignee',
-            'projectStage', 
-            'assignee', 
-            'creator', 
+            'projectStage',
+            'assignee',
+            'creator',
             'notes.user',
-            'attachments.uploader'
+            'attachments.uploader',
         ])->findOrFail($id);
 
         Gate::authorize('view', $task);
@@ -328,10 +332,10 @@ class TasksController extends Controller
         Gate::authorize('update', $task);
 
         $projects = Project::with('projectStages')->orderBy('name')->get();
-        $engineers = User::whereHas('roles', function($q) {
+        $engineers = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['engineer', 'project_manager']);
         })->orderBy('name')->get();
-        
+
         // تحميل project stages للمشروع الحالي
         $task->load('project.projectStages');
 
@@ -352,10 +356,10 @@ class TasksController extends Controller
         DB::beginTransaction();
         try {
             $oldStatus = $task->status;
-            
+
             // الموظف يمكنه تحديث حقول محدودة فقط
             if ($isEmployee) {
-                $task->update($request->only(['description', 'progress', 'completion_notes']));
+                $task->update($request->only(['description', 'description_en', 'progress', 'completion_notes']));
             } else {
                 // Managers و Admins يمكنهم تحديث كل شيء
                 $task->update($request->validated());
@@ -380,7 +384,8 @@ class TasksController extends Controller
                 ->with('success', 'تم تحديث المهمة بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'حدث خطأ أثناء تحديث المهمة: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'حدث خطأ أثناء تحديث المهمة: '.$e->getMessage());
         }
     }
 
@@ -417,11 +422,12 @@ class TasksController extends Controller
         ]);
 
         // التحقق من إمكانية الانتقال
-        if (!$task->canChangeStatus($validated['status'])) {
-            $errorMsg = 'لا يمكن الانتقال من ' . $task->status . ' إلى ' . $validated['status'];
+        if (! $task->canChangeStatus($validated['status'])) {
+            $errorMsg = 'لا يمكن الانتقال من '.$task->status.' إلى '.$validated['status'];
             if ($request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
                 return response()->json(['success' => false, 'message' => $errorMsg], 422);
             }
+
             return back()->with('error', $errorMsg);
         }
 
@@ -466,17 +472,18 @@ class TasksController extends Controller
                         'id' => $task->id,
                         'status' => $task->status,
                         'title' => $task->title,
-                    ]
+                    ],
                 ], 200);
             }
 
             return back()->with('success', 'تم تحديث حالة المهمة بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            $errorMsg = 'حدث خطأ أثناء تحديث الحالة: ' . $e->getMessage();
+            $errorMsg = 'حدث خطأ أثناء تحديث الحالة: '.$e->getMessage();
             if ($request->expectsJson() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $errorMsg], 500);
             }
+
             return back()->with('error', $errorMsg);
         }
     }
@@ -517,10 +524,11 @@ class TasksController extends Controller
             return back()->with('success', 'تم إضافة الملاحظة بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            $errorMsg = 'حدث خطأ أثناء إضافة الملاحظة: ' . $e->getMessage();
+            $errorMsg = 'حدث خطأ أثناء إضافة الملاحظة: '.$e->getMessage();
             if ($request->expectsJson() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $errorMsg], 500);
             }
+
             return back()->with('error', $errorMsg);
         }
     }

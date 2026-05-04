@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,8 +17,11 @@ class Task extends Model
         'assignee_id',
         'created_by',
         'title',
+        'title_en',
         'description',
+        'description_en',
         'manager_notes',
+        'manager_notes_en',
         'status',
         'rejection_reason',
         'rejected_by',
@@ -29,6 +33,45 @@ class Task extends Model
         'progress',
         'completion_notes',
     ];
+
+    /**
+     * عنوان المهمة المعروض حسب اللغة.
+     */
+    protected function displayTitle(): Attribute
+    {
+        return Attribute::get(function () {
+            if (app()->getLocale() === 'en' && filled($this->title_en)) {
+                return $this->title_en;
+            }
+
+            return $this->title ?? '';
+        });
+    }
+
+    /**
+     * وصف المهمة المعروض حسب اللغة.
+     */
+    protected function displayDescription(): Attribute
+    {
+        return Attribute::get(function () {
+            if (app()->getLocale() === 'en' && filled($this->description_en)) {
+                return $this->description_en;
+            }
+
+            return $this->description;
+        });
+    }
+
+    protected function displayManagerNotes(): Attribute
+    {
+        return Attribute::get(function () {
+            if (app()->getLocale() === 'en' && filled($this->manager_notes_en)) {
+                return $this->manager_notes_en;
+            }
+
+            return $this->manager_notes;
+        });
+    }
 
     protected $casts = [
         'start_date' => 'date',
@@ -106,8 +149,9 @@ class Task extends Model
 
         // السماح بجميع الانتقالات (لأن الإدارة/المدير يمكنهم تغيير الحالة لأي حالة)
         // يمكن تقييد الانتقالات هنا إذا لزم الأمر
-        
+
         $validStatuses = ['new', 'in_progress', 'done', 'rejected'];
+
         return in_array($newStatus, $validStatuses);
     }
 
@@ -116,7 +160,7 @@ class Task extends Model
      */
     public function validateStage(): bool
     {
-        if (!$this->project_stage_id) {
+        if (! $this->project_stage_id) {
             return true; // المرحلة اختيارية
         }
 

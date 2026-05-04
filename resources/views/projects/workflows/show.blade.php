@@ -50,7 +50,7 @@
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-2xl md:text-3xl font-bold text-white">{{ $workflow->name }}</h1>
-            <p class="text-gray-400 text-sm mt-1">{{ $project->name }}</p>
+            <p class="text-gray-400 text-sm mt-1">{{ $project->display_name }}</p>
         </div>
         <a href="{{ route('projects.workflows.index', $project) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
             <i class="fas fa-arrow-right ml-2"></i>

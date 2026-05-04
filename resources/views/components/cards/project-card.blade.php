@@ -1,4 +1,8 @@
 @php
+    $typeLabelMap = $typeLabelMap ?? [];
+    $stageLabelMap = $stageLabelMap ?? [];
+    $statusLabelMap = $statusLabelMap ?? [];
+
     $typeColors = [
         'تصميم' => 'bg-green-500/20 text-green-400',
         'تصميم وإشراف' => 'bg-primary-400/20 text-primary-400',
@@ -29,33 +33,32 @@
     $typeColor = $typeColors[$project->type] ?? 'bg-primary-400/20 text-primary-400';
     $stageColor = $stageColors[$project->current_stage] ?? 'bg-gray-500/20 text-gray-400';
     $statusColor = $statusColors[$project->status] ?? 'bg-gray-500/20 text-gray-400';
+
+    $typeDisplay = $typeLabelMap[$project->type] ?? $project->type;
+    $stageDisplay = $project->current_stage ? ($stageLabelMap[$project->current_stage] ?? $project->current_stage) : null;
+    $statusDisplay = $statusLabelMap[$project->status] ?? $project->status;
     
-    // حساب حالة المشروع
-    $projectStatus = 'normal'; // normal, warning, danger
+    $projectStatus = 'normal';
     $statusMessage = '';
     $daysDelay = 0;
     
     if ($project->end_date) {
         $today = now();
         $endDate = \Carbon\Carbon::parse($project->end_date);
-        // استخدام diffInDays مع false للحصول على الفرق الموقع (سالب إذا انتهى التاريخ)
         $daysUntilEnd = $today->diffInDays($endDate, false);
         
-        // عدد المهام غير المكتملة (استخدام العلاقة المحملة مسبقاً)
-        $incompleteTasks = $project->tasks ? $project->tasks->whereNotIn('status', ['done', 'rejected'])->count() : 0;
+        $incompleteTasks = (int) ($project->incomplete_tasks_count ?? 0);
         
         if ($daysUntilEnd < 0 && $incompleteTasks > 0) {
-            // متأخر - تقريب إلى عدد صحيح
+            $projectStatus = 'danger';
             $daysDelay = (int) floor(abs($daysUntilEnd));
-            $statusMessage = 'متأخر: ' . $daysDelay . ' ' . ($daysDelay == 1 ? 'يوم' : 'أيام');
+            $statusMessage = __('Delayed by days count', ['count' => $daysDelay]);
         } elseif ($daysUntilEnd <= 7 && $daysUntilEnd >= 0 && $incompleteTasks > 0) {
-            // قريب من الانتهاء
             $projectStatus = 'warning';
             $statusMessage = __('Approaching deadline with incomplete tasks');
         }
     }
     
-    // تحديد لون الحدود والرسالة
     $borderColor = 'border-white/10';
     $alertBg = '';
     if ($projectStatus === 'danger') {
@@ -68,7 +71,6 @@
 @endphp
 
 <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 hover:border-primary-400/40 transition-all duration-200 border-2 {{ $borderColor }}">
-    <!-- Alert Message -->
     @if($projectStatus !== 'normal')
     <div class="mb-4 p-3 rounded-lg {{ $alertBg }} border">
         <div class="flex items-center gap-2">
@@ -80,33 +82,31 @@
     </div>
     @endif
 
-    <!-- Header -->
     <div class="flex items-start justify-between mb-4">
         <div class="flex-1">
             <div class="flex items-center gap-2 mb-1">
-                <h3 class="text-lg md:text-xl font-bold text-white">{{ $project->name }}</h3>
+                <h3 class="text-lg md:text-xl font-bold text-white">{{ $project->display_name }}</h3>
                 @if(\Illuminate\Support\Facades\Schema::hasColumn('projects', 'is_hidden'))
                     @if($project->is_hidden)
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs" title="مخفي">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs" title="{{ __('Project hidden badge') }}">
                             <i class="fas fa-eye-slash"></i>
-                            <span>مخفي</span>
+                            <span>{{ __('Project hidden badge') }}</span>
                         </span>
                     @else
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-green-500/20 text-green-400 text-xs">
                             <i class="fas fa-eye"></i>
-                            <span>المشروع ظاهر</span>
+                            <span>{{ __('Project visible badge') }}</span>
                         </span>
                     @endif
                 @endif
             </div>
-            <p class="text-gray-400 text-xs md:text-sm">{{ $project->project_number ?? 'غير محدد' }}</p>
+            <p class="text-gray-400 text-xs md:text-sm">{{ $project->project_number ?? __('Not specified') }}</p>
         </div>
         <span class="px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap {{ $typeColor }}">
-            {{ $project->type }}
+            {{ $typeDisplay }}
         </span>
     </div>
 
-    <!-- Location & Owner -->
     <div class="space-y-2 mb-4">
         <div class="flex items-center gap-2 text-gray-300 text-sm">
             <i class="fas fa-map-marker-alt text-primary-400"></i>
@@ -119,7 +119,7 @@
         @if(\App\Helpers\PermissionHelper::hasPermission('financials.view') || \App\Helpers\PermissionHelper::hasPermission('financials.manage'))
         <div class="flex items-center gap-2 text-gray-300 text-sm">
             <i class="fas fa-money-bill-wave text-primary-400"></i>
-            <span>{{ number_format($project->value, 2) }} ر.س</span>
+            <span>{{ number_format($project->value, 2) }} {{ __('Currency SAR') }}</span>
         </div>
         @endif
         @if($project->start_date || $project->end_date)
@@ -140,7 +140,6 @@
         @endif
     </div>
 
-    <!-- Progress Circle -->
     <div class="flex items-center gap-4 mb-4">
         <div class="relative w-16 h-16 md:w-20 md:h-20">
             <svg class="transform -rotate-90 w-full h-full" viewBox="0 0 36 36">
@@ -162,23 +161,22 @@
             </div>
         </div>
         <div class="flex-1">
-            <p class="text-gray-400 text-xs mb-1">التقدّم</p>
+            <p class="text-gray-400 text-xs mb-1">{{ __('Progress') }}</p>
             @if($project->current_stage)
             <span class="px-3 py-1 rounded-lg text-xs font-semibold {{ $stageColor }}">
-                {{ $project->current_stage }}
+                {{ $stageDisplay }}
             </span>
             @else
-            <span class="text-gray-400 text-xs">لا توجد مرحلة حالية</span>
+            <span class="text-gray-400 text-xs">{{ __('Projects no current stage') }}</span>
             @endif
             <div class="mt-1">
                 <span class="px-2 py-0.5 rounded text-xs {{ $statusColor }}">
-                    {{ $project->status }}
+                    {{ $statusDisplay }}
                 </span>
             </div>
         </div>
     </div>
 
-    <!-- Quick Icons -->
     <div class="flex items-center gap-4 mb-4 pt-4 border-t border-white/10">
         <a href="{{ route('projects.show', $project->id) }}#attachments" class="flex items-center gap-2 text-gray-400 hover:text-primary-400 text-xs transition-colors">
             <i class="fas fa-paperclip"></i>
@@ -186,32 +184,31 @@
         </a>
         <a href="{{ route('projects.show', $project->id) }}#tasks" class="flex items-center gap-2 text-gray-400 hover:text-primary-400 text-xs transition-colors">
             <i class="fas fa-list-check"></i>
-            <span>0</span>
+            <span>{{ $project->tasks_count }}</span>
         </a>
         @if(\App\Helpers\PermissionHelper::hasPermission('financials.view') || \App\Helpers\PermissionHelper::hasPermission('financials.manage'))
-        <a href="{{ route('financials.index', ['project' => $project->id]) }}" class="flex items-center gap-2 text-gray-400 hover:text-primary-400 text-xs transition-colors">
+        <a href="{{ route('financials.index', ['project_id' => $project->id]) }}" class="flex items-center gap-2 text-gray-400 hover:text-primary-400 text-xs transition-colors">
             <i class="fas fa-file-invoice-dollar"></i>
-            <span>0</span>
+            <span>{{ $project->invoices_count }}</span>
         </a>
         @endif
     </div>
 
-    <!-- Actions -->
     <div class="flex items-center gap-2">
         <a 
             href="{{ route('projects.show', $project->id) }}"
             class="flex-1 bg-primary-400/20 hover:bg-primary-500/30 text-primary-400 px-3 py-2 rounded-lg text-center text-xs md:text-sm transition-all duration-200"
         >
-            <i class="fas fa-eye ml-1"></i>
-            عرض
+            <i class="fas fa-eye {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+            {{ __('View') }}
         </a>
         @can('update', $project)
         <a 
             href="{{ route('projects.edit', $project->id) }}"
             class="flex-1 bg-white/5 hover:bg-white/10 text-white px-3 py-2 rounded-lg text-center text-xs md:text-sm transition-all duration-200"
         >
-            <i class="fas fa-edit ml-1"></i>
-            تحرير
+            <i class="fas fa-edit {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+            {{ __('Edit') }}
         </a>
         @endcan
         @if(($project->project_manager_id && $project->project_manager_id === auth()->id()) || auth()->user()->hasRole('super_admin'))
@@ -223,10 +220,10 @@
         </form>
         @endif
         @can('delete', $project)
-        <form action="{{ route('projects.destroy', $project->id) }}" method="POST" class="inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المشروع؟')">
+        <form action="{{ route('projects.destroy', $project->id) }}" method="POST" class="inline" onsubmit="return confirm(@json(__('Confirm delete project')))">
             @csrf
             @method('DELETE')
-            <button type="submit" class="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs md:text-sm transition-all duration-200">
+            <button type="submit" class="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs md:text-sm transition-all duration-200" title="{{ __('Delete') }}">
                 <i class="fas fa-trash"></i>
             </button>
         </form>

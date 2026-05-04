@@ -2,20 +2,46 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\PermissionHelper;
+use App\Models\City;
 use App\Models\Project;
-use App\Models\ProjectStage;
 use App\Models\ProjectAttachment;
+use App\Models\ProjectStage;
 use App\Models\ProjectThirdParty;
+use App\Models\ProjectType;
+use App\Models\StageSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use App\Helpers\PermissionHelper;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectsController extends Controller
 {
+    /**
+     * @return array{projectTypes: \Illuminate\Database\Eloquent\Collection<int, ProjectType>, stages: \Illuminate\Database\Eloquent\Collection<int, StageSetting>, typeLabelMap: array<string, string>, stageLabelMap: array<string, string>, statusLabelMap: array<string, string>}
+     */
+    protected function projectTypeStageLabelContext(): array
+    {
+        $projectTypes = ProjectType::active()->ordered()->get();
+        $stages = StageSetting::active()->ordered()->get();
+
+        return [
+            'projectTypes' => $projectTypes,
+            'stages' => $stages,
+            'typeLabelMap' => $projectTypes->mapWithKeys(fn (ProjectType $t) => [$t->name => $t->display_name])->all(),
+            'stageLabelMap' => $stages->mapWithKeys(fn (StageSetting $s) => [$s->name => $s->display_name])->all(),
+            'statusLabelMap' => [
+                'قيد التنفيذ' => __('In Progress'),
+                'مكتمل' => __('Completed'),
+                'متوقف' => __('Paused'),
+                'ملغي' => __('Cancelled'),
+            ],
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -23,22 +49,25 @@ class ProjectsController extends Controller
     {
         $user = Auth::user();
         $query = Project::with([
-            'projectManager', 
-            'projectStages', 
-            'tasks' => function($q) {
-                $q->whereIn('status', ['new', 'in_progress']);
+            'projectManager',
+            'projectStages',
+            'attachments',
+        ])->withCount([
+            'tasks',
+            'invoices',
+            'tasks as incomplete_tasks_count' => function ($q) {
+                $q->whereNotIn('status', ['done', 'rejected']);
             },
-            'attachments' // إضافة attachments لتجنب N+1 في project-card
         ]);
 
         // تطبيق فلاتر الصلاحيات - المستخدم يرى المشاريع المخصصة له فقط
-        if (!$user->hasRole('super_admin')) {
+        if (! $user->hasRole('super_admin')) {
             // للمستخدمين العاديين: إخفاء المشاريع المخفية + يروا المشاريع التي هم مديرين عليها أو أعضاء في فريقها
             $query->where('is_hidden', false); // إخفاء المشاريع المخفية للمستخدمين العاديين فقط
-            $query->where(function($q) use ($user) {
+            $query->where(function ($q) use ($user) {
                 $q->where('project_manager_id', $user->id)
-                  ->orWhereJsonContains('team_members', (string)$user->id)
-                  ->orWhereJsonContains('team_members', $user->id);
+                    ->orWhereJsonContains('team_members', (string) $user->id)
+                    ->orWhereJsonContains('team_members', $user->id);
             });
         }
         // Super Admin يرى الكل (بما في ذلك المشاريع المخفية - لا فلاتر)
@@ -46,10 +75,12 @@ class ProjectsController extends Controller
         // الفلاتر
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('project_number', 'like', "%{$search}%")
-                  ->orWhere('owner', 'like', "%{$search}%");
+                    ->orWhere('name_en', 'like', "%{$search}%")
+                    ->orWhere('project_number', 'like', "%{$search}%")
+                    ->orWhere('owner', 'like', "%{$search}%")
+                    ->orWhere('owner_en', 'like', "%{$search}%");
             });
         }
 
@@ -70,7 +101,13 @@ class ProjectsController extends Controller
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $statusFilter = $request->status;
+            $projectStatusValues = ['قيد التنفيذ', 'مكتمل', 'متوقف', 'ملغي'];
+            if (in_array($statusFilter, $projectStatusValues, true)) {
+                $query->where('status', $statusFilter);
+            } else {
+                $query->where('current_stage', $statusFilter);
+            }
         }
 
         if ($request->filled('current_stage')) {
@@ -89,13 +126,13 @@ class ProjectsController extends Controller
         // Note: Using 'delayed_count' instead of 'delayed' as it's a MySQL reserved word
         // تطبيق نفس فلاتر الصلاحيات على KPIs
         $kpisQuery = Project::query();
-        if (!$user->hasRole('super_admin')) {
+        if (! $user->hasRole('super_admin')) {
             // للمستخدمين العاديين: إخفاء المشاريع المخفية
             $kpisQuery->where('is_hidden', false);
-            $kpisQuery->where(function($q) use ($user) {
+            $kpisQuery->where(function ($q) use ($user) {
                 $q->where('project_manager_id', $user->id)
-                  ->orWhereJsonContains('team_members', (string)$user->id)
-                  ->orWhereJsonContains('team_members', $user->id);
+                    ->orWhereJsonContains('team_members', (string) $user->id)
+                    ->orWhereJsonContains('team_members', $user->id);
             });
         }
         // Super Admin يرى الكل (بما في ذلك المشاريع المخفية)
@@ -106,7 +143,7 @@ class ProjectsController extends Controller
             SUM(CASE WHEN status = "متوقف" THEN 1 ELSE 0 END) as delayed_count,
             SUM(value) as total_value
         ')->first();
-        
+
         $totalProjects = $kpis->total ?? 0;
         $activeProjects = $kpis->active ?? 0;
         $completedProjects = $kpis->completed ?? 0;
@@ -115,18 +152,37 @@ class ProjectsController extends Controller
 
         $projects = $query->latest()->paginate(12);
 
-        // جلب المدن من قاعدة البيانات للفلترة
-        $cities = \App\Models\City::active()->ordered()->pluck('name');
+        $cities = City::active()->ordered()->get();
+        $labelCtx = $this->projectTypeStageLabelContext();
 
-        return view('projects.index', compact(
+        $districtsQuery = Project::query();
+        $ownersQuery = Project::query();
+        if (! $user->hasRole('super_admin')) {
+            $districtsQuery->where('is_hidden', false)->where(function ($q) use ($user) {
+                $q->where('project_manager_id', $user->id)
+                    ->orWhereJsonContains('team_members', (string) $user->id)
+                    ->orWhereJsonContains('team_members', $user->id);
+            });
+            $ownersQuery->where('is_hidden', false)->where(function ($q) use ($user) {
+                $q->where('project_manager_id', $user->id)
+                    ->orWhereJsonContains('team_members', (string) $user->id)
+                    ->orWhereJsonContains('team_members', $user->id);
+            });
+        }
+        $districts = $districtsQuery->whereNotNull('district')->where('district', '!=', '')->distinct()->orderBy('district')->pluck('district');
+        $owners = $ownersQuery->whereNotNull('owner')->where('owner', '!=', '')->distinct()->orderBy('owner')->pluck('owner');
+
+        return view('projects.index', array_merge(compact(
             'projects',
             'totalProjects',
             'activeProjects',
             'completedProjects',
             'delayedProjects',
             'totalValue',
-            'cities'
-        ));
+            'cities',
+            'districts',
+            'owners',
+        ), $labelCtx));
     }
 
     /**
@@ -136,12 +192,12 @@ class ProjectsController extends Controller
     {
         Gate::authorize('create', Project::class);
         // جلب مديري المشاريع (project_manager)
-        $projectManagers = User::whereHas('roles', function($q) {
+        $projectManagers = User::whereHas('roles', function ($q) {
             $q->where('name', 'project_manager');
         })->where('status', 'active')->orderBy('name')->get();
 
         // جلب المهندسين (engineer + project_manager)
-        $engineers = User::whereHas('roles', function($q) {
+        $engineers = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['engineer', 'project_manager']);
         })->where('status', 'active')->orderBy('name')->get();
 
@@ -156,7 +212,7 @@ class ProjectsController extends Controller
 
         $clients = \App\Models\Client::where('status', 'active')->orderBy('name')->get();
         $selectedClientId = $request->get('client_id');
-        
+
         // جلب أنواع المشاريع والمدن والمراحل من قاعدة البيانات
         $projectTypes = \App\Models\ProjectType::active()->ordered()->get();
         $cities = \App\Models\City::active()->ordered()->get();
@@ -171,15 +227,18 @@ class ProjectsController extends Controller
     public function store(Request $request)
     {
         Gate::authorize('create', Project::class);
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'name_en' => 'nullable|string|max:255',
             'project_number' => 'nullable|string|unique:projects,project_number',
             'type' => 'required|string',
             'city' => 'required|string',
             'district' => 'nullable|string',
+            'district_en' => 'nullable|string|max:255',
             'client_id' => 'nullable|exists:clients,id',
             'owner' => 'nullable|string|max:255',
+            'owner_en' => 'nullable|string|max:255',
             'value' => 'required|numeric|min:0',
             'installments_count' => 'nullable|integer|min:1|max:100',
             'contract_number' => 'nullable|string',
@@ -197,17 +256,21 @@ class ProjectsController extends Controller
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ], [
-            'name.required' => 'اسم المشروع مطلوب',
-            'type.required' => 'نوع المشروع مطلوب',
-            'city.required' => 'المدينة مطلوبة',
-            'value.required' => 'قيمة المشروع مطلوبة',
-            'value.numeric' => 'قيمة المشروع يجب أن تكون رقماً',
-            'value.min' => 'قيمة المشروع يجب أن تكون أكبر من أو تساوي 0',
-            'client_id.exists' => 'العميل المحدد غير موجود',
-            'project_manager_id.exists' => 'مدير المشروع المحدد غير موجود',
-            'team_members.*.exists' => 'أحد أعضاء الفريق المحددين غير موجود',
-            'end_date.after_or_equal' => 'تاريخ الانتهاء يجب أن يكون بعد أو يساوي تاريخ البدء',
+            'name.required' => __('Project name is required'),
+            'type.required' => __('Project type is required'),
+            'city.required' => __('City is required'),
+            'value.required' => __('Project value is required'),
+            'value.numeric' => __('Project value must be a number'),
+            'value.min' => __('Project value must be at least zero'),
+            'client_id.exists' => __('The selected client is invalid'),
+            'project_manager_id.exists' => __('The selected project manager is invalid'),
+            'team_members.*.exists' => __('A selected team member is invalid'),
+            'end_date.after_or_equal' => __('End date must be on or after start date'),
         ]);
+
+        foreach (['name_en', 'owner_en', 'district_en'] as $field) {
+            $validated[$field] = filled($validated[$field] ?? null) ? $validated[$field] : null;
+        }
 
         DB::beginTransaction();
         try {
@@ -228,9 +291,9 @@ class ProjectsController extends Controller
             // الحالة الافتراضية
             $validated['status'] = 'قيد التنفيذ';
             $validated['progress'] = 0;
-            
+
             // القيمة الافتراضية لعدد الأقساط
-            if (!isset($validated['installments_count']) || empty($validated['installments_count'])) {
+            if (! isset($validated['installments_count']) || empty($validated['installments_count'])) {
                 $validated['installments_count'] = 1;
             }
 
@@ -259,7 +322,7 @@ class ProjectsController extends Controller
             // إضافة الأطراف الثالثة
             if ($request->filled('third_party') && is_array($request->third_party)) {
                 foreach ($request->third_party as $thirdParty) {
-                    if (is_array($thirdParty) && !empty($thirdParty['name'])) {
+                    if (is_array($thirdParty) && ! empty($thirdParty['name'])) {
                         ProjectThirdParty::create([
                             'project_id' => $project->id,
                             'name' => $thirdParty['name'],
@@ -273,17 +336,19 @@ class ProjectsController extends Controller
             DB::commit();
 
             return redirect()->route('projects.show', $project->id)
-                ->with('success', 'تم إنشاء المشروع بنجاح');
+                ->with('success', __('Project created successfully'));
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
+
             return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error creating project: ' . $e->getMessage(), [
+            \Log::error('Error creating project: '.$e->getMessage(), [
                 'exception' => $e,
-                'request' => $request->all()
+                'request' => $request->all(),
             ]);
-            return back()->withInput()->with('error', 'حدث خطأ أثناء إنشاء المشروع: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', __('An error occurred while creating the project'));
         }
     }
 
@@ -295,18 +360,19 @@ class ProjectsController extends Controller
         $project = Project::with([
             'projectManager',
             'teamUsers',
-            'projectStages' => function($query) {
+            'projectStages' => function ($query) {
                 $query->orderBy('created_at');
             },
             'projectStages.tasks.assignee',
-            'attachments' => function($query) {
+            'attachments' => function ($query) {
                 $query->with('uploader')->latest();
             },
-            'thirdParties' => function($query) {
+            'thirdParties' => function ($query) {
                 $query->latest();
             },
             'tasks.assignee',
             'tasks.projectStage',
+            'tasks.notes.user',
             'workflows.service',
             'workflows.steps.assignedUser',
             'documents.creator',
@@ -324,7 +390,12 @@ class ProjectsController extends Controller
         $stagesCount = $project->projectStages ? $project->projectStages->count() : 0;
         $attachmentsCount = $project->attachments ? $project->attachments->count() : 0;
 
-        return view('projects.show', compact('project', 'tasksCount', 'stagesCount', 'attachmentsCount'));
+        $labelCtx = $this->projectTypeStageLabelContext();
+
+        return view('projects.show', array_merge(
+            compact('project', 'tasksCount', 'stagesCount', 'attachmentsCount'),
+            Arr::only($labelCtx, ['typeLabelMap', 'stageLabelMap', 'statusLabelMap'])
+        ));
     }
 
     /**
@@ -335,11 +406,11 @@ class ProjectsController extends Controller
         $project = Project::with(['teamUsers', 'projectStages', 'thirdParties'])->findOrFail($id);
         Gate::authorize('update', $project);
 
-        $projectManagers = User::whereHas('roles', function($q) {
+        $projectManagers = User::whereHas('roles', function ($q) {
             $q->where('name', 'project_manager');
         })->where('status', 'active')->orderBy('name')->get();
 
-        $engineers = User::whereHas('roles', function($q) {
+        $engineers = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['engineer', 'project_manager']);
         })->where('status', 'active')->orderBy('name')->get();
 
@@ -353,7 +424,7 @@ class ProjectsController extends Controller
         }
 
         $clients = \App\Models\Client::where('status', 'active')->orderBy('name')->get();
-        
+
         // جلب أنواع المشاريع والمدن والمراحل من قاعدة البيانات
         $projectTypes = \App\Models\ProjectType::active()->ordered()->get();
         $cities = \App\Models\City::active()->ordered()->get();
@@ -372,12 +443,15 @@ class ProjectsController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'project_number' => 'nullable|string|unique:projects,project_number,' . $id,
+            'name_en' => 'nullable|string|max:255',
+            'project_number' => 'nullable|string|unique:projects,project_number,'.$id,
             'type' => 'required|string',
             'city' => 'required|string',
             'district' => 'nullable|string',
+            'district_en' => 'nullable|string|max:255',
             'client_id' => 'nullable|exists:clients,id',
             'owner' => 'nullable|string|max:255',
+            'owner_en' => 'nullable|string|max:255',
             'value' => 'required|numeric|min:0',
             'contract_number' => 'nullable|string',
             'contract_file' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
@@ -405,6 +479,10 @@ class ProjectsController extends Controller
             'value.required' => 'قيمة المشروع مطلوبة',
         ]);
 
+        foreach (['name_en', 'owner_en', 'district_en'] as $field) {
+            $validated[$field] = filled($validated[$field] ?? null) ? $validated[$field] : null;
+        }
+
         DB::beginTransaction();
         try {
             // رفع الملفات الجديدة
@@ -431,8 +509,8 @@ class ProjectsController extends Controller
                 $conversation = \App\Models\Conversation::where('type', 'project')
                     ->where('project_id', $project->id)
                     ->first();
-                
-                if ($conversation && !$conversation->is_closed) {
+
+                if ($conversation && ! $conversation->is_closed) {
                     $conversation->close();
                 }
             }
@@ -441,7 +519,7 @@ class ProjectsController extends Controller
             if ($request->filled('stages')) {
                 // حذف المراحل القديمة غير المحددة
                 $project->projectStages()->whereNotIn('stage_name', $request->stages)->delete();
-                
+
                 // إضافة المراحل الجديدة
                 foreach ($request->stages as $stageName) {
                     ProjectStage::firstOrCreate(
@@ -468,7 +546,8 @@ class ProjectsController extends Controller
                 ->with('success', 'تم تحديث المشروع بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'حدث خطأ أثناء تحديث المشروع: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'حدث خطأ أثناء تحديث المشروع: '.$e->getMessage());
         }
     }
 
@@ -498,29 +577,29 @@ class ProjectsController extends Controller
         return redirect()->route('projects.index')
             ->with('success', 'تم حذف المشروع بنجاح');
     }
-    
+
     /**
      * إخفاء/إظهار المشروع
      */
     public function toggleHide(string $id)
     {
         $project = Project::findOrFail($id);
-        
+
         // التحقق من الصلاحيات - فقط super_admin أو project_manager يمكنه إخفاء المشروع
-        if (!$project->project_manager_id || $project->project_manager_id !== Auth::id()) {
-            if (!Auth::user()->hasRole('super_admin')) {
+        if (! $project->project_manager_id || $project->project_manager_id !== Auth::id()) {
+            if (! Auth::user()->hasRole('super_admin')) {
                 abort(403, 'غير مصرح لك بإخفاء هذا المشروع');
             }
         }
-        
+
         $project->update([
-            'is_hidden' => !$project->is_hidden,
+            'is_hidden' => ! $project->is_hidden,
         ]);
-        
-        $message = $project->is_hidden 
-            ? 'تم إخفاء المشروع بنجاح' 
+
+        $message = $project->is_hidden
+            ? 'تم إخفاء المشروع بنجاح'
             : 'تم إظهار المشروع بنجاح';
-        
+
         return redirect()->route('projects.index')
             ->with('success', $message);
     }
@@ -558,7 +637,7 @@ class ProjectsController extends Controller
 
             return back()->with('success', 'تم رفع المرفق بنجاح');
         } catch (\Exception $e) {
-            return back()->with('error', 'حدث خطأ أثناء رفع الملف: ' . $e->getMessage());
+            return back()->with('error', 'حدث خطأ أثناء رفع الملف: '.$e->getMessage());
         }
     }
 
@@ -581,7 +660,7 @@ class ProjectsController extends Controller
 
             return back()->with('success', 'تم حذف المرفق بنجاح');
         } catch (\Exception $e) {
-            return back()->with('error', 'حدث خطأ أثناء حذف الملف: ' . $e->getMessage());
+            return back()->with('error', 'حدث خطأ أثناء حذف الملف: '.$e->getMessage());
         }
     }
 
@@ -605,7 +684,7 @@ class ProjectsController extends Controller
 
         if ($stage) {
             $stage->update($validated);
-            
+
             // تحديث المرحلة الحالية
             if ($validated['status'] == 'جارٍ') {
                 $project->update(['current_stage' => $validated['stage_name']]);
@@ -648,11 +727,12 @@ class ProjectsController extends Controller
     public function financialsIndex(string $id)
     {
         // التحقق من الصلاحية
-        if (!PermissionHelper::hasPermission('financials.view') && !PermissionHelper::hasPermission('financials.manage')) {
+        if (! PermissionHelper::hasPermission('financials.view') && ! PermissionHelper::hasPermission('financials.manage')) {
             abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة');
         }
 
         $project = Project::findOrFail($id);
+
         return redirect()->route('financials.index', ['project_id' => $project->id]);
     }
 
@@ -662,11 +742,12 @@ class ProjectsController extends Controller
     public function storeInvoice(Request $request, string $id)
     {
         // التحقق من الصلاحية
-        if (!PermissionHelper::hasPermission('financials.create') && !PermissionHelper::hasPermission('financials.manage')) {
+        if (! PermissionHelper::hasPermission('financials.create') && ! PermissionHelper::hasPermission('financials.manage')) {
             abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة');
         }
 
         $project = Project::findOrFail($id);
+
         return redirect()->route('financials.create', ['project_id' => $project->id]);
     }
 }

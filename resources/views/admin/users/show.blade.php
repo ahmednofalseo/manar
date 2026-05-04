@@ -26,7 +26,7 @@
 @section('content')
 @php
     use App\Helpers\PermissionHelper;
-    $avatarUrl = $user->avatar ? asset('storage/' . $user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=1db8f8&color=fff&size=128';
+    $avatarUrl = $user->avatar ? asset('storage/' . $user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($user->display_name) . '&background=1db8f8&color=fff&size=128';
 @endphp
 
 <!-- Toast Notifications -->
@@ -47,9 +47,9 @@
 <!-- Header Actions -->
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
     <div class="flex items-center gap-4">
-        <img src="{{ $avatarUrl }}" alt="{{ $user->name }}" class="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-primary-400/50 object-cover">
+        <img src="{{ $avatarUrl }}" alt="{{ $user->display_name }}" class="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-primary-400/50 object-cover">
         <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-white mb-1">{{ $user->name }}</h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-white mb-1">{{ $user->display_name }}</h1>
             <p class="text-gray-400 text-sm">{{ $user->job_title ?? __('No Job Title') }}</p>
         </div>
     </div>

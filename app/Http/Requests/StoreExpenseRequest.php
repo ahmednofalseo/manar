@@ -42,21 +42,21 @@ class StoreExpenseRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'voucher_number.unique' => 'رقم السند مستخدم مسبقاً',
-            'date.required' => 'التاريخ مطلوب',
-            'date.date' => 'التاريخ غير صحيح',
-            'department.required' => 'القسم مطلوب',
-            'type.required' => 'نوع المصروف مطلوب',
-            'description.required' => 'الوصف مطلوب',
-            'description.max' => 'الوصف يجب أن يكون أقل من 1000 حرف',
-            'amount.required' => 'المبلغ مطلوب',
-            'amount.numeric' => 'المبلغ يجب أن يكون رقماً',
-            'amount.min' => 'المبلغ يجب أن يكون أكبر من صفر',
-            'payment_method.required' => 'طريقة الدفع مطلوبة',
-            'status.in' => 'الحالة غير صحيحة',
-            'attachments.*.file' => 'الملف المرفق غير صحيح',
-            'attachments.*.mimes' => 'نوع الملف يجب أن يكون: pdf, jpg, jpeg, png',
-            'attachments.*.max' => 'حجم الملف يجب أن يكون أقل من 10MB',
+            'voucher_number.unique' => __('Expense validation voucher number unique'),
+            'date.required' => __('Expense validation date required'),
+            'date.date' => __('Expense validation date invalid'),
+            'department.required' => __('Expense validation department required'),
+            'type.required' => __('Expense validation type required'),
+            'description.required' => __('Expense validation description required'),
+            'description.max' => __('Expense validation description max'),
+            'amount.required' => __('Expense validation amount required'),
+            'amount.numeric' => __('Expense validation amount numeric'),
+            'amount.min' => __('Expense validation amount min'),
+            'payment_method.required' => __('Expense validation payment method required'),
+            'status.in' => __('Expense validation status invalid'),
+            'attachments.*.file' => __('Expense validation attachment file'),
+            'attachments.*.mimes' => __('Expense validation attachment mimes'),
+            'attachments.*.max' => __('Expense validation attachment max'),
         ];
     }
 }

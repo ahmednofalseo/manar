@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -19,6 +20,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $fillable = [
         'name',
+        'name_en',
         'email',
         'password',
         'phone',
@@ -65,6 +67,20 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * الاسم المعروض حسب اللغة.
+     */
+    protected function displayName(): Attribute
+    {
+        return Attribute::get(function () {
+            if (app()->getLocale() === 'en' && filled($this->name_en)) {
+                return $this->name_en;
+            }
+
+            return $this->name ?? '';
+        });
+    }
+
+    /**
      * Get the roles that belong to the user.
      */
     public function roles()
@@ -88,6 +104,7 @@ class User extends Authenticatable implements MustVerifyEmail
         if (is_string($role)) {
             return $this->roles->contains('name', $role);
         }
+
         return $this->roles->contains('id', $role->id);
     }
 
@@ -101,6 +118,7 @@ class User extends Authenticatable implements MustVerifyEmail
                 return true;
             }
         }
+
         return false;
     }
 
@@ -130,6 +148,7 @@ class User extends Authenticatable implements MustVerifyEmail
                 return true;
             }
         }
+
         return false;
     }
 
@@ -186,10 +205,10 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getAvatarUrlAttribute(): ?string
     {
-        if (!$this->avatar) {
+        if (! $this->avatar) {
             return null;
         }
-        
-        return asset('storage/' . $this->avatar);
+
+        return asset('storage/'.$this->avatar);
     }
 }

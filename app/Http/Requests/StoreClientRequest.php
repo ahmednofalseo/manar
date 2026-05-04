@@ -43,21 +43,21 @@ class StoreClientRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'اسم العميل مطلوب',
-            'name.string' => 'اسم العميل يجب أن يكون نص',
-            'name.max' => 'اسم العميل يجب ألا يتجاوز 255 حرف',
-            'type.required' => 'نوع العميل مطلوب',
-            'type.in' => 'نوع العميل غير صحيح',
-            'phone.required' => 'رقم الجوال مطلوب',
-            'phone.string' => 'رقم الجوال يجب أن يكون نص',
-            'phone.max' => 'رقم الجوال يجب ألا يتجاوز 20 حرف',
-            'email.email' => 'البريد الإلكتروني غير صحيح',
-            'email.max' => 'البريد الإلكتروني يجب ألا يتجاوز 255 حرف',
-            'city.required' => 'المدينة مطلوبة',
-            'city.string' => 'المدينة يجب أن تكون نص',
-            'city.max' => 'المدينة يجب ألا تتجاوز 100 حرف',
-            'status.required' => 'الحالة مطلوبة',
-            'status.in' => 'الحالة غير صحيحة',
+            'name.required' => __('Client validation name required'),
+            'name.string' => __('Client validation name string'),
+            'name.max' => __('Client validation name max'),
+            'type.required' => __('Client validation type required'),
+            'type.in' => __('Client validation type in'),
+            'phone.required' => __('Client validation phone required'),
+            'phone.string' => __('Client validation phone string'),
+            'phone.max' => __('Client validation phone max'),
+            'email.email' => __('Client validation email email'),
+            'email.max' => __('Client validation email max'),
+            'city.required' => __('Client validation city required'),
+            'city.string' => __('Client validation city string'),
+            'city.max' => __('Client validation city max'),
+            'status.required' => __('Client validation status required'),
+            'status.in' => __('Client validation status in'),
         ];
     }
 }

@@ -62,8 +62,8 @@
     <!-- Header Actions -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
         <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">{{ $project->name }}</h1>
-            <p class="text-gray-400 text-sm">{{ $project->project_number ?? 'غير محدد' }}</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">{{ $project->display_name }}</h1>
+            <p class="text-gray-400 text-sm">{{ $project->project_number ?? __('Not specified') }}</p>
         </div>
         <div class="flex items-center gap-3">
             <a href="{{ route('projects.edit', $project->id) }}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200">
@@ -105,7 +105,7 @@
                 class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
             >
                 <i class="fas fa-sitemap"></i>
-                المسار
+                {{ __('Project tab workflow') }}
                 @if($project->workflows && $project->workflows->count() > 0)
                 <span class="bg-[#1db8f8]/20 text-[#1db8f8] px-2 py-0.5 rounded text-xs">{{ $project->workflows->count() }}</span>
                 @endif
@@ -117,7 +117,7 @@
                 class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
             >
                 <i class="fas fa-file-alt"></i>
-                المستندات
+                {{ __('Project tab documents') }}
                 @php
                     $documentsCount = $project->documents ? $project->documents->count() : 0;
                 @endphp
@@ -155,7 +155,7 @@
                 class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
             >
                 <i class="fas fa-file-invoice-dollar"></i>
-                المالية
+                {{ __('Project tab financials') }}
             </button>
             @endif
             <button 
@@ -164,7 +164,7 @@
                 class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
             >
                 <i class="fas fa-handshake"></i>
-                الطرف الثالث
+                {{ __('Project tab third party') }}
             </button>
             <button 
                 @click="activeTab = 'activity'"
@@ -172,9 +172,9 @@
                 class="px-4 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
             >
                 <i class="fas fa-clock-rotate-left"></i>
-                السجل
+                {{ __('Project tab activity') }}
             </button>
-            @if($project->status !== 'مكتمل')
+            @if(! $project->isCompleted())
             <button 
                 @click="activeTab = 'chat'"
                 :class="activeTab === 'chat' ? 'border-b-2 border-primary-400 text-primary-400' : 'text-gray-400 hover:text-white'"
@@ -238,7 +238,7 @@
     </div>
 
     <!-- Chat Tab -->
-    @if($project->status !== 'مكتمل')
+    @if(! $project->isCompleted())
     <div x-show="activeTab === 'chat'" class="space-y-4 md:space-y-6">
         @include('projects.tabs.chat', ['currentUserId' => auth()->user()->id])
     </div>
@@ -255,7 +255,7 @@
 </script>
 @endpush
 
-@if($project->status !== 'مكتمل')
+@if(! $project->isCompleted())
 @push('scripts')
 <script>
     function projectChat(projectId, currentUserId) {

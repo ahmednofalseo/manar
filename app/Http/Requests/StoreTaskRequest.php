@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreTaskRequest extends FormRequest
 {
@@ -23,8 +22,13 @@ class StoreTaskRequest extends FormRequest
         $data = $this->all();
         if (isset($data['project_stage_id']) && $data['project_stage_id'] === '') {
             $data['project_stage_id'] = null;
-            $this->merge($data);
         }
+        foreach (['title_en', 'description_en', 'manager_notes_en'] as $field) {
+            if (array_key_exists($field, $data) && $data[$field] === '') {
+                $data[$field] = null;
+            }
+        }
+        $this->merge($data);
     }
 
     /**
@@ -42,22 +46,26 @@ class StoreTaskRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     if ($value) {
                         $project = \App\Models\Project::find($this->project_id);
-                        if ($project && !$project->projectStages()->where('id', $value)->exists()) {
-                            $fail('المرحلة المحددة غير مرتبطة بهذا المشروع.');
+                        if ($project && ! $project->projectStages()->where('id', $value)->exists()) {
+                            $fail(__('Task validation stage not belongs project'));
                         }
                     }
                 },
             ],
             'assignee_id' => ['required', 'exists:users,id'],
             'title' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'description_en' => ['nullable', 'string'],
             'manager_notes' => ['nullable', 'string'],
+            'manager_notes_en' => ['nullable', 'string'],
             'priority' => ['nullable', 'in:low,medium,high'],
             'start_date' => ['nullable', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'progress' => ['nullable', 'integer', 'min:0', 'max:100'],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['file', 'max:10240'], // 10MB max per file
+            'status' => ['nullable', 'in:new,in_progress,done,rejected'],
         ];
     }
 
@@ -69,17 +77,18 @@ class StoreTaskRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'project_id.required' => 'المشروع مطلوب',
-            'project_id.exists' => 'المشروع المحدد غير موجود',
-            'project_stage_id.exists' => 'المرحلة المحددة غير موجودة',
-            'assignee_id.required' => 'الموظف المسند إليه مطلوب',
-            'assignee_id.exists' => 'الموظف المحدد غير موجود',
-            'title.required' => 'عنوان المهمة مطلوب',
-            'title.max' => 'عنوان المهمة يجب أن يكون أقل من 255 حرف',
-            'priority.in' => 'الأولوية يجب أن تكون: منخفضة، متوسطة، أو عالية',
-            'due_date.after_or_equal' => 'تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء أو مساوياً له',
-            'progress.min' => 'نسبة الإنجاز يجب أن تكون بين 0 و 100',
-            'progress.max' => 'نسبة الإنجاز يجب أن تكون بين 0 و 100',
+            'project_id.required' => __('Task validation project required'),
+            'project_id.exists' => __('Task validation project invalid'),
+            'project_stage_id.exists' => __('Task validation stage invalid'),
+            'assignee_id.required' => __('Task validation assignee required'),
+            'assignee_id.exists' => __('Task validation assignee invalid'),
+            'title.required' => __('Task validation title required'),
+            'title.max' => __('Task validation title max'),
+            'priority.in' => __('Task validation priority invalid'),
+            'due_date.after_or_equal' => __('Task validation due after start'),
+            'progress.min' => __('Task validation progress min'),
+            'progress.max' => __('Task validation progress max'),
+            'status.in' => __('Task validation status invalid'),
         ];
     }
 }

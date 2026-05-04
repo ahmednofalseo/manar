@@ -206,14 +206,14 @@
             class="tab-button px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-semibold {{ request()->routeIs('settings.project-types.*') || request()->routeIs('settings.project-stages.*') ? 'bg-primary-400/20 border-primary-500 text-primary-400' : 'bg-white/5 border-white/10 text-gray-300' }}"
         >
             <i class="fas fa-list {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
-            إعدادات المشاريع
+            {{ __('Project Settings') }}
         </a>
         <a 
             href="{{ route('settings.cities.index') }}"
             class="tab-button px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-semibold {{ request()->routeIs('settings.cities.*') ? 'bg-primary-400/20 border-primary-500 text-primary-400' : 'bg-white/5 border-white/10 text-gray-300' }}"
         >
             <i class="fas fa-city {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
-            إدارة المدن
+            {{ __('Cities Management') }}
         </a>
     </div>
 
@@ -293,7 +293,7 @@
                     required
                 >
                     <option value="ar" {{ old('language', $settings['language'] ?? 'ar') === 'ar' ? 'selected' : '' }}>{{ __('Arabic') }}</option>
-                    <option value="en" {{ old('language', $settings['language'] ?? 'ar') === 'en' ? 'selected' : '' }}>English</option>
+                    <option value="en" {{ old('language', $settings['language'] ?? 'ar') === 'en' ? 'selected' : '' }}>{{ __('English') }}</option>
                 </select>
                 @error('language')
                 <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
@@ -435,7 +435,7 @@
 
             <!-- Mail Password -->
             <div>
-                <label class="block text-gray-300 text-sm font-semibold mb-2">كلمة المرور</label>
+                <label class="block text-gray-300 text-sm font-semibold mb-2">{{ __('Password') }}</label>
                 <input 
                     type="password" 
                     name="mail_password" 

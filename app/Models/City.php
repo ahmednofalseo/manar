@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -22,6 +23,20 @@ class City extends Model
         'is_active' => 'boolean',
         'order' => 'integer',
     ];
+
+    /**
+     * الاسم المعروض حسب لغة الواجهة (القيمة المخزّنة للعميل تبقى `name`).
+     */
+    protected function displayName(): Attribute
+    {
+        return Attribute::get(function () {
+            if (app()->getLocale() === 'en' && filled($this->name_en)) {
+                return $this->name_en;
+            }
+
+            return $this->name ?? '';
+        });
+    }
 
     /**
      * الحصول على المدن النشطة

@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreUserRequest extends FormRequest
 {
@@ -15,6 +14,15 @@ class StoreUserRequest extends FormRequest
         return auth()->user()->hasPermission('users.manage');
     }
 
+    protected function prepareForValidation(): void
+    {
+        $data = $this->all();
+        if (array_key_exists('name_en', $data) && $data['name_en'] === '') {
+            $data['name_en'] = null;
+        }
+        $this->merge($data);
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -24,6 +32,7 @@ class StoreUserRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'name_en' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:20'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
@@ -67,5 +76,3 @@ class StoreUserRequest extends FormRequest
         ];
     }
 }
-
-

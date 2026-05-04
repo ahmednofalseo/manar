@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 
-@section('title', 'قوالب المسارات - ' . \App\Helpers\SettingsHelper::systemName())
-@section('page-title', 'قوالب المسارات')
+@section('title', __('Workflow templates') . ' - ' . \App\Helpers\SettingsHelper::systemName())
+@section('page-title', __('Workflow templates'))
 
 @push('styles')
 <style>
@@ -47,12 +47,12 @@
 <div x-data="templatesPage()">
     <!-- Header Actions -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
-        <h1 class="text-2xl md:text-3xl font-bold text-white">قوالب المسارات</h1>
+        <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('Workflow templates') }}</h1>
         <div class="flex items-center gap-3 w-full sm:w-auto">
             @can('create', \App\Models\WorkflowTemplate::class)
             <a href="{{ route('workflow-templates.create') }}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
-                <i class="fas fa-plus ml-2"></i>
-                إنشاء قالب جديد
+                <i class="fas fa-plus {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Create new workflow template button') }}
             </a>
             @endcan
         </div>
@@ -62,9 +62,9 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="select-wrapper">
-                <label class="block text-gray-300 text-xs md:text-sm mb-2">الخدمة</label>
+                <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('Service') }}</label>
                 <select x-model="serviceId" @change="applyFilters()" class="w-full bg-[#173343]/90 border-2 border-white/30 rounded-lg px-3 md:px-4 py-2 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#1db8f8] focus:border-[#1db8f8] transition-all duration-200 text-sm md:text-base" style="background-color: rgba(23, 51, 67, 0.9); color: #ffffff; font-weight: 600; max-width: 100%;">
-                    <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">جميع الخدمات</option>
+                    <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ __('All services') }}</option>
                     @foreach($services as $service)
                     <option value="{{ $service->id }}" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ $service->name }}</option>
                     @endforeach
@@ -87,15 +87,15 @@
                                 <h3 class="text-lg md:text-xl font-bold text-white flex items-center gap-2">
                                     {{ $template->name }}
                                     @if($template->is_default)
-                                    <span class="bg-primary-500/20 text-primary-400 px-2 py-0.5 rounded text-xs">افتراضي</span>
+                                    <span class="bg-primary-500/20 text-primary-400 px-2 py-0.5 rounded text-xs">{{ __('Default') }}</span>
                                     @endif
                                     @if(!$template->is_active)
-                                    <span class="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-xs">غير نشط</span>
+                                    <span class="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-xs">{{ __('Inactive') }}</span>
                                     @endif
                                 </h3>
                                 @if($template->service)
                                 <p class="text-gray-400 text-sm mt-1">
-                                    <i class="fas fa-cog ml-1"></i>
+                                    <i class="fas fa-cog {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
                                     {{ $template->service->name }}
                                 </p>
                                 @endif
@@ -104,12 +104,12 @@
                                 @endif
                                 <div class="mt-3 flex items-center gap-4 text-sm text-gray-400">
                                     <span>
-                                        <i class="fas fa-list-ol ml-1"></i>
-                                        {{ $template->steps->count() }} خطوة
+                                        <i class="fas fa-list-ol {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+                                        {{ __('steps count', ['count' => $template->steps->count()]) }}
                                     </span>
                                     <span>
-                                        <i class="fas fa-clock ml-1"></i>
-                                        {{ $template->steps->sum('default_duration_days') }} يوم
+                                        <i class="fas fa-clock {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+                                        {{ __('days count', ['count' => $template->steps->sum('default_duration_days')]) }}
                                     </span>
                                 </div>
                             </div>
@@ -118,23 +118,23 @@
                     <div class="flex items-center gap-2">
                         @can('view', $template)
                         <a href="{{ route('workflow-templates.show', $template) }}" class="px-3 py-2 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded-lg transition-all duration-200 text-sm">
-                            <i class="fas fa-eye ml-1"></i>
-                            عرض
+                            <i class="fas fa-eye {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+                            {{ __('View') }}
                         </a>
                         @endcan
                         @can('update', $template)
                         <a href="{{ route('workflow-templates.edit', $template) }}" class="px-3 py-2 bg-[#1db8f8]/20 hover:bg-[#1db8f8]/30 text-[#1db8f8] rounded-lg transition-all duration-200 text-sm">
-                            <i class="fas fa-edit ml-1"></i>
-                            تعديل
+                            <i class="fas fa-edit {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+                            {{ __('Edit') }}
                         </a>
                         @endcan
                         @can('delete', $template)
-                        <form action="{{ route('workflow-templates.destroy', $template) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا القالب؟')">
+                        <form action="{{ route('workflow-templates.destroy', $template) }}" method="POST" onsubmit="return confirm(@json(__('Confirm delete workflow template')))">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-all duration-200 text-sm">
-                                <i class="fas fa-trash ml-1"></i>
-                                حذف
+                                <i class="fas fa-trash {{ app()->getLocale() === 'ar' ? 'ml-1' : 'mr-1' }}"></i>
+                                {{ __('Delete') }}
                             </button>
                         </form>
                         @endcan
@@ -151,11 +151,11 @@
         @else
         <div class="text-center py-12">
             <i class="fas fa-sitemap text-6xl text-gray-500 mb-4"></i>
-            <p class="text-gray-400 text-lg">لا توجد قوالب مسارات</p>
+            <p class="text-gray-400 text-lg">{{ __('No workflow templates') }}</p>
             @can('create', \App\Models\WorkflowTemplate::class)
             <a href="{{ route('workflow-templates.create') }}" class="mt-4 inline-block px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200">
-                <i class="fas fa-plus ml-2"></i>
-                إنشاء قالب جديد
+                <i class="fas fa-plus {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+                {{ __('Create new workflow template button') }}
             </a>
             @endcan
         </div>

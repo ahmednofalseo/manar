@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Role;
 use App\Models\Permission;
+use App\Models\Role;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -13,14 +14,14 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        $roleDefaults = ['guard_name' => 'web'];
+        $roleDefaults = Schema::hasColumn('roles', 'guard_name') ? ['guard_name' => 'web'] : [];
 
         // Create or get Roles
         $superAdmin = Role::firstOrCreate(
             ['name' => 'super_admin'],
             array_merge($roleDefaults, [
                 'display_name' => 'الأدمن العام',
-                'description' => 'صلاحيات كاملة على جميع الوحدات'
+                'description' => 'صلاحيات كاملة على جميع الوحدات',
             ])
         );
 
@@ -28,7 +29,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'project_manager'],
             array_merge($roleDefaults, [
                 'display_name' => 'مدير المشروع',
-                'description' => 'إدارة المشاريع والمهام والفريق'
+                'description' => 'إدارة المشاريع والمهام والفريق',
             ])
         );
 
@@ -36,7 +37,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'engineer'],
             array_merge($roleDefaults, [
                 'display_name' => 'مهندس/فني',
-                'description' => 'إدارة المهام المسندة والمشاريع المرتبطة'
+                'description' => 'إدارة المهام المسندة والمشاريع المرتبطة',
             ])
         );
 
@@ -44,7 +45,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'admin_staff'],
             array_merge($roleDefaults, [
                 'display_name' => 'الإداري',
-                'description' => 'إدارة العملاء والفواتير والمصروفات'
+                'description' => 'إدارة العملاء والفواتير والمصروفات',
             ])
         );
 
@@ -127,10 +128,12 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'manage-roles-permissions', 'display_name' => 'إدارة الأدوار والصلاحيات', 'group' => 'Settings'],
         ];
 
+        $permissionDefaults = Schema::hasColumn('permissions', 'guard_name') ? ['guard_name' => 'web'] : [];
+
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(
                 ['name' => $permission['name']],
-                array_merge($permission, ['guard_name' => 'web'])
+                array_merge($permission, $permissionDefaults)
             );
         }
 

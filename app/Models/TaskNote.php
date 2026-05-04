@@ -41,26 +41,31 @@ class TaskNote extends Model
     public function getActionDescriptionAttribute(): string
     {
         $actions = [
-            'status_change' => 'تغيير الحالة',
-            'rejection' => 'رفض المهمة',
-            'comment' => 'تعليق',
-            'attachment' => 'رفع مرفق',
-            'reopen' => 'إعادة فتح',
-            'assignment' => 'إسناد',
+            'status_change' => __('Task note action status change'),
+            'rejection' => __('Task note action rejection'),
+            'comment' => __('Task note action comment'),
+            'attachment' => __('Task note action attachment'),
+            'reopen' => __('Task note action reopen'),
+            'assignment' => __('Task note action assignment'),
         ];
 
         $actionName = $actions[$this->action_type] ?? $this->action_type;
 
         if ($this->action_type === 'status_change' && $this->old_value && $this->new_value) {
             $statusMap = [
-                'new' => 'جديد',
-                'in_progress' => 'قيد التنفيذ',
-                'done' => 'منجز',
-                'rejected' => 'مرفوض',
+                'new' => __('Task status new'),
+                'in_progress' => __('Task status in progress'),
+                'done' => __('Task status done'),
+                'rejected' => __('Task status rejected'),
             ];
             $old = $statusMap[$this->old_value] ?? $this->old_value;
             $new = $statusMap[$this->new_value] ?? $this->new_value;
-            return "{$actionName}: من {$old} إلى {$new}";
+
+            return __('Task note status change line', [
+                'action' => $actionName,
+                'from' => $old,
+                'to' => $new,
+            ]);
         }
 
         return $actionName;

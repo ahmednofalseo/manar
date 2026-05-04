@@ -11,6 +11,10 @@
         -webkit-backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
     }
+
+    [x-cloak] {
+        display: none !important;
+    }
 </style>
 @endpush
 
@@ -91,22 +95,110 @@
                 {{ __('Basic Information') }}
             </h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div>
-                    <label class="block text-gray-300 text-sm mb-2">{{ __('Project Name') }} <span class="text-red-400">*</span></label>
-                    <input 
-                        type="text" 
-                        name="name"
-                        value="{{ old('name', $project->name) }}"
-                        required
-                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                        placeholder="{{ __('Project Name Example') }}"
-                    >
-                    @error('name')
-                    <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
-                    @enderror
+            <div x-data="{ projectLocaleTab: 'ar' }" class="mb-6 space-y-4">
+                <div class="flex gap-2 border-b border-white/10 pb-1">
+                    <button type="button" @click="projectLocaleTab = 'ar'"
+                        class="px-4 py-2 rounded-t-lg text-sm font-medium transition"
+                        :class="projectLocaleTab === 'ar' ? 'bg-primary-500/30 text-white border-b-2 border-primary-400 -mb-px' : 'text-gray-400 hover:text-white'">
+                        العربية
+                    </button>
+                    <button type="button" @click="projectLocaleTab = 'en'"
+                        class="px-4 py-2 rounded-t-lg text-sm font-medium transition"
+                        :class="projectLocaleTab === 'en' ? 'bg-primary-500/30 text-white border-b-2 border-primary-400 -mb-px' : 'text-gray-400 hover:text-white'">
+                        English
+                    </button>
                 </div>
 
+                <div x-show="projectLocaleTab === 'ar'" x-cloak class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-300 text-sm mb-2">{{ __('Project Name') }} <span class="text-red-400">*</span></label>
+                        <input
+                            type="text"
+                            name="name"
+                            value="{{ old('name', $project->name) }}"
+                            required
+                            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                            placeholder="{{ __('Project Name Example') }}"
+                        >
+                        @error('name')
+                        <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label class="block text-gray-300 text-sm mb-2">{{ __('District') }}</label>
+                        <input
+                            type="text"
+                            name="district"
+                            value="{{ old('district', $project->district) }}"
+                            id="district"
+                            autocomplete="off"
+                            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                            placeholder="{{ __('Enter District Name') }}"
+                        >
+                        @error('district')
+                        <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label class="block text-gray-300 text-sm mb-2">{{ __('Owner') }} <span class="text-red-400">*</span></label>
+                        <input
+                            type="text"
+                            name="owner"
+                            value="{{ old('owner', $project->owner) }}"
+                            required
+                            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                            placeholder="{{ __('Enter Owner Name') }}"
+                        >
+                        @error('owner')
+                        <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div x-show="projectLocaleTab === 'en'" x-cloak class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-300 text-sm mb-2">Project name (English)</label>
+                        <input
+                            type="text"
+                            name="name_en"
+                            value="{{ old('name_en', $project->name_en) }}"
+                            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                            placeholder="e.g. Residential villa – Olaya"
+                        >
+                        @error('name_en')
+                        <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label class="block text-gray-300 text-sm mb-2">District</label>
+                        <input
+                            type="text"
+                            name="district_en"
+                            value="{{ old('district_en', $project->district_en) }}"
+                            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                            placeholder="District name"
+                        >
+                        @error('district_en')
+                        <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label class="block text-gray-300 text-sm mb-2">Owner</label>
+                        <input
+                            type="text"
+                            name="owner_en"
+                            value="{{ old('owner_en', $project->owner_en) }}"
+                            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                            placeholder="Owner name in English"
+                        >
+                        @error('owner_en')
+                        <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                     <label class="block text-gray-300 text-sm mb-2">{{ __('Project Number') }}</label>
                     <input 
@@ -157,22 +249,6 @@
                 </div>
 
                 <div>
-                    <label class="block text-gray-300 text-sm mb-2">{{ __('District') }}</label>
-                    <input 
-                        type="text" 
-                        name="district"
-                        value="{{ old('district', $project->district) }}"
-                        id="district"
-                        autocomplete="off"
-                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                        placeholder="{{ __('Enter District Name') }}"
-                    >
-                    @error('district')
-                    <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
                     <label class="block text-gray-300 text-sm mb-2">{{ __('Client') }}</label>
                     <select 
                         name="client_id" 
@@ -187,21 +263,6 @@
                     </select>
                     @error('client_id')
                         <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label class="block text-gray-300 text-sm mb-2">{{ __('Owner') }} <span class="text-red-400">*</span></label>
-                    <input 
-                        type="text" 
-                        name="owner"
-                        value="{{ old('owner', $project->owner) }}"
-                        required
-                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                        placeholder="{{ __('Enter Owner Name') }}"
-                    >
-                    @error('owner')
-                    <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
 

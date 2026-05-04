@@ -24,9 +24,9 @@ class ServicesController extends Controller
         // البحث
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -73,7 +73,7 @@ class ServicesController extends Controller
     public function store(StoreServiceRequest $request)
     {
         $data = $request->validated();
-        
+
         // توليد slug تلقائياً إذا لم يُحدد
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
@@ -82,7 +82,7 @@ class ServicesController extends Controller
         $service = Service::create($data);
 
         return redirect()->route('services.index')
-            ->with('success', 'تم إنشاء الخدمة بنجاح');
+            ->with('success', __('Service created successfully'));
     }
 
     /**
@@ -120,7 +120,7 @@ class ServicesController extends Controller
     public function update(UpdateServiceRequest $request, Service $service)
     {
         $data = $request->validated();
-        
+
         // توليد slug تلقائياً إذا لم يُحدد
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
@@ -129,7 +129,7 @@ class ServicesController extends Controller
         $service->update($data);
 
         return redirect()->route('services.index')
-            ->with('success', 'تم تحديث الخدمة بنجاح');
+            ->with('success', __('Service updated successfully'));
     }
 
     /**
@@ -142,12 +142,12 @@ class ServicesController extends Controller
         // التحقق من وجود مشاريع مرتبطة
         if ($service->projects()->count() > 0) {
             return redirect()->route('services.index')
-                ->with('error', 'لا يمكن حذف الخدمة لوجود مشاريع مرتبطة بها');
+                ->with('error', __('Service cannot delete has projects'));
         }
 
         $service->delete();
 
         return redirect()->route('services.index')
-            ->with('success', 'تم حذف الخدمة بنجاح');
+            ->with('success', __('Service deleted successfully'));
     }
 }

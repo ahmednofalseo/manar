@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreInvoiceRequest extends FormRequest
 {
@@ -41,19 +40,19 @@ class StoreInvoiceRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'project_id.required' => 'المشروع مطلوب',
-            'project_id.exists' => 'المشروع المحدد غير موجود',
-            'client_id.exists' => 'العميل المحدد غير موجود',
-            'number.unique' => 'رقم الفاتورة مستخدم مسبقاً',
-            'issue_date.required' => 'تاريخ الإصدار مطلوب',
-            'issue_date.date' => 'تاريخ الإصدار غير صحيح',
-            'due_date.required' => 'تاريخ الاستحقاق مطلوب',
-            'due_date.date' => 'تاريخ الاستحقاق غير صحيح',
-            'due_date.after_or_equal' => 'تاريخ الاستحقاق يجب أن يكون بعد أو يساوي تاريخ الإصدار',
-            'total_amount.required' => 'المبلغ الإجمالي مطلوب',
-            'total_amount.numeric' => 'المبلغ الإجمالي يجب أن يكون رقماً',
-            'total_amount.min' => 'المبلغ الإجمالي يجب أن يكون أكبر من صفر',
-            'payment_method.in' => 'طريقة الدفع غير صحيحة',
+            'project_id.required' => __('Invoice validation project required'),
+            'project_id.exists' => __('Invoice validation project invalid'),
+            'client_id.exists' => __('Invoice validation client invalid'),
+            'number.unique' => __('Invoice validation number unique'),
+            'issue_date.required' => __('Invoice validation issue date required'),
+            'issue_date.date' => __('Invoice validation issue date invalid'),
+            'due_date.required' => __('Invoice validation due date required'),
+            'due_date.date' => __('Invoice validation due date invalid'),
+            'due_date.after_or_equal' => __('Invoice validation due after issue'),
+            'total_amount.required' => __('Invoice validation total required'),
+            'total_amount.numeric' => __('Invoice validation total numeric'),
+            'total_amount.min' => __('Invoice validation total min'),
+            'payment_method.in' => __('Invoice validation payment method invalid'),
         ];
     }
 }
