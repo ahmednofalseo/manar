@@ -68,8 +68,8 @@
                 <label class="block text-xs md:text-sm text-gray-300 mb-1 md:mb-2">{{ __('City') }}</label>
                 <select name="city" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-sm md:text-base text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                     <option value="">{{ __('All Cities') }}</option>
-                    @foreach($cities as $city)
-                        <option value="{{ $city }}" {{ request('city') == $city ? 'selected' : '' }}>{{ $city }}</option>
+                    @foreach($cities as $cityModel)
+                        <option value="{{ $cityModel->name }}" {{ request('city') == $cityModel->name ? 'selected' : '' }}>{{ $cityModel->display_name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -79,7 +79,7 @@
                 <select name="owner" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-sm md:text-base text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                     <option value="">{{ __('All Owners') }}</option>
                     @foreach($owners as $owner)
-                        <option value="{{ $owner }}" {{ request('owner') == $owner ? 'selected' : '' }}>{{ $owner }}</option>
+                        <option value="{{ $owner }}" {{ request('owner') == $owner ? 'selected' : '' }}>{{ $ownerLabelMap[$owner] ?? $owner }}</option>
                     @endforeach
                 </select>
             </div>
@@ -99,7 +99,7 @@
                 <select name="engineer_id" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-sm md:text-base text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                     <option value="">{{ __('All Engineers') }}</option>
                     @foreach($engineers as $engineer)
-                        <option value="{{ $engineer->id }}" {{ request('engineer_id') == $engineer->id ? 'selected' : '' }}>{{ $engineer->name }}</option>
+                        <option value="{{ $engineer->id }}" {{ request('engineer_id') == $engineer->id ? 'selected' : '' }}>{{ $engineer->display_name }}</option>
                     @endforeach
                 </select>
             </div>

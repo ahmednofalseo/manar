@@ -2,6 +2,12 @@
     $typeLabelMap = $typeLabelMap ?? [];
     $stageLabelMap = $stageLabelMap ?? [];
     $statusLabelMap = $statusLabelMap ?? [];
+    $cityLabelMap = $cityLabelMap ?? [];
+
+    $cityDisplay = $cityLabelMap[$project->city] ?? $project->city;
+    $districtDisplay = app()->getLocale() === 'en' && filled($project->district_en ?? null)
+        ? $project->district_en
+        : $project->district;
 
     $typeColors = [
         'تصميم' => 'bg-green-500/20 text-green-400',
@@ -110,7 +116,7 @@
     <div class="space-y-2 mb-4">
         <div class="flex items-center gap-2 text-gray-300 text-sm">
             <i class="fas fa-map-marker-alt text-primary-400"></i>
-            <span>{{ $project->city }}@if($project->district) / {{ $project->district }}@endif</span>
+            <span>{{ $cityDisplay }}@if($project->district) / {{ $districtDisplay }}@endif</span>
         </div>
         <div class="flex items-center gap-2 text-gray-300 text-sm">
             <i class="fas fa-user text-primary-400"></i>

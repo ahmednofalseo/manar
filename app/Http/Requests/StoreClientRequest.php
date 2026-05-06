@@ -23,6 +23,7 @@ class StoreClientRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'name_en' => ['nullable', 'string', 'max:255'],
             'type' => ['required', 'in:individual,company,government'],
             'national_id_or_cr' => ['nullable', 'string', 'max:50'],
             'phone' => ['required', 'string', 'max:20'],
@@ -46,6 +47,8 @@ class StoreClientRequest extends FormRequest
             'name.required' => __('Client validation name required'),
             'name.string' => __('Client validation name string'),
             'name.max' => __('Client validation name max'),
+            'name_en.string' => __('Client validation name en string'),
+            'name_en.max' => __('Client validation name en max'),
             'type.required' => __('Client validation type required'),
             'type.in' => __('Client validation type in'),
             'phone.required' => __('Client validation phone required'),

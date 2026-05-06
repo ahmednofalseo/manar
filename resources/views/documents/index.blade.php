@@ -116,7 +116,7 @@
                     <select name="client_id" class="w-full bg-[#173343]/90 border-2 border-white/30 rounded-lg px-3 md:px-4 py-2 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#1db8f8] focus:border-[#1db8f8] transition-all duration-200 text-sm md:text-base" style="background-color: rgba(23, 51, 67, 0.9); color: #ffffff; font-weight: 600; max-width: 100%;">
                         <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">جميع العملاء</option>
                         @foreach($clients as $client)
-                        <option value="{{ $client->id }}" {{ request('client_id') == $client->id ? 'selected' : '' }} style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ $client->name }}</option>
+                        <option value="{{ $client->id }}" {{ request('client_id') == $client->id ? 'selected' : '' }} style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ $client->display_name }}</option>
                         @endforeach
                     </select>
                 </div>

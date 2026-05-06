@@ -18,7 +18,7 @@
 <!-- Header Actions -->
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
     <div>
-        <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">{{ $client->name }}</h1>
+        <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">{{ $client->display_name }}</h1>
         <p class="text-gray-400 text-sm">تاريخ الإنشاء: {{ $client->created_at->format('Y-m-d') }}</p>
     </div>
     <div class="flex items-center gap-3">

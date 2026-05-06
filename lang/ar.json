@@ -1021,5 +1021,8 @@
     "Profile validation current password required with": "كلمة المرور الحالية مطلوبة لتغيير كلمة المرور",
     "Profile validation avatar image": "الصورة الشخصية يجب أن تكون صورة",
     "Profile validation avatar max": "حجم الصورة يجب أن يكون أقل من 2 ميجابايت",
-    "Profile validation current password incorrect": "كلمة المرور الحالية غير صحيحة"
+    "Profile validation current password incorrect": "كلمة المرور الحالية غير صحيحة",
+    "Full name English placeholder": "مثال بالإنجليزية: Ahmed Mohammed Al-Ali",
+    "Client validation name en string": "الاسم بالإنجليزية يجب أن يكون نصاً.",
+    "Client validation name en max": "الاسم بالإنجليزية يجب ألا يتجاوز 255 حرفاً."
 }

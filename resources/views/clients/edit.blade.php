@@ -39,15 +39,15 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
         <h2 class="text-xl font-bold text-white mb-6">{{ __('Basic Information') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <div class="md:col-span-2">
+            <div>
                 <label class="block text-gray-300 text-sm mb-2">{{ __('Full Name') }} <span class="text-red-400">*</span></label>
-                <input 
-                    type="text" 
-                    name="name" 
+                <input
+                    type="text"
+                    name="name"
                     required
                     value="{{ old('name', $client->name) }}"
                     class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
-                    placeholder="مثال: أحمد محمد العلي"
+                    placeholder="{{ __('Full name placeholder example') }}"
                 >
                 @error('name')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
@@ -55,7 +55,22 @@
             </div>
 
             <div>
-                <label class="block text-gray-300 text-sm mb-2">نوع العميل <span class="text-red-400">*</span></label>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Full Name (English)') }}</label>
+                <input
+                    type="text"
+                    name="name_en"
+                    value="{{ old('name_en', $client->name_en) }}"
+                    lang="en"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                    placeholder="{{ __('Full name English placeholder') }}"
+                >
+                @error('name_en')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Client Type') }} <span class="text-red-400">*</span></label>
                 <select name="type" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                     <option value="">{{ __('Select Type') }}</option>
                     <option value="individual" {{ old('type', $client->type) == 'individual' ? 'selected' : '' }}>{{ __('Individual') }}</option>

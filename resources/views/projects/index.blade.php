@@ -78,7 +78,7 @@
                 <select x-model="city" class="w-full bg-[#173343]/90 border-2 border-white/30 rounded-lg px-3 md:px-4 py-2 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#1db8f8] focus:border-[#1db8f8] transition-all duration-200 text-sm md:text-base" style="background-color: rgba(23, 51, 67, 0.9); color: #ffffff; font-weight: 600; max-width: 100%;">
                     <option value="" style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ __('All Cities') }}</option>
                     @foreach($cities as $cityModel)
-                        <option value="{{ $cityModel->name }}" {{ request('city') == $cityModel->name ? 'selected' : '' }} style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ $cityModel->display_name }}</option>
+                        <option value="{{ $cityModel->name }}" {{ request('city') == $cityModel->name ? 'selected' : '' }} style="background-color: #173343; color: #ffffff; font-weight: 600; padding: 12px;">{{ $cityLabelMap[$cityModel->name] ?? $cityModel->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -253,6 +253,7 @@
             'typeLabelMap' => $typeLabelMap,
             'stageLabelMap' => $stageLabelMap,
             'statusLabelMap' => $statusLabelMap,
+            'cityLabelMap' => $cityLabelMap,
         ])
     @endforeach
 </div>

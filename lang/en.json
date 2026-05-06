@@ -1023,5 +1023,8 @@
     "Profile validation current password required with": "Current password is required to change your password.",
     "Profile validation avatar image": "Avatar must be an image file.",
     "Profile validation avatar max": "Avatar must be smaller than 2 MB.",
-    "Profile validation current password incorrect": "Current password is incorrect."
+    "Profile validation current password incorrect": "Current password is incorrect.",
+    "Full name English placeholder": "e.g. Ahmed Mohammed Al-Ali",
+    "Client validation name en string": "The English name must be text.",
+    "Client validation name en max": "The English name must not exceed 255 characters."
 }

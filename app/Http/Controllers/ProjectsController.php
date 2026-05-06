@@ -153,6 +153,14 @@ class ProjectsController extends Controller
         $projects = $query->latest()->paginate(12);
 
         $cities = City::active()->ordered()->get();
+        $cityLabelMap = $cities->mapWithKeys(function (City $city) {
+            $label = app()->getLocale() === 'en' && filled($city->name_en)
+                ? $city->name_en
+                : $city->name;
+
+            return [$city->name => $label];
+        })->all();
+
         $labelCtx = $this->projectTypeStageLabelContext();
 
         $districtsQuery = Project::query();
@@ -180,6 +188,7 @@ class ProjectsController extends Controller
             'delayedProjects',
             'totalValue',
             'cities',
+            'cityLabelMap',
             'districts',
             'owners',
         ), $labelCtx));

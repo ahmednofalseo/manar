@@ -7,6 +7,8 @@ use App\Events\TaskCreated;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Project;
+use App\Models\ProjectStage;
+use App\Models\StageSetting;
 use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Models\User;
@@ -50,7 +52,8 @@ class TasksController extends Controller
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhereHas('project', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
+                        $q->where('name', 'like', "%{$search}%")
+                            ->orWhere('name_en', 'like', "%{$search}%");
                     });
             });
         }
@@ -113,22 +116,26 @@ class TasksController extends Controller
         $tasks = $query->latest()->paginate(20);
 
         // البيانات للـ dropdowns (تحسين - cache إذا أمكن)
-        $projects = Project::select('id', 'name', 'project_number')
+        $projects = Project::select('id', 'name', 'name_en', 'project_number')
             ->with('projectStages:id,project_id,stage_name')
             ->get();
 
-        $engineers = User::select('id', 'name')
+        $engineers = User::select('id', 'name', 'name_en', 'job_title')
             ->whereHas('roles', function ($q) {
                 $q->whereIn('name', ['engineer', 'project_manager']);
             })
             ->orderBy('name')
             ->get();
 
-        // الحصول على جميع المراحل المميزة (تحسين - select فقط الحقول المطلوبة)
-        $stages = \App\Models\ProjectStage::select('stage_name')
+        $stages = ProjectStage::query()
+            ->select('stage_name')
             ->distinct()
             ->orderBy('stage_name')
             ->pluck('stage_name');
+
+        $stageLabelMap = StageSetting::active()->ordered()->get()
+            ->mapWithKeys(fn (StageSetting $s) => [$s->name => $s->display_name])
+            ->all();
 
         // ========== الإحصائيات الجديدة ==========
 
@@ -168,7 +175,7 @@ class TasksController extends Controller
 
                 return [
                     'id' => $engineer->id,
-                    'name' => $engineer->name,
+                    'name' => $engineer->display_name,
                     'job_title' => $engineer->job_title,
                     'avatar' => $engineer->avatar,
                     'completed_tasks' => $completedTasks,
@@ -210,6 +217,7 @@ class TasksController extends Controller
             'projects',
             'engineers',
             'stages',
+            'stageLabelMap',
             'totalTasks',
             'inProgressTasks',
             'completedTasks',

@@ -196,7 +196,7 @@
                     <option value="">{{ __('All Projects') }}</option>
                     @foreach($projects as $proj)
                         <option value="{{ $proj->id }}" {{ request('project_id') == $proj->id ? 'selected' : '' }}>
-                            {{ $proj->name }}@if($proj->project_number) ({{ $proj->project_number }})@endif
+                            {{ $proj->display_name }}@if($proj->project_number) ({{ $proj->project_number }})@endif
                         </option>
                     @endforeach
                 </select>
@@ -208,7 +208,7 @@
                     <option value="">{{ __('All Engineers') }}</option>
                     @foreach($engineers as $eng)
                         <option value="{{ $eng->id }}" {{ request('assignee_id') == $eng->id ? 'selected' : '' }}>
-                            {{ $eng->name }}@if($eng->job_title) - {{ $eng->job_title }}@endif
+                            {{ $eng->display_name }}@if($eng->job_title) — {{ $eng->job_title }}@endif
                         </option>
                     @endforeach
                 </select>
@@ -220,7 +220,7 @@
                     <option value="">{{ __('All Stages') }}</option>
                     @foreach($stages as $stageName)
                         <option value="{{ $stageName }}" {{ request('project_stage_id') == $stageName ? 'selected' : '' }}>
-                            {{ $stageName }}
+                            {{ $stageLabelMap[$stageName] ?? $stageName }}
                         </option>
                     @endforeach
                 </select>
@@ -292,13 +292,16 @@
 
 <!-- Kanban Board / Table View -->
 @php
-    $tasksJson = $tasks->map(function($task) {
+    $stageLabelMap = $stageLabelMap ?? [];
+    $tasksJson = $tasks->map(function ($task) use ($stageLabelMap) {
+        $stageName = optional($task->projectStage)->stage_name;
+
         return [
             'id' => $task->id,
             'title' => $task->display_title,
-            'project' => $task->project ? ['name' => $task->project->name] : null,
-            'assignee' => $task->assignee ? ['name' => $task->assignee->name] : null,
-            'project_stage' => $task->projectStage ? ['stage_name' => $task->projectStage->stage_name] : null,
+            'project' => $task->project?->display_name,
+            'assignee' => $task->assignee?->display_name,
+            'stage' => $stageName ? ($stageLabelMap[$stageName] ?? $stageName) : null,
             'status' => $task->status,
             'progress' => $task->progress ?? 0,
             'due_date' => $task->due_date ? $task->due_date->format('Y-m-d') : null,
@@ -615,9 +618,9 @@
                                 <span class="text-white text-sm font-semibold">{{ $task->display_title }}</span>
                             </div>
                         </td>
-                        <td class="py-3 text-gray-300 text-sm">{{ $task->project->name ?? 'غير محدد' }}</td>
-                        <td class="py-3 text-gray-300 text-sm">{{ $task->assignee->name ?? 'غير محدد' }}</td>
-                        <td class="py-3 text-gray-300 text-sm">{{ $task->projectStage->stage_name ?? 'غير محدد' }}</td>
+                        <td class="py-3 text-gray-300 text-sm">{{ $task->project?->display_name ?? __('Not specified') }}</td>
+                        <td class="py-3 text-gray-300 text-sm">{{ $task->assignee?->display_name ?? __('Not specified') }}</td>
+                        <td class="py-3 text-gray-300 text-sm">@php $sn = optional($task->projectStage)->stage_name; @endphp{{ $sn ? ($stageLabelMap[$sn] ?? $sn) : __('Not specified') }}</td>
                         <td class="py-3">
                             <div class="flex items-center gap-2">
                                 <div class="flex-1 bg-white/5 rounded-full h-2 w-24">
@@ -700,15 +703,16 @@ function taskFilters() {
 }
 
 function tasksData(initialTasks) {
+    const notSpecified = @json(__('Not specified'));
     return {
         viewMode: 'kanban', // Default to kanban view
         tasks: initialTasks.map(function(task) {
             return {
                 id: task.id,
                 title: task.title,
-                project: task.project ? task.project.name : 'غير محدد',
-                engineer: task.assignee ? task.assignee.name : 'غير محدد',
-                stage: task.project_stage ? task.project_stage.stage_name : 'غير محدد',
+                project: task.project || notSpecified,
+                engineer: task.assignee || notSpecified,
+                stage: task.stage || notSpecified,
                 status: task.status,
                 progress: task.progress || 0,
                 hasAttachment: false,

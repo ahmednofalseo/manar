@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,6 +13,7 @@ class Client extends Model
 
     protected $fillable = [
         'name',
+        'name_en',
         'type',
         'national_id_or_cr',
         'phone',
@@ -26,6 +28,20 @@ class Client extends Model
     protected $casts = [
         'status' => 'string',
     ];
+
+    /**
+     * الاسم المعروض حسب لغة الواجهة.
+     */
+    protected function displayName(): Attribute
+    {
+        return Attribute::get(function () {
+            if (app()->getLocale() === 'en' && filled($this->name_en)) {
+                return $this->name_en;
+            }
+
+            return $this->name ?? '';
+        });
+    }
 
     /**
      * المشاريع المرتبطة بالعميل
@@ -60,27 +76,27 @@ class Client extends Model
     }
 
     /**
-     * الحصول على نوع العميل بالعربية
+     * تسمية نوع العميل حسب لغة الواجهة.
      */
     public function getTypeLabelAttribute(): string
     {
-        return match($this->type) {
-            'individual' => 'فرد',
-            'company' => 'شركة',
-            'government' => 'جهة حكومية',
-            default => $this->type,
+        return match ($this->type) {
+            'individual' => __('Individual'),
+            'company' => __('Company'),
+            'government' => __('Government Entity'),
+            default => $this->type ?? '',
         };
     }
 
     /**
-     * الحصول على حالة العميل بالعربية
+     * تسمية حالة العميل حسب لغة الواجهة.
      */
     public function getStatusLabelAttribute(): string
     {
-        return match($this->status) {
-            'active' => 'نشط',
-            'inactive' => 'غير نشط',
-            default => $this->status,
+        return match ($this->status) {
+            'active' => __('Active'),
+            'inactive' => __('Inactive'),
+            default => $this->status ?? '',
         };
     }
 }

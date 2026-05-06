@@ -23,6 +23,7 @@ class UpdateClientRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'name_en' => ['nullable', 'string', 'max:255'],
             'type' => ['required', 'in:individual,company,government'],
             'national_id_or_cr' => ['nullable', 'string', 'max:50'],
             'phone' => ['required', 'string', 'max:20'],
@@ -46,6 +47,8 @@ class UpdateClientRequest extends FormRequest
             'name.required' => 'اسم العميل مطلوب',
             'name.string' => 'اسم العميل يجب أن يكون نص',
             'name.max' => 'اسم العميل يجب ألا يتجاوز 255 حرف',
+            'name_en.string' => __('Client validation name en string'),
+            'name_en.max' => __('Client validation name en max'),
             'type.required' => 'نوع العميل مطلوب',
             'type.in' => 'نوع العميل غير صحيح',
             'phone.required' => 'رقم الجوال مطلوب',

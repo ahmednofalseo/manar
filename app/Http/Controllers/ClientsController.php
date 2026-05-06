@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
+use App\Models\City;
 use App\Models\Client;
 use App\Models\ClientAttachment;
 use App\Models\ClientNote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class ClientsController extends Controller
@@ -26,11 +28,12 @@ class ClientsController extends Controller
         // البحث
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('national_id_or_cr', 'like', "%{$search}%");
+                    ->orWhere('name_en', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('national_id_or_cr', 'like', "%{$search}%");
             });
         }
 
@@ -58,8 +61,10 @@ class ClientsController extends Controller
         $activeClients = Client::where('status', 'active')->count();
         $inactiveClients = Client::where('status', 'inactive')->count();
 
-        // المدن للفلترة - من جدول المدن
-        $cities = \App\Models\City::active()->ordered()->pluck('name');
+        // المدن للفلترة — قيمة الفلتر = name العربي؛ العرض يتبع لغة الواجهة عبر City::display_name
+        $cities = Schema::hasTable('cities') && Schema::hasColumn('cities', 'name')
+            ? City::active()->ordered()->get()
+            : collect();
 
         // بيانات العملاء الجدد شهريًا (آخر 12 شهر)
         $newClientsByMonth = Client::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count')
@@ -79,7 +84,7 @@ class ClientsController extends Controller
         $mostActiveClients = Client::withCount('projects')
             ->orderBy('projects_count', 'desc')
             ->limit(5)
-            ->get(['id', 'name', 'projects_count']);
+            ->get(['id', 'name', 'name_en', 'projects_count']);
 
         return view('clients.index', compact(
             'clients',
@@ -124,7 +129,8 @@ class ClientsController extends Controller
                 ->with('success', 'تم إنشاء العميل بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'حدث خطأ أثناء إنشاء العميل: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'حدث خطأ أثناء إنشاء العميل: '.$e->getMessage());
         }
     }
 
@@ -134,12 +140,12 @@ class ClientsController extends Controller
     public function show(string $id)
     {
         $client = Client::with([
-            'projects' => function($query) {
+            'projects' => function ($query) {
                 $query->with('projectManager')->latest('created_at');
             },
             'attachments.uploader',
             'notes.creator',
-            'documents'
+            'documents',
         ])
             ->withCount('projects')
             ->findOrFail($id);
@@ -161,7 +167,7 @@ class ClientsController extends Controller
                 'icon' => 'comment',
                 'color' => 'bg-blue-500',
                 'title' => 'تم إضافة ملاحظة',
-                'detail' => 'بواسطة: ' . ($note->creator->name ?? 'غير معروف'),
+                'detail' => 'بواسطة: '.($note->creator->name ?? 'غير معروف'),
                 'user' => $note->creator->name ?? 'غير معروف',
                 'date' => $note->created_at,
             ]);
@@ -173,8 +179,8 @@ class ClientsController extends Controller
                 'type' => 'attachment',
                 'icon' => 'paperclip',
                 'color' => 'bg-green-500',
-                'title' => 'تم رفع ملف: ' . $attachment->name,
-                'detail' => 'بواسطة: ' . ($attachment->uploader->name ?? 'غير معروف'),
+                'title' => 'تم رفع ملف: '.$attachment->name,
+                'detail' => 'بواسطة: '.($attachment->uploader->name ?? 'غير معروف'),
                 'user' => $attachment->uploader->name ?? 'غير معروف',
                 'date' => $attachment->created_at,
             ]);
@@ -187,7 +193,7 @@ class ClientsController extends Controller
                 'icon' => 'link',
                 'color' => 'bg-emerald-500',
                 'title' => 'تم ربط مشروع جديد',
-                'detail' => 'مشروع: ' . $project->name,
+                'detail' => 'مشروع: '.$project->name,
                 'user' => $project->projectManager->name ?? 'النظام',
                 'date' => $project->created_at,
             ]);
@@ -244,7 +250,8 @@ class ClientsController extends Controller
                 ->with('success', 'تم تحديث بيانات العميل بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'حدث خطأ أثناء تحديث العميل: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'حدث خطأ أثناء تحديث العميل: '.$e->getMessage());
         }
     }
 
@@ -276,7 +283,8 @@ class ClientsController extends Controller
                 ->with('success', 'تم حذف العميل بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'حدث خطأ أثناء حذف العميل: ' . $e->getMessage());
+
+            return back()->with('error', 'حدث خطأ أثناء حذف العميل: '.$e->getMessage());
         }
     }
 
@@ -328,21 +336,21 @@ class ClientsController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'تم رفع ' . count($uploadedFiles) . ' ملف بنجاح',
+                    'message' => 'تم رفع '.count($uploadedFiles).' ملف بنجاح',
                     'attachments' => $uploadedFiles,
                 ]);
             }
 
-            return back()->with('success', 'تم رفع ' . count($uploadedFiles) . ' ملف بنجاح');
+            return back()->with('success', 'تم رفع '.count($uploadedFiles).' ملف بنجاح');
         } catch (\Exception $e) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'حدث خطأ أثناء رفع الملفات: ' . $e->getMessage(),
+                    'message' => 'حدث خطأ أثناء رفع الملفات: '.$e->getMessage(),
                 ], 422);
             }
 
-            return back()->with('error', 'حدث خطأ أثناء رفع الملفات: ' . $e->getMessage());
+            return back()->with('error', 'حدث خطأ أثناء رفع الملفات: '.$e->getMessage());
         }
     }
 
@@ -404,11 +412,11 @@ class ClientsController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'حدث خطأ أثناء حذف الملف: ' . $e->getMessage(),
+                    'message' => 'حدث خطأ أثناء حذف الملف: '.$e->getMessage(),
                 ], 422);
             }
 
-            return back()->with('error', 'حدث خطأ أثناء حذف الملف: ' . $e->getMessage());
+            return back()->with('error', 'حدث خطأ أثناء حذف الملف: '.$e->getMessage());
         }
     }
 
@@ -449,11 +457,11 @@ class ClientsController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'حدث خطأ أثناء إضافة الملاحظة: ' . $e->getMessage(),
+                    'message' => 'حدث خطأ أثناء إضافة الملاحظة: '.$e->getMessage(),
                 ], 422);
             }
 
-            return back()->with('error', 'حدث خطأ أثناء إضافة الملاحظة: ' . $e->getMessage());
+            return back()->with('error', 'حدث خطأ أثناء إضافة الملاحظة: '.$e->getMessage());
         }
     }
 
@@ -469,11 +477,12 @@ class ClientsController extends Controller
         // تطبيق نفس الفلاتر المستخدمة في index
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('national_id_or_cr', 'like', "%{$search}%");
+                    ->orWhere('name_en', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('national_id_or_cr', 'like', "%{$search}%");
             });
         }
 
@@ -491,19 +500,19 @@ class ClientsController extends Controller
 
         $clients = $query->get();
 
-        $filename = 'clients_' . date('Y-m-d_His') . '.csv';
+        $filename = 'clients_'.date('Y-m-d_His').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function() use ($clients) {
+        $callback = function () use ($clients) {
             $file = fopen('php://output', 'w');
-            
+
             // BOM for UTF-8 Excel compatibility
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
+
             // Headers
             fputcsv($file, [
                 'الاسم',
@@ -562,7 +571,7 @@ class ClientsController extends Controller
         try {
             $file = $request->file('file');
             $handle = fopen($file->getRealPath(), 'r');
-            
+
             // Skip BOM if present
             $firstLine = fgets($handle);
             if (substr($firstLine, 0, 3) !== chr(0xEF).chr(0xBB).chr(0xBF)) {
@@ -576,7 +585,9 @@ class ClientsController extends Controller
             $errors = [];
 
             while (($row = fgetcsv($handle)) !== false) {
-                if (count($row) < 3) continue;
+                if (count($row) < 3) {
+                    continue;
+                }
 
                 try {
                     $data = [
@@ -598,7 +609,7 @@ class ClientsController extends Controller
                     Client::create($data);
                     $imported++;
                 } catch (\Exception $e) {
-                    $errors[] = 'خطأ في السطر: ' . implode(', ', $row) . ' - ' . $e->getMessage();
+                    $errors[] = 'خطأ في السطر: '.implode(', ', $row).' - '.$e->getMessage();
                 }
             }
 
@@ -607,14 +618,15 @@ class ClientsController extends Controller
             DB::commit();
 
             $message = "تم استيراد {$imported} عميل بنجاح";
-            if (!empty($errors)) {
-                $message .= '. ' . count($errors) . ' أخطاء: ' . implode('; ', array_slice($errors, 0, 5));
+            if (! empty($errors)) {
+                $message .= '. '.count($errors).' أخطاء: '.implode('; ', array_slice($errors, 0, 5));
             }
 
             return back()->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'حدث خطأ أثناء استيراد الملف: ' . $e->getMessage());
+
+            return back()->with('error', 'حدث خطأ أثناء استيراد الملف: '.$e->getMessage());
         }
     }
 
@@ -623,7 +635,7 @@ class ClientsController extends Controller
      */
     private function mapTypeFromArabic(string $type): string
     {
-        return match(trim($type)) {
+        return match (trim($type)) {
             'فرد' => 'individual',
             'شركة' => 'company',
             'جهة حكومية', 'حكومي' => 'government',
@@ -636,7 +648,7 @@ class ClientsController extends Controller
      */
     private function mapStatusFromArabic(string $status): string
     {
-        return match(trim($status)) {
+        return match (trim($status)) {
             'نشط', 'نشطة' => 'active',
             'غير نشط', 'غير نشطة' => 'inactive',
             default => 'active',
@@ -685,14 +697,19 @@ class ClientsController extends Controller
                     'success' => true,
                     'message' => "تم حذف {$deleted} عميل بنجاح",
                 ]);
-            }            return back()->with('success', "تم حذف {$deleted} عميل بنجاح");
+            }
+
+            return back()->with('success', "تم حذف {$deleted} عميل بنجاح");
         } catch (\Exception $e) {
-            DB::rollBack();            if ($request->expectsJson()) {
+            DB::rollBack();
+            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'حدث خطأ أثناء الحذف: ' . $e->getMessage(),
+                    'message' => 'حدث خطأ أثناء الحذف: '.$e->getMessage(),
                 ], 422);
-            }            return back()->with('error', 'حدث خطأ أثناء الحذف: ' . $e->getMessage());
+            }
+
+            return back()->with('error', 'حدث خطأ أثناء الحذف: '.$e->getMessage());
         }
     }
 }

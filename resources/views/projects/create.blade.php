@@ -268,7 +268,7 @@
                         <option value="">{{ __('Select Client Optional') }}</option>
                         @foreach($clients ?? [] as $client)
                             <option value="{{ $client->id }}" {{ old('client_id', $selectedClientId ?? '') == $client->id ? 'selected' : '' }}>
-                                {{ $client->name }} - {{ $client->type_label }}
+                                {{ $client->display_name }} - {{ $client->type_label }}
                             </option>
                         @endforeach
                     </select>

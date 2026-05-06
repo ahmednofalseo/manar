@@ -125,8 +125,8 @@
                 <label class="block text-gray-300 text-xs md:text-sm mb-2">{{ __('City') }}</label>
                 <select name="city" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 md:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40 text-sm md:text-base">
                     <option value="">{{ __('All Cities') }}</option>
-                    @foreach($cities as $city)
-                        <option value="{{ $city }}" {{ request('city') == $city ? 'selected' : '' }}>{{ $city }}</option>
+                    @foreach($cities as $cityModel)
+                        <option value="{{ $cityModel->name }}" {{ request('city') == $cityModel->name ? 'selected' : '' }}>{{ $cityModel->display_name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -211,7 +211,7 @@
                         <td class="py-3">
                             <input type="checkbox" :value="{{ $client->id }}" @change="toggleClient({{ $client->id }}, $event)" class="rounded border-white/20">
                         </td>
-                        <td x-show="isVisible('name')" class="py-3 text-white text-sm font-semibold">{{ $client->name }}</td>
+                        <td x-show="isVisible('name')" class="py-3 text-white text-sm font-semibold">{{ $client->display_name }}</td>
                         <td x-show="isVisible('type')" class="py-3 text-gray-300 text-sm">{{ $client->type_label }}</td>
                         <td x-show="isVisible('phone')" class="py-3 text-gray-300 text-sm">{{ $client->phone }}</td>
                         <td x-show="isVisible('email')" class="py-3 text-gray-300 text-sm">{{ $client->email ?? '-' }}</td>
@@ -268,7 +268,7 @@
             <div class="glass-card rounded-xl p-4 border border-white/10">
                 <div class="flex items-start justify-between mb-3">
                     <div>
-                        <h3 class="text-white font-semibold mb-1">{{ $client->name }}</h3>
+                        <h3 class="text-white font-semibold mb-1">{{ $client->display_name }}</h3>
                         <p class="text-gray-400 text-sm">{{ $client->type_label }}</p>
                     </div>
                     <span 
@@ -591,9 +591,9 @@ function clientsData() {
         ],
         getClientTypeText(type) {
             const typeMap = {
-                'individual': 'فرد',
-                'company': 'شركة',
-                'government': 'جهة حكومية'
+                'individual': '{{ __('Individual') }}',
+                'company': '{{ __('Company') }}',
+                'government': '{{ __('Government Entity') }}'
             };
             return typeMap[type] || type;
         },
@@ -631,11 +631,12 @@ function chartsData() {
             const counts = [];
             
             // إنشاء قائمة الأشهر للـ 12 شهر الماضية
+            const chartLocale = @json(app()->getLocale() === 'ar' ? 'ar-SA' : 'en-US');
             for (let i = 11; i >= 0; i--) {
                 const date = new Date();
                 date.setMonth(date.getMonth() - i);
                 const monthKey = date.toISOString().slice(0, 7); // YYYY-MM
-                const monthName = date.toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' });
+                const monthName = date.toLocaleDateString(chartLocale, { month: 'long', year: 'numeric' });
                 months.push(monthName);
                 counts.push(newClientsData[monthKey] || 0);
             }
@@ -704,7 +705,7 @@ function chartsData() {
                 this.clientsByTypeChart = new Chart(typeCtx, {
                     type: 'pie',
                     data: {
-                        labels: typeLabelsArray.length > 0 ? typeLabelsArray : ['لا توجد بيانات'],
+                        labels: typeLabelsArray.length > 0 ? typeLabelsArray : ['{{ __('No data available') }}'],
                         datasets: [{
                             data: typeDataArray.length > 0 ? typeDataArray : [0],
                             backgroundColor: ['rgba(71, 135, 167, 0.8)', 'rgba(29, 184, 248, 0.8)', 'rgba(16, 185, 129, 0.8)'],
@@ -729,7 +730,7 @@ function chartsData() {
             }
 
             // بيانات العملاء الأكثر نشاطًا
-            const mostActiveClientsData = @json($mostActiveClients ?? []);
+            const mostActiveClientsData = @json(($mostActiveClients ?? collect())->map(fn ($c) => ['name' => $c->display_name, 'projects_count' => $c->projects_count ?? 0])->values());
             const activeClientNames = mostActiveClientsData.map(client => client.name);
             const activeClientProjects = mostActiveClientsData.map(client => client.projects_count || 0);
 
@@ -739,7 +740,7 @@ function chartsData() {
                 this.mostActiveChart = new Chart(activeCtx, {
                     type: 'bar',
                     data: {
-                        labels: activeClientNames.length > 0 ? activeClientNames : ['لا توجد بيانات'],
+                        labels: activeClientNames.length > 0 ? activeClientNames : ['{{ __('No data available') }}'],
                         datasets: [{
                             label: '{{ __('Projects Count') }}',
                             data: activeClientProjects.length > 0 ? activeClientProjects : [0],
