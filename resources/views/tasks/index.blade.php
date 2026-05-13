@@ -606,6 +606,8 @@
                             'rejected' => ['text' => __('Rejected'), 'class' => 'bg-red-500/20 text-red-400'],
                         ];
                         $status = $statusMap[$task->status] ?? ['text' => $task->status, 'class' => 'bg-gray-500/20 text-gray-400'];
+                        $taskStageName = optional($task->projectStage)->stage_name;
+                        $taskStageLabel = $taskStageName ? ($stageLabelMap[$taskStageName] ?? $taskStageName) : __('Not specified');
                     @endphp
                     <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
                         <td class="py-3">
@@ -635,7 +637,7 @@
                                 {{ __('Not specified') }}
                             @endif
                         </td>
-                        <td class="py-3 text-gray-300 text-sm">@php $sn = optional($task->projectStage)->stage_name; @endphp{{ $sn ? ($stageLabelMap[$sn] ?? $sn) : __('Not specified') }}</td>
+                        <td class="py-3 text-gray-300 text-sm">{{ $taskStageLabel }}</td>
                         <td class="py-3">
                             <div class="flex items-center gap-2">
                                 <div class="flex-1 bg-white/5 rounded-full h-2 w-24">
