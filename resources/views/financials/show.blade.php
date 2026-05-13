@@ -1,5 +1,37 @@
 @extends('layouts.dashboard')
 
+@php
+    $total = (float) $invoice->total_amount;
+    $paid = (float) $invoice->paid_amount;
+    $remaining = (float) $invoice->remaining_amount;
+    $paymentPercent = $total > 0 ? min(100, round(($paid / $total) * 100, 1)) : 0;
+    $showOverdueAlert = $invoice->status === \App\Enums\InvoiceStatus::OVERDUE
+        || ($invoice->due_date && $invoice->due_date->isPast() && $remaining > 0.00001);
+    $progressBarClass = match ($invoice->status) {
+        \App\Enums\InvoiceStatus::PAID => 'bg-green-400',
+        \App\Enums\InvoiceStatus::PARTIAL => 'bg-yellow-400',
+        default => 'bg-primary-400',
+    };
+    $statusChipClass = match ($invoice->status) {
+        \App\Enums\InvoiceStatus::PAID => 'bg-green-500/20 text-green-400',
+        \App\Enums\InvoiceStatus::PARTIAL => 'bg-yellow-500/20 text-yellow-400',
+        \App\Enums\InvoiceStatus::OVERDUE => 'bg-orange-500/20 text-orange-400',
+        default => 'bg-red-500/20 text-red-400',
+    };
+    $clientLabel = $invoice->client?->display_name ?? $invoice->client?->name ?? '—';
+    $projectLabel = $invoice->project?->display_name ?? $invoice->project?->name ?? '—';
+    $paymentsForAlpine = $invoice->payments->map(function ($p) {
+        return [
+            'id' => $p->id,
+            'number' => $p->payment_no ?? ('#'.$p->id),
+            'date' => optional($p->paid_at)->format('Y-m-d'),
+            'amount' => (float) $p->amount,
+            'status' => $p->status instanceof \BackedEnum ? $p->status->value : (string) $p->status,
+            'notes' => $p->notes,
+        ];
+    })->values()->all();
+@endphp
+
 @section('title', __('Details') . ' - ' . __('Financials') . ' - ' . \App\Helpers\SettingsHelper::systemName())
 @section('page-title', __('Details'))
 
@@ -18,8 +50,8 @@
 <!-- Header Actions -->
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
     <div>
-        <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">فاتورة #INV-2025-001</h1>
-        <p class="text-gray-400 text-sm">تاريخ الإصدار: 2025-11-01</p>
+        <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">{{ $invoice->number }}</h1>
+        <p class="text-gray-400 text-sm">{{ __('Issue date') }}: {{ $invoice->issue_date?->format('Y-m-d') ?? '—' }}</p>
     </div>
     <div class="flex items-center gap-3">
         <a href="{{ route('financials.edit', $invoice->id) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200 text-sm md:text-base">
@@ -41,31 +73,31 @@
 <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6">
         <div>
-            <p class="text-gray-400 text-sm mb-2">إجمالي الفاتورة</p>
-            <p class="text-2xl md:text-3xl font-bold text-white">50,000 <span class="text-lg text-gray-400">ر.س</span></p>
+            <p class="text-gray-400 text-sm mb-2">{{ __('Invoice Total') }}</p>
+            <p class="text-2xl md:text-3xl font-bold text-white">{{ number_format($total, 2) }} <span class="text-lg text-gray-400">{{ __('Currency SAR') }}</span></p>
         </div>
         <div>
-            <p class="text-gray-400 text-sm mb-2">المدفوع</p>
-            <p class="text-2xl md:text-3xl font-bold text-green-400">50,000 <span class="text-lg text-gray-400">ر.س</span></p>
+            <p class="text-gray-400 text-sm mb-2">{{ __('Invoice paid amount label') }}</p>
+            <p class="text-2xl md:text-3xl font-bold text-green-400">{{ number_format($paid, 2) }} <span class="text-lg text-gray-400">{{ __('Currency SAR') }}</span></p>
         </div>
         <div>
-            <p class="text-gray-400 text-sm mb-2">المتبقي</p>
-            <p class="text-2xl md:text-3xl font-bold text-red-400">0 <span class="text-lg text-gray-400">ر.س</span></p>
+            <p class="text-gray-400 text-sm mb-2">{{ __('Remaining') }}</p>
+            <p class="text-2xl md:text-3xl font-bold text-red-400">{{ number_format($remaining, 2) }} <span class="text-lg text-gray-400">{{ __('Currency SAR') }}</span></p>
         </div>
     </div>
     <div class="w-full bg-white/5 rounded-full h-3">
-        <div class="bg-green-400 h-3 rounded-full" style="width: 100%"></div>
+        <div class="{{ $progressBarClass }} h-3 rounded-full transition-all" style="width: {{ $paymentPercent }}%"></div>
     </div>
-    <p class="text-center text-gray-400 text-sm mt-2">تم سداد 100% من الفاتورة</p>
+    <p class="text-center text-gray-400 text-sm mt-2">{{ __('Invoice progress settled', ['percent' => $paymentPercent]) }}</p>
 </div>
 
 <!-- Alert for Overdue/Unpaid -->
-<div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6 bg-yellow-500/10 border border-yellow-500/20 hidden" id="alertOverdue">
+<div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6 bg-yellow-500/10 border border-yellow-500/20 {{ $showOverdueAlert ? '' : 'hidden' }}" id="alertOverdue">
     <div class="flex items-center gap-3">
         <i class="fas fa-exclamation-triangle text-yellow-400 text-xl"></i>
         <div>
-            <p class="text-yellow-400 font-semibold">فاتورة متأخرة</p>
-            <p class="text-gray-300 text-sm">هذه الفاتورة تجاوزت تاريخ الاستحقاق ولم يتم سدادها بالكامل</p>
+            <p class="text-yellow-400 font-semibold">{{ __('Invoice overdue alert title') }}</p>
+            <p class="text-gray-300 text-sm">{{ __('Invoice overdue alert body') }}</p>
         </div>
     </div>
 </div>
@@ -74,35 +106,35 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
     <!-- Main Info -->
     <div class="lg:col-span-2 glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-        <h2 class="text-xl font-bold text-white mb-6">معلومات الفاتورة</h2>
+        <h2 class="text-xl font-bold text-white mb-6">{{ __('Invoice information') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <p class="text-gray-400 text-sm mb-1">العميل</p>
-                <p class="text-white font-semibold">أحمد محمد</p>
+                <p class="text-gray-400 text-sm mb-1">{{ __('Client') }}</p>
+                <p class="text-white font-semibold">{{ $clientLabel }}</p>
             </div>
             <div>
-                <p class="text-gray-400 text-sm mb-1">المشروع</p>
-                <p class="text-white font-semibold">مشروع فيلا رقم 1</p>
+                <p class="text-gray-400 text-sm mb-1">{{ __('Project') }}</p>
+                <p class="text-white font-semibold">{{ $projectLabel }}</p>
             </div>
             <div>
-                <p class="text-gray-400 text-sm mb-1">رقم الفاتورة</p>
-                <p class="text-white font-semibold">INV-2025-001</p>
+                <p class="text-gray-400 text-sm mb-1">{{ __('Invoice Number') }}</p>
+                <p class="text-white font-semibold">{{ $invoice->number }}</p>
             </div>
             <div>
-                <p class="text-gray-400 text-sm mb-1">تاريخ الاستحقاق</p>
-                <p class="text-white font-semibold">2025-11-15</p>
+                <p class="text-gray-400 text-sm mb-1">{{ __('Due date') }}</p>
+                <p class="text-white font-semibold">{{ $invoice->due_date?->format('Y-m-d') ?? '—' }}</p>
             </div>
             <div>
-                <p class="text-gray-400 text-sm mb-1">طريقة الدفع</p>
-                <p class="text-white font-semibold">تحويل بنكي</p>
+                <p class="text-gray-400 text-sm mb-1">{{ __('Payment method') }}</p>
+                <p class="text-white font-semibold">{{ $invoice->payment_method_label ?? '—' }}</p>
             </div>
             <div>
-                <p class="text-gray-400 text-sm mb-1">الحالة</p>
-                <span class="inline-block bg-green-500/20 text-green-400 px-3 py-1 rounded-lg text-sm font-semibold">مدفوعة</span>
+                <p class="text-gray-400 text-sm mb-1">{{ __('Status') }}</p>
+                <span class="inline-block {{ $statusChipClass }} px-3 py-1 rounded-lg text-sm font-semibold">{{ $invoice->status_label }}</span>
             </div>
             <div class="md:col-span-2">
-                <p class="text-gray-400 text-sm mb-1">ملاحظات</p>
-                <p class="text-white text-sm">دفعة أولية للمشروع - تم السداد كاملاً</p>
+                <p class="text-gray-400 text-sm mb-1">{{ __('Notes') }}</p>
+                <p class="text-white text-sm">{{ filled($invoice->notes) ? $invoice->notes : '—' }}</p>
             </div>
         </div>
     </div>
@@ -111,7 +143,7 @@
     <div class="space-y-4 md:space-y-6">
         <!-- Monthly Payments Chart -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-            <h3 class="text-lg font-bold text-white mb-4">تحليل الدفعات الشهرية</h3>
+            <h3 class="text-lg font-bold text-white mb-4">{{ __('Monthly payments chart title') }}</h3>
             <div style="position: relative; height: 250px; width: 100%;">
                 <canvas id="paymentsChart"></canvas>
             </div>
@@ -119,7 +151,7 @@
 
         <!-- Payment Methods Chart -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-            <h3 class="text-lg font-bold text-white mb-4">طرق الدفع</h3>
+            <h3 class="text-lg font-bold text-white mb-4">{{ __('Payment methods chart title') }}</h3>
             <div style="position: relative; height: 250px; width: 100%;">
                 <canvas id="paymentMethodsChart"></canvas>
             </div>
@@ -127,22 +159,23 @@
 
         <!-- Overdue Invoices -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
-            <h3 class="text-lg font-bold text-white mb-4">فواتير متأخرة</h3>
+            <h3 class="text-lg font-bold text-white mb-4">{{ __('Overdue invoices list title') }}</h3>
             <div class="space-y-3">
-                <div class="flex items-center justify-between p-2 bg-red-500/10 rounded-lg">
-                    <div>
-                        <p class="text-white text-sm font-semibold">INV-2025-003</p>
-                        <p class="text-gray-400 text-xs">خالد مطر</p>
-                    </div>
-                    <span class="text-red-400 text-sm font-semibold">100,000 ر.س</span>
-                </div>
-                <div class="flex items-center justify-between p-2 bg-red-500/10 rounded-lg">
-                    <div>
-                        <p class="text-white text-sm font-semibold">INV-2025-005</p>
-                        <p class="text-gray-400 text-xs">سارة أحمد</p>
-                    </div>
-                    <span class="text-red-400 text-sm font-semibold">75,000 ر.س</span>
-                </div>
+                @forelse($overdueInvoices as $ov)
+                    @php
+                        $ovRemaining = max(0, (float) $ov->total_amount - (float) $ov->paid_amount);
+                        $ovClient = $ov->client?->display_name ?? $ov->client?->name ?? '—';
+                    @endphp
+                    <a href="{{ route('financials.show', $ov->id) }}" class="flex items-center justify-between p-2 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition-all">
+                        <div>
+                            <p class="text-white text-sm font-semibold">{{ $ov->number }}</p>
+                            <p class="text-gray-400 text-xs">{{ $ovClient }}</p>
+                        </div>
+                        <span class="text-red-400 text-sm font-semibold">{{ number_format($ovRemaining, 2) }} {{ __('Currency SAR') }}</span>
+                    </a>
+                @empty
+                    <p class="text-gray-400 text-sm">{{ __('No other overdue invoices') }}</p>
+                @endforelse
             </div>
         </div>
     </div>
@@ -151,10 +184,10 @@
 <!-- Payments Table -->
 <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6" x-data="paymentsData()">
     <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-white">جدول الدفعات</h2>
+        <h2 class="text-xl font-bold text-white">{{ __('Payments table title') }}</h2>
         <button @click="openPaymentModal()" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm">
             <i class="fas fa-plus ml-2"></i>
-            إضافة دفعة
+            {{ __('Add payment button') }}
         </button>
     </div>
 
@@ -163,22 +196,27 @@
         <table class="w-full">
             <thead>
                 <tr class="text-right border-b border-white/10">
-                    <th class="text-gray-400 text-sm font-normal pb-3">رقم الدفعة</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">التاريخ</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">المبلغ</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الحالة</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الملاحظات</th>
-                    <th class="text-gray-400 text-sm font-normal pb-3">الإجراءات</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Payment number') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Payment date') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Amount') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Status') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Notes') }}</th>
+                    <th class="text-gray-400 text-sm font-normal pb-3">{{ __('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
+                <template x-if="payments.length === 0">
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-gray-400 text-sm">{{ __('No payments chart placeholder') }}</td>
+                    </tr>
+                </template>
                 <template x-for="payment in payments" :key="payment.id">
                     <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
                         <td class="py-3 text-white text-sm font-semibold" x-text="payment.number"></td>
                         <td class="py-3 text-gray-300 text-sm" x-text="payment.date"></td>
                         <td class="py-3 text-white font-semibold" x-text="formatCurrency(payment.amount)"></td>
                         <td class="py-3">
-                            <span 
+                            <span
                                 class="px-2 py-1 rounded text-xs font-semibold"
                                 :class="{
                                     'bg-green-500/20 text-green-400': payment.status === 'paid',
@@ -191,11 +229,8 @@
                         <td class="py-3 text-gray-300 text-sm" x-text="payment.notes || '-'"></td>
                         <td class="py-3">
                             <div class="flex items-center gap-2">
-                                <button @click="editPayment(payment.id)" class="text-primary-400 hover:text-primary-300" title="تعديل">
+                                <button type="button" @click="editPayment(payment.id)" class="text-primary-400 hover:text-primary-300" title="{{ __('Edit') }}">
                                     <i class="fas fa-edit"></i>
-                                </button>
-                                <button @click="deletePayment(payment.id)" class="text-red-400 hover:text-red-300" title="حذف">
-                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </td>
@@ -207,6 +242,9 @@
 
     <!-- Mobile Cards -->
     <div class="md:hidden space-y-4">
+        <template x-if="payments.length === 0">
+            <p class="text-center text-gray-400 text-sm py-8">{{ __('No payments chart placeholder') }}</p>
+        </template>
         <template x-for="payment in payments" :key="payment.id">
             <div class="bg-white/5 rounded-lg p-4 border border-white/10">
                 <div class="flex items-start justify-between mb-3">
@@ -214,7 +252,7 @@
                         <h3 class="text-white font-semibold mb-1" x-text="payment.number"></h3>
                         <p class="text-gray-400 text-sm" x-text="payment.date"></p>
                     </div>
-                    <span 
+                    <span
                         class="px-2 py-1 rounded text-xs font-semibold"
                         :class="{
                             'bg-green-500/20 text-green-400': payment.status === 'paid',
@@ -226,22 +264,18 @@
                 </div>
                 <div class="space-y-2 mb-3">
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-400 text-xs">المبلغ</span>
+                        <span class="text-gray-400 text-xs">{{ __('Amount') }}</span>
                         <span class="text-white font-semibold" x-text="formatCurrency(payment.amount)"></span>
                     </div>
                     <div class="flex items-center justify-between" x-show="payment.notes">
-                        <span class="text-gray-400 text-xs">الملاحظات</span>
+                        <span class="text-gray-400 text-xs">{{ __('Notes') }}</span>
                         <span class="text-gray-300 text-sm" x-text="payment.notes"></span>
                     </div>
                 </div>
                 <div class="flex items-center justify-between pt-3 border-t border-white/10">
-                    <button @click="editPayment(payment.id)" class="text-primary-400 hover:text-primary-300">
+                    <button type="button" @click="editPayment(payment.id)" class="text-primary-400 hover:text-primary-300">
                         <i class="fas fa-edit ml-1"></i>
-                        تعديل
-                    </button>
-                    <button @click="deletePayment(payment.id)" class="text-red-400 hover:text-red-300">
-                        <i class="fas fa-trash ml-1"></i>
-                        حذف
+                        {{ __('Edit') }}
                     </button>
                 </div>
             </div>
@@ -256,87 +290,64 @@
 <script>
 function paymentsData() {
     return {
-        payments: [
-            {
-                id: 1,
-                number: 'PAY-001',
-                date: '2025-11-05',
-                amount: 50000,
-                status: 'paid',
-                notes: 'دفعة أولية - تحويل بنكي'
-            }
-        ],
+        payments: @json($paymentsForAlpine),
         formatCurrency(amount) {
-            return new Intl.NumberFormat('ar-SA').format(amount) + ' ر.س';
+            return new Intl.NumberFormat('ar-SA').format(amount) + ' {{ __('Currency SAR') }}';
         },
         getStatusText(status) {
             const statusMap = {
-                'paid': 'مدفوع',
-                'pending': 'قيد الانتظار',
-                'failed': 'فشل'
+                'paid': '{{ __('Paid') }}',
+                'pending': '{{ __('Pending') }}',
+                'failed': '{{ __('Failed') }}'
             };
             return statusMap[status] || status;
         },
         openPaymentModal() {
-            // Trigger event to open modal
             window.dispatchEvent(new CustomEvent('open-payment-modal', { detail: { invoiceId: '{{ $invoice->id }}' } }));
         },
         editPayment(id) {
-            alert('تعديل دفعة #' + id);
+            alert('{{ __('Edit') }} #' + id);
         },
-        deletePayment(id) {
-            if (confirm('هل أنت متأكد من حذف هذه الدفعة؟')) {
-                console.log('Deleting payment:', id);
-            }
-        }
     }
 }
 
 // Initialize Charts
 function initCharts() {
-    // Wait for Chart.js to be available
     if (typeof Chart === 'undefined') {
-        // Retry after a short delay
         setTimeout(initCharts, 100);
         return;
     }
-    
-    // Initialize charts
     initChartsInternal();
 }
 
 function initChartsInternal() {
-
-    // Monthly Payments Line Chart
     const paymentsCtx = document.getElementById('paymentsChart');
     if (paymentsCtx) {
         try {
             const paymentsData = @json($invoice->payments ?? []);
             const monthlyData = {};
-            
-            // Group payments by month
+
             paymentsData.forEach(payment => {
                 if (payment.paid_at) {
                     const month = new Date(payment.paid_at).toLocaleDateString('ar-SA', { month: 'long' });
                     monthlyData[month] = (monthlyData[month] || 0) + parseFloat(payment.amount || 0);
                 }
             });
-            
-            const labels = Object.keys(monthlyData);
-            const data = Object.values(monthlyData);
-            
-            // If no data, use default
+
+            let labels = Object.keys(monthlyData);
+            let data = Object.values(monthlyData);
+
             if (labels.length === 0) {
-                labels.push('{{ now()->format('F') }}');
-                data.push({{ $invoice->paid_amount ?? 0 }});
+                labels = ['—'];
+                data = [0];
             }
-            
+
             new Chart(paymentsCtx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'المبالغ المحصلة',
+                        label: '{{ __('Collected amounts label') }}',
                         data: data,
                         borderColor: '#1db8f8',
                         backgroundColor: 'rgba(29, 184, 248, 0.1)',
@@ -358,7 +369,7 @@ function initChartsInternal() {
                             ticks: {
                                 color: '#9ca3af',
                                 callback: function(value) {
-                                    return new Intl.NumberFormat('ar-SA').format(value) + ' ر.س';
+                                    return new Intl.NumberFormat('ar-SA').format(value) + ' {{ __('Currency SAR') }}';
                                 }
                             },
                             grid: {
@@ -381,35 +392,32 @@ function initChartsInternal() {
         }
     }
 
-    // Payment Methods Doughnut Chart
     const methodsCtx = document.getElementById('paymentMethodsChart');
     if (methodsCtx) {
         try {
             const paymentsData = @json($invoice->payments ?? []);
             const methodCounts = {};
-            
-            // Count payments by method
+
             paymentsData.forEach(payment => {
                 const method = payment.method || 'transfer';
                 methodCounts[method] = (methodCounts[method] || 0) + 1;
             });
-            
+
             const methodLabels = {
-                'transfer': 'تحويل بنكي',
-                'cash': 'نقدي',
-                'check': 'شيك',
-                'electronic': 'إلكتروني'
+                'transfer': '{{ __('Payment method bank transfer') }}',
+                'cash': '{{ __('Payment method cash') }}',
+                'check': '{{ __('Payment method check') }}',
+                'electronic': '{{ __('Payment method electronic') }}'
             };
-            
-            const labels = Object.keys(methodCounts).map(key => methodLabels[key] || key);
-            const data = Object.values(methodCounts);
-            
-            // If no data, show placeholder
+
+            let labels = Object.keys(methodCounts).map(key => methodLabels[key] || key);
+            let data = Object.values(methodCounts);
+
             if (labels.length === 0) {
-                labels.push('لا توجد دفعات');
-                data.push(1);
+                labels = ['{{ __('No payments chart placeholder') }}'];
+                data = [1];
             }
-            
+
             new Chart(methodsCtx, {
                 type: 'doughnut',
                 data: {
@@ -448,7 +456,6 @@ function initChartsInternal() {
     }
 }
 
-// Start initialization
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initCharts);
 } else {
@@ -458,4 +465,3 @@ if (document.readyState === 'loading') {
 @endpush
 
 @endsection
-

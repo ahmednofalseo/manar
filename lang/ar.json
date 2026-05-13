@@ -1042,5 +1042,22 @@
     "Job title Arabic required": "المسمى بالعربية مطلوب.",
     "Job title unique error": "هذا المسمى موجود مسبقاً.",
     "Cannot delete job title in use": "لا يمكن الحذف: :count مستخدم(ين) يستخدمون هذا المسمى. غيّر مسماهم أولاً.",
-    "Confirm delete job title": "حذف هذا المسمى الوظيفي؟"
+    "Confirm delete job title": "حذف هذا المسمى الوظيفي؟",
+    "Invoice paid amount label": "المدفوع",
+    "Invoice progress settled": "تم سداد :percent% من الفاتورة",
+    "No other overdue invoices": "لا توجد فواتير متأخرة أخرى.",
+    "Invoice overdue alert title": "فاتورة متأخرة",
+    "Invoice overdue alert body": "هذه الفاتورة تجاوزت تاريخ الاستحقاق ولم يُسدد منها المبلغ بالكامل.",
+    "Overdue invoices list title": "فواتير متأخرة أخرى",
+    "Invoice information": "معلومات الفاتورة",
+    "Payments table title": "جدول الدفعات",
+    "Add payment button": "إضافة دفعة",
+    "Payment number": "رقم الدفعة",
+    "Payment date": "التاريخ",
+    "Monthly payments chart title": "تحليل الدفعات الشهرية",
+    "Payment methods chart title": "طرق الدفع",
+    "No payments chart placeholder": "لا توجد دفعات بعد",
+    "Collected amounts label": "المبالغ المحصلة",
+    "Payment method": "طريقة الدفع",
+    "Failed": "فشل"
 }

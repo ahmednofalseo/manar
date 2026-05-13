@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\PermissionHelper;
 use App\Models\City;
+use App\Models\Invoice;
 use App\Models\JobTitle;
 use App\Models\Project;
 use App\Models\ProjectAttachment;
@@ -448,8 +449,21 @@ class ProjectsController extends Controller
 
         $labelCtx = $this->projectTypeStageLabelContext();
 
+        $invoicesCollected = (float) Invoice::where('project_id', $project->id)->sum('paid_amount');
+        $projectValue = (float) $project->value;
+        $projectFinancials = [
+            'collected' => $invoicesCollected,
+            'remaining' => max(0, $projectValue - $invoicesCollected),
+            'progress_percent' => $projectValue > 0 ? min(100, round(($invoicesCollected / $projectValue) * 100, 1)) : 0,
+        ];
+        $projectInvoices = Invoice::where('project_id', $project->id)
+            ->with(['client'])
+            ->latest('issue_date')
+            ->limit(20)
+            ->get();
+
         return view('projects.show', array_merge(
-            compact('project', 'tasksCount', 'stagesCount', 'attachmentsCount'),
+            compact('project', 'tasksCount', 'stagesCount', 'attachmentsCount', 'projectFinancials', 'projectInvoices'),
             Arr::only($labelCtx, ['typeLabelMap', 'stageLabelMap', 'statusLabelMap'])
         ));
     }

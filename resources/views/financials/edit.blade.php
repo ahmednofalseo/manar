@@ -19,7 +19,7 @@
 <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('Edit') }} {{ __('Financials') }}</h1>
     <div class="flex items-center gap-3">
-        <a href="{{ route('financials.show', $id) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
+        <a href="{{ route('financials.show', $invoice) }}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all duration-200">
             <i class="fas fa-eye {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
             {{ __('View') }} {{ __('Details') }}
         </a>
@@ -31,7 +31,7 @@
 </div>
 
 <!-- Form -->
-<form method="POST" action="{{ route('financials.update', $id) }}" enctype="multipart/form-data" x-data="invoiceForm()">
+<form method="POST" action="{{ route('financials.update', $invoice) }}" enctype="multipart/form-data" x-data="invoiceForm()">
     @csrf
     @method('PUT')
 

@@ -1044,5 +1044,22 @@
     "Job title Arabic required": "Arabic title is required.",
     "Job title unique error": "This title already exists.",
     "Cannot delete job title in use": "Cannot delete: :count user(s) use this title. Reassign them first.",
-    "Confirm delete job title": "Delete this job title?"
+    "Confirm delete job title": "Delete this job title?",
+    "Invoice paid amount label": "Paid",
+    "Invoice progress settled": ":percent% of this invoice has been paid.",
+    "No other overdue invoices": "No other overdue invoices.",
+    "Invoice overdue alert title": "Overdue invoice",
+    "Invoice overdue alert body": "This invoice is past its due date and is not fully paid.",
+    "Overdue invoices list title": "Other overdue invoices",
+    "Invoice information": "Invoice details",
+    "Payments table title": "Payments",
+    "Add payment button": "Add payment",
+    "Payment number": "Payment #",
+    "Payment date": "Payment date",
+    "Monthly payments chart title": "Monthly payments",
+    "Payment methods chart title": "Payment methods",
+    "No payments chart placeholder": "No payments yet",
+    "Collected amounts label": "Collected amounts",
+    "Payment method": "Payment method",
+    "Failed": "Failed"
 }

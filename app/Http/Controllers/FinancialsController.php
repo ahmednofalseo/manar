@@ -190,7 +190,23 @@ class FinancialsController extends Controller
 
         Gate::authorize('view', $invoice);
 
-        return view('financials.show', compact('invoice'));
+        $overdueCandidates = Invoice::with(['client', 'project'])
+            ->where('id', '!=', $invoice->id)
+            ->whereColumn('paid_amount', '<', 'total_amount')
+            ->where(function ($q) {
+                $q->where('status', InvoiceStatus::OVERDUE)
+                    ->orWhereDate('due_date', '<', now()->toDateString());
+            })
+            ->orderBy('due_date')
+            ->limit(25)
+            ->get();
+
+        $overdueInvoices = $overdueCandidates
+            ->filter(fn (Invoice $inv) => Gate::allows('view', $inv))
+            ->take(10)
+            ->values();
+
+        return view('financials.show', compact('invoice', 'overdueInvoices'));
     }
 
     /**
