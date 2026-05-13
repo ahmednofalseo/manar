@@ -51,7 +51,7 @@
             </div>
             <div>
                 <p class="text-gray-400 text-sm mb-2">المبلغ</p>
-                <p class="text-2xl font-bold text-white">{{ number_format($expense->amount, 2) }} <span class="text-lg text-gray-400">ر.س</span></p>
+                <p class="text-2xl font-bold text-white">{{ number_format($expense->amount, 2) }} <span class="text-lg text-gray-400">{{ __('Currency SAR') }}</span></p>
             </div>
         </div>
         @if($expense->status->value === 'pending')
@@ -115,7 +115,7 @@
             </div>
             <div>
                 <p class="text-gray-400 text-sm mb-1">المبلغ</p>
-                <p class="text-white font-semibold text-lg">{{ number_format($expense->amount, 2) }} ر.س</p>
+                <p class="text-white font-semibold text-lg">{{ number_format($expense->amount, 2) }} {{ __('Currency SAR') }}</p>
             </div>
             <div class="md:col-span-2">
                 <p class="text-gray-400 text-sm mb-1">الوصف</p>

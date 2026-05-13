@@ -208,7 +208,7 @@
                     <option value="">{{ __('All Engineers') }}</option>
                     @foreach($engineers as $eng)
                         <option value="{{ $eng->id }}" {{ request('assignee_id') == $eng->id ? 'selected' : '' }}>
-                            {{ $eng->display_name }}@if($eng->job_title) — {{ $eng->job_title }}@endif
+                            {{ $eng->display_name }}@if($eng->job_title) — {{ data_get($jobTitleLabelMap ?? [], $eng->job_title, $eng->job_title) }}@endif
                         </option>
                     @endforeach
                 </select>
@@ -293,14 +293,23 @@
 <!-- Kanban Board / Table View -->
 @php
     $stageLabelMap = $stageLabelMap ?? [];
-    $tasksJson = $tasks->map(function ($task) use ($stageLabelMap) {
+    $jobTitleLabelMap = $jobTitleLabelMap ?? [];
+    $tasksJson = $tasks->map(function ($task) use ($stageLabelMap, $jobTitleLabelMap) {
         $stageName = optional($task->projectStage)->stage_name;
+
+        $assigneeLine = null;
+        if ($task->assignee) {
+            $assigneeLine = $task->assignee->display_name;
+            if ($task->assignee->job_title) {
+                $assigneeLine .= ' — '.data_get($jobTitleLabelMap, $task->assignee->job_title, $task->assignee->job_title);
+            }
+        }
 
         return [
             'id' => $task->id,
             'title' => $task->display_title,
             'project' => $task->project?->display_name,
-            'assignee' => $task->assignee?->display_name,
+            'assignee' => $assigneeLine,
             'stage' => $stageName ? ($stageLabelMap[$stageName] ?? $stageName) : null,
             'status' => $task->status,
             'progress' => $task->progress ?? 0,
@@ -619,7 +628,13 @@
                             </div>
                         </td>
                         <td class="py-3 text-gray-300 text-sm">{{ $task->project?->display_name ?? __('Not specified') }}</td>
-                        <td class="py-3 text-gray-300 text-sm">{{ $task->assignee?->display_name ?? __('Not specified') }}</td>
+                        <td class="py-3 text-gray-300 text-sm">
+                            @if($task->assignee)
+                                {{ $task->assignee->display_name }}@if($task->assignee->job_title) — {{ data_get($jobTitleLabelMap ?? [], $task->assignee->job_title, $task->assignee->job_title) }}@endif
+                            @else
+                                {{ __('Not specified') }}
+                            @endif
+                        </td>
                         <td class="py-3 text-gray-300 text-sm">@php $sn = optional($task->projectStage)->stage_name; @endphp{{ $sn ? ($stageLabelMap[$sn] ?? $sn) : __('Not specified') }}</td>
                         <td class="py-3">
                             <div class="flex items-center gap-2">
@@ -934,7 +949,7 @@ function chartsData(projectsData = {}, engineersLabels = [], engineersData = [],
                 this.engineersChart = new Chart(engineersCtx, {
                     type: 'bar',
                     data: {
-                        labels: this.engineersLabels.length > 0 ? this.engineersLabels : ['لا توجد بيانات'],
+                        labels: this.engineersLabels.length > 0 ? this.engineersLabels : ['{{ __('No data available') }}'],
                         datasets: [{
                             label: '{{ __('Completed Tasks') }}',
                             data: this.engineersData.length > 0 ? this.engineersData : [0],

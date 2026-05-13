@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\PermissionHelper;
 use App\Models\City;
+use App\Models\JobTitle;
 use App\Models\Project;
 use App\Models\ProjectAttachment;
 use App\Models\ProjectStage;
@@ -13,9 +14,11 @@ use App\Models\StageSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class ProjectsController extends Controller
@@ -40,6 +43,62 @@ class ProjectsController extends Controller
                 'ملغي' => __('Cancelled'),
             ],
         ];
+    }
+
+    /**
+     * @return array{projectManagers: Collection<int, User>, engineers: Collection<int, User>, jobTitleLabelMap: array<string, string>}
+     */
+    protected function teamAssignmentData(): array
+    {
+        $projectManagers = User::whereHas('roles', function ($q) {
+            $q->where('name', 'project_manager');
+        })->where('status', 'active')->get();
+
+        $engineers = User::whereHas('roles', function ($q) {
+            $q->whereIn('name', ['engineer', 'project_manager']);
+        })->where('status', 'active')->get();
+
+        if ($projectManagers->isEmpty()) {
+            $projectManagers = User::where('status', 'active')->get();
+        }
+
+        if ($engineers->isEmpty()) {
+            $engineers = User::where('status', 'active')->get();
+        }
+
+        $projectManagers = $this->sortUsersForLocale($projectManagers);
+        $engineers = $this->sortUsersForLocale($engineers);
+
+        $jobTitleLabelMap = $this->jobTitleLabelMap();
+
+        return compact('projectManagers', 'engineers', 'jobTitleLabelMap');
+    }
+
+    /**
+     * @param  Collection<int, User>  $users
+     * @return Collection<int, User>
+     */
+    protected function sortUsersForLocale(Collection $users): Collection
+    {
+        if (app()->getLocale() === 'en') {
+            return $users->sortBy(fn (User $u) => mb_strtolower($u->display_name))->values();
+        }
+
+        return $users->sortBy(fn (User $u) => mb_strtolower((string) ($u->name ?? '')))->values();
+    }
+
+    /**
+     * Map stored job_title (Arabic key) to label for current locale.
+     *
+     * @return array<string, string>
+     */
+    protected function jobTitleLabelMap(): array
+    {
+        if (! Schema::hasTable('job_titles')) {
+            return [];
+        }
+
+        return JobTitle::query()->get()->mapWithKeys(fn (JobTitle $jt) => [$jt->name => $jt->display_name])->all();
     }
 
     /**
@@ -200,24 +259,12 @@ class ProjectsController extends Controller
     public function create(Request $request)
     {
         Gate::authorize('create', Project::class);
-        // جلب مديري المشاريع (project_manager)
-        $projectManagers = User::whereHas('roles', function ($q) {
-            $q->where('name', 'project_manager');
-        })->where('status', 'active')->orderBy('name')->get();
 
-        // جلب المهندسين (engineer + project_manager)
-        $engineers = User::whereHas('roles', function ($q) {
-            $q->whereIn('name', ['engineer', 'project_manager']);
-        })->where('status', 'active')->orderBy('name')->get();
-
-        // إذا لم يوجد مستخدمون بأدوار محددة، جلب جميع المستخدمين النشطين
-        if ($projectManagers->isEmpty()) {
-            $projectManagers = User::where('status', 'active')->orderBy('name')->get();
-        }
-
-        if ($engineers->isEmpty()) {
-            $engineers = User::where('status', 'active')->orderBy('name')->get();
-        }
+        [
+            'projectManagers' => $projectManagers,
+            'engineers' => $engineers,
+            'jobTitleLabelMap' => $jobTitleLabelMap,
+        ] = $this->teamAssignmentData();
 
         $clients = \App\Models\Client::where('status', 'active')->orderBy('name')->get();
         $selectedClientId = $request->get('client_id');
@@ -227,7 +274,7 @@ class ProjectsController extends Controller
         $cities = \App\Models\City::active()->ordered()->get();
         $stages = \App\Models\StageSetting::active()->ordered()->get();
 
-        return view('projects.create', compact('projectManagers', 'engineers', 'clients', 'selectedClientId', 'projectTypes', 'cities', 'stages'));
+        return view('projects.create', compact('projectManagers', 'engineers', 'jobTitleLabelMap', 'clients', 'selectedClientId', 'projectTypes', 'cities', 'stages'));
     }
 
     /**
@@ -415,22 +462,11 @@ class ProjectsController extends Controller
         $project = Project::with(['teamUsers', 'projectStages', 'thirdParties'])->findOrFail($id);
         Gate::authorize('update', $project);
 
-        $projectManagers = User::whereHas('roles', function ($q) {
-            $q->where('name', 'project_manager');
-        })->where('status', 'active')->orderBy('name')->get();
-
-        $engineers = User::whereHas('roles', function ($q) {
-            $q->whereIn('name', ['engineer', 'project_manager']);
-        })->where('status', 'active')->orderBy('name')->get();
-
-        // إذا لم يوجد مستخدمون بأدوار محددة، جلب جميع المستخدمين النشطين
-        if ($projectManagers->isEmpty()) {
-            $projectManagers = User::where('status', 'active')->orderBy('name')->get();
-        }
-
-        if ($engineers->isEmpty()) {
-            $engineers = User::where('status', 'active')->orderBy('name')->get();
-        }
+        [
+            'projectManagers' => $projectManagers,
+            'engineers' => $engineers,
+            'jobTitleLabelMap' => $jobTitleLabelMap,
+        ] = $this->teamAssignmentData();
 
         $clients = \App\Models\Client::where('status', 'active')->orderBy('name')->get();
 
@@ -439,7 +475,7 @@ class ProjectsController extends Controller
         $cities = \App\Models\City::active()->ordered()->get();
         $stages = \App\Models\StageSetting::active()->ordered()->get();
 
-        return view('projects.edit', compact('project', 'projectManagers', 'engineers', 'clients', 'projectTypes', 'cities', 'stages'));
+        return view('projects.edit', compact('project', 'projectManagers', 'engineers', 'jobTitleLabelMap', 'clients', 'projectTypes', 'cities', 'stages'));
     }
 
     /**

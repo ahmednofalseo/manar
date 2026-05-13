@@ -539,7 +539,7 @@
                         <option value="">{{ __('Select Project Manager') }}</option>
                         @forelse($projectManagers ?? [] as $manager)
                             <option value="{{ $manager->id }}" {{ old('project_manager_id', $project->project_manager_id) == $manager->id ? 'selected' : '' }}>
-                                {{ $manager->name }}@if($manager->job_title) - {{ $manager->job_title }}@endif
+                                {{ $manager->display_name }}@if($manager->job_title) - {{ data_get($jobTitleLabelMap ?? [], $manager->job_title, $manager->job_title) }}@endif
                             </option>
                         @empty
                             <option value="" disabled>{{ __('No Project Managers Available') }}</option>
@@ -560,7 +560,7 @@
                     >
                         @forelse($engineers ?? [] as $engineer)
                             <option value="{{ $engineer->id }}" {{ in_array($engineer->id, old('team_members', $project->team_members ?? [])) ? 'selected' : '' }}>
-                                {{ $engineer->name }}@if($engineer->job_title) - {{ $engineer->job_title }}@endif
+                                {{ $engineer->display_name }}@if($engineer->job_title) - {{ data_get($jobTitleLabelMap ?? [], $engineer->job_title, $engineer->job_title) }}@endif
                             </option>
                         @empty
                             <option value="" disabled>{{ __('No Engineers Available') }}</option>

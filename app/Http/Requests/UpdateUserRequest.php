@@ -41,6 +41,7 @@ class UpdateUserRequest extends FormRequest
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'national_id' => ['nullable', 'string', 'max:20', Rule::unique('users')->ignore($userId)],
             'job_title' => ['nullable', 'string', 'max:255'],
+            'job_title_other' => ['nullable', 'string', 'max:255', 'required_if:job_title,__other__'],
             'practice_license_no' => ['nullable', 'string', 'max:255'],
             'practice_license_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'engineer_rank_expiry' => ['nullable', 'date'],

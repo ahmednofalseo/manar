@@ -215,6 +215,13 @@
             <i class="fas fa-city {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
             {{ __('Cities Management') }}
         </a>
+        <a 
+            href="{{ route('settings.job-titles.index') }}"
+            class="tab-button px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-semibold {{ request()->routeIs('settings.job-titles.*') ? 'bg-primary-400/20 border-primary-500 text-primary-400' : 'bg-white/5 border-white/10 text-gray-300' }}"
+        >
+            <i class="fas fa-id-badge {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Job titles management') }}
+        </a>
     </div>
 
     <!-- General Settings -->

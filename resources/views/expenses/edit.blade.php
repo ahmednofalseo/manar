@@ -129,7 +129,7 @@
                         class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 pr-16 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                         placeholder="0.00"
                     >
-                    <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">ر.س</span>
+                    <span class="absolute end-4 top-1/2 transform -translate-y-1/2 text-gray-400">{{ __('Currency SAR') }}</span>
                 </div>
                 @error('amount')
                     <p class="text-red-400 text-xs mt-1">{{ $message }}</p>

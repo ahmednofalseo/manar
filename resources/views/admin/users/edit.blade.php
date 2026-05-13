@@ -140,17 +140,49 @@
     <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
         <h2 class="text-xl font-bold text-white mb-6">البيانات الوظيفية</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <div>
-                <label class="block text-gray-300 text-sm mb-2">الوظيفة</label>
-                <select name="job_title" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    <option value="">اختر الوظيفة</option>
-                    <option value="مهندس معماري" {{ old('job_title', $user->job_title) == 'مهندس معماري' ? 'selected' : '' }}>مهندس معماري</option>
-                    <option value="مهندس إنشائي" {{ old('job_title', $user->job_title) == 'مهندس إنشائي' ? 'selected' : '' }}>مهندس إنشائي</option>
-                    <option value="مهندس كهرباء" {{ old('job_title', $user->job_title) == 'مهندس كهرباء' ? 'selected' : '' }}>مهندس كهرباء</option>
-                    <option value="مهندس ميكانيكي" {{ old('job_title', $user->job_title) == 'مهندس ميكانيكي' ? 'selected' : '' }}>مهندس ميكانيكي</option>
-                    <option value="مدير مشروع" {{ old('job_title', $user->job_title) == 'مدير مشروع' ? 'selected' : '' }}>مدير مشروع</option>
-                    <option value="إداري" {{ old('job_title', $user->job_title) == 'إداري' ? 'selected' : '' }}>إداري</option>
-                </select>
+            <div class="md:col-span-2" x-data="{ showJobOther: {{ old('job_title', $user->job_title) === '__other__' ? 'true' : 'false' }} }">
+                <label class="block text-gray-300 text-sm mb-2">{{ __('Job Title/Department') }}</label>
+                @if($jobTitles->count() > 0)
+                    <select
+                        name="job_title"
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                        @change="showJobOther = ($event.target.value === '__other__')"
+                    >
+                        <option value="">{{ __('Select Job') }}</option>
+                        @isset($legacyJobTitle)
+                            <option value="{{ $legacyJobTitle }}" {{ old('job_title', $user->job_title) === $legacyJobTitle ? 'selected' : '' }}>{{ $legacyJobTitle }}</option>
+                        @endisset
+                        @foreach($jobTitles as $jt)
+                            <option value="{{ $jt->name }}" {{ old('job_title', $user->job_title) == $jt->name ? 'selected' : '' }}>{{ $jt->display_name }}@unless($jt->is_active) ({{ __('Inactive') }})@endunless</option>
+                        @endforeach
+                        <option value="__other__" {{ old('job_title') === '__other__' ? 'selected' : '' }}>{{ __('Other') }}</option>
+                    </select>
+                    <input
+                        type="text"
+                        name="job_title_other"
+                        value="{{ old('job_title_other') }}"
+                        x-show="showJobOther"
+                        x-cloak
+                        class="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                        placeholder="{{ __('Job title placeholder example') }}"
+                    >
+                    <p class="text-gray-400 text-xs mt-1">{{ __('Custom job title hint') }}</p>
+                @else
+                    <input
+                        type="text"
+                        name="job_title"
+                        value="{{ old('job_title', $user->job_title) }}"
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
+                        placeholder="{{ __('Job title placeholder example') }}"
+                    >
+                    <p class="text-gray-400 text-xs mt-1">{{ __('Job titles empty hint') }}</p>
+                @endif
+                @error('job_title')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
+                @error('job_title_other')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>

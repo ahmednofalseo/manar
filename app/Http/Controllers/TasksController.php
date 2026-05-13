@@ -6,6 +6,7 @@ use App\Events\TaskCommented;
 use App\Events\TaskCreated;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
+use App\Models\JobTitle;
 use App\Models\Project;
 use App\Models\ProjectStage;
 use App\Models\StageSetting;
@@ -13,13 +14,53 @@ use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class TasksController extends Controller
 {
+    /**
+     * @return array<string, string>
+     */
+    protected function jobTitleLabelMap(): array
+    {
+        if (! Schema::hasTable('job_titles')) {
+            return [];
+        }
+
+        return JobTitle::query()->get()->mapWithKeys(fn (JobTitle $jt) => [$jt->name => $jt->display_name])->all();
+    }
+
+    /**
+     * @param  Collection<int, User>  $users
+     * @return Collection<int, User>
+     */
+    protected function sortUsersForTasksUi(Collection $users): Collection
+    {
+        if (app()->getLocale() === 'en') {
+            return $users->sortBy(fn (User $u) => mb_strtolower($u->display_name))->values();
+        }
+
+        return $users->sortBy(fn (User $u) => mb_strtolower((string) ($u->name ?? '')))->values();
+    }
+
+    /**
+     * @param  Collection<int, Project>  $projects
+     * @return Collection<int, Project>
+     */
+    protected function sortProjectsForTasksUi(Collection $projects): Collection
+    {
+        if (app()->getLocale() === 'en') {
+            return $projects->sortBy(fn (Project $p) => mb_strtolower($p->display_name))->values();
+        }
+
+        return $projects->sortBy(fn (Project $p) => mb_strtolower((string) ($p->name ?? '')))->values();
+    }
+
     /**
      * Display a listing of tasks.
      */
@@ -119,13 +160,14 @@ class TasksController extends Controller
         $projects = Project::select('id', 'name', 'name_en', 'project_number')
             ->with('projectStages:id,project_id,stage_name')
             ->get();
+        $projects = $this->sortProjectsForTasksUi($projects);
 
         $engineers = User::select('id', 'name', 'name_en', 'job_title')
             ->whereHas('roles', function ($q) {
                 $q->whereIn('name', ['engineer', 'project_manager']);
             })
-            ->orderBy('name')
             ->get();
+        $engineers = $this->sortUsersForTasksUi($engineers);
 
         $stages = ProjectStage::query()
             ->select('stage_name')
@@ -136,6 +178,8 @@ class TasksController extends Controller
         $stageLabelMap = StageSetting::active()->ordered()->get()
             ->mapWithKeys(fn (StageSetting $s) => [$s->name => $s->display_name])
             ->all();
+
+        $jobTitleLabelMap = $this->jobTitleLabelMap();
 
         // ========== الإحصائيات الجديدة ==========
 
@@ -218,6 +262,7 @@ class TasksController extends Controller
             'engineers',
             'stages',
             'stageLabelMap',
+            'jobTitleLabelMap',
             'totalTasks',
             'inProgressTasks',
             'completedTasks',

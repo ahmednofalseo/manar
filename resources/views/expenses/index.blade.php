@@ -30,7 +30,7 @@
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
                 <p class="text-gray-400 text-xs md:text-sm">{{ __('Total Expenses This Month') }}</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{{ number_format($totalExpensesThisMonth, 2) }} <span class="text-lg text-gray-400">ر.س</span></h3>
+                <h3 class="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{{ number_format($totalExpensesThisMonth, 2) }} <span class="text-lg text-gray-400">{{ __('Currency SAR') }}</span></h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-primary-400/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-money-bill-wave text-primary-400 text-xl md:text-2xl"></i>
@@ -42,7 +42,7 @@
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
                 <p class="text-gray-400 text-xs md:text-sm">{{ __('Approved Expenses') }}</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-green-400 mt-1 md:mt-2">{{ number_format($approvedExpenses, 2) }} <span class="text-lg text-gray-400">ر.س</span></h3>
+                <h3 class="text-2xl md:text-3xl font-bold text-green-400 mt-1 md:mt-2">{{ number_format($approvedExpenses, 2) }} <span class="text-lg text-gray-400">{{ __('Currency SAR') }}</span></h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-circle-check text-green-400 text-xl md:text-2xl"></i>
@@ -54,7 +54,7 @@
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
                 <p class="text-gray-400 text-xs md:text-sm">{{ __('Rejected Expenses') }}</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-red-400 mt-1 md:mt-2">{{ number_format($rejectedExpenses, 2) }} <span class="text-lg text-gray-400">ر.س</span></h3>
+                <h3 class="text-2xl md:text-3xl font-bold text-red-400 mt-1 md:mt-2">{{ number_format($rejectedExpenses, 2) }} <span class="text-lg text-gray-400">{{ __('Currency SAR') }}</span></h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-ban text-red-400 text-xl md:text-2xl"></i>
@@ -66,7 +66,7 @@
         <div class="flex items-center justify-between mb-3 md:mb-4">
             <div>
                 <p class="text-gray-400 text-xs md:text-sm">{{ __('Pending Approval') }}</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-yellow-400 mt-1 md:mt-2">{{ number_format($pendingExpenses, 2) }} <span class="text-lg text-gray-400">ر.س</span></h3>
+                <h3 class="text-2xl md:text-3xl font-bold text-yellow-400 mt-1 md:mt-2">{{ number_format($pendingExpenses, 2) }} <span class="text-lg text-gray-400">{{ __('Currency SAR') }}</span></h3>
             </div>
             <div class="w-12 h-12 md:w-16 md:h-16 bg-yellow-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas fa-clock text-yellow-400 text-xl md:text-2xl"></i>
@@ -221,7 +221,7 @@
                             <td class="py-3 px-2 text-gray-300 text-sm whitespace-nowrap">{{ $expense->department }}</td>
                             <td class="py-3 px-2 text-gray-300 text-sm whitespace-nowrap">{{ $expense->type }}</td>
                             <td class="py-3 px-2 text-gray-300 text-sm max-w-xs truncate" title="{{ $expense->description }}">{{ Str::limit($expense->description, 50) }}</td>
-                            <td class="py-3 px-2 text-white font-semibold whitespace-nowrap">{{ number_format($expense->amount, 2) }} ر.س</td>
+                            <td class="py-3 px-2 text-white font-semibold whitespace-nowrap">{{ number_format($expense->amount, 2) }} {{ __('Currency SAR') }}</td>
                             <td class="py-3 px-2 text-gray-300 text-sm whitespace-nowrap">{{ $expense->payment_method }}</td>
                             <td class="py-3 px-2 whitespace-nowrap">
                                 <span class="px-2 py-1 rounded text-xs font-semibold
@@ -302,7 +302,7 @@
                     </div>
                     <div class="flex items-center justify-between gap-2">
                         <span class="text-gray-400 text-xs flex-shrink-0">{{ __('Amount') }}</span>
-                        <span class="text-white font-semibold whitespace-nowrap">{{ number_format($expense->amount, 2) }} ر.س</span>
+                        <span class="text-white font-semibold whitespace-nowrap">{{ number_format($expense->amount, 2) }} {{ __('Currency SAR') }}</span>
                     </div>
                     <div class="flex items-center justify-between gap-2">
                         <span class="text-gray-400 text-xs flex-shrink-0">{{ __('Status') }}</span>
@@ -423,7 +423,7 @@ const monthNames = @json($monthNames);
                         <p class="text-gray-400 text-xs">{{ $item->count }} {{ __('expenses') }}</p>
                     </div>
                 </div>
-                <span class="text-white font-semibold">{{ number_format($item->total, 2) }} ر.س</span>
+                <span class="text-white font-semibold">{{ number_format($item->total, 2) }} {{ __('Currency SAR') }}</span>
             </div>
         @endforeach
     </div>
@@ -460,6 +460,8 @@ function chartsData() {
             // Monthly Expenses Line Chart
             const monthlyCtx = document.getElementById('monthlyExpensesChart');
             if (monthlyCtx && !this.monthlyChart) {
+                const chartNumberLocale = @json(app()->getLocale() === 'ar' ? 'ar-SA' : 'en-US');
+                const currencySuffix = @json(__('Currency SAR'));
                 const months = monthNames;
                 const monthlyData = [];
                 for (let i = 1; i <= 12; i++) {
@@ -511,7 +513,7 @@ function chartsData() {
                                 ticks: {
                                     color: '#9ca3af',
                                     callback: function(value) {
-                                        return new Intl.NumberFormat('ar-SA').format(value) + ' ر.س';
+                                        return new Intl.NumberFormat(chartNumberLocale).format(value) + ' ' + currencySuffix;
                                     }
                                 },
                                 grid: {

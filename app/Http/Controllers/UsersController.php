@@ -4,15 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\JobTitle;
 use App\Models\Permission;
-use App\Models\Role;
-use App\Models\User;
 use App\Models\Project;
+use App\Models\Role;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class UsersController extends Controller
@@ -29,11 +31,11 @@ class UsersController extends Controller
         // البحث
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('national_id', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('national_id', 'like', "%{$search}%");
             });
         }
 
@@ -44,7 +46,7 @@ class UsersController extends Controller
 
         // فلترة حسب الدور
         if ($request->filled('role')) {
-            $query->whereHas('roles', function($q) use ($request) {
+            $query->whereHas('roles', function ($q) use ($request) {
                 $q->where('roles.id', $request->role);
             });
         }
@@ -94,7 +96,11 @@ class UsersController extends Controller
 
         $roles = Role::orderBy('display_name')->get();
 
-        return view('admin.users.create', compact('roles'));
+        $jobTitles = Schema::hasTable('job_titles')
+            ? JobTitle::query()->ordered()->get()
+            : collect();
+
+        return view('admin.users.create', compact('roles', 'jobTitles'));
     }
 
     /**
@@ -105,6 +111,7 @@ class UsersController extends Controller
         DB::beginTransaction();
         try {
             $data = $request->validated();
+            $this->resolveJobTitleForUser($data);
 
             // تشفير كلمة المرور
             $data['password'] = Hash::make($data['password']);
@@ -131,7 +138,8 @@ class UsersController extends Controller
                 ->with('success', 'تم إنشاء الموظف بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'حدث خطأ أثناء إنشاء الموظف: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'حدث خطأ أثناء إنشاء الموظف: '.$e->getMessage());
         }
     }
 
@@ -145,16 +153,16 @@ class UsersController extends Controller
         Gate::authorize('view', $user);
 
         // جلب المشاريع التي المستخدم مدير عليها أو عضو في فريقها
-        $userProjects = Project::where(function($q) use ($user) {
+        $userProjects = Project::where(function ($q) use ($user) {
             $q->where('project_manager_id', $user->id)
-              ->orWhereJsonContains('team_members', (string)$user->id)
-              ->orWhereJsonContains('team_members', $user->id);
+                ->orWhereJsonContains('team_members', (string) $user->id)
+                ->orWhereJsonContains('team_members', $user->id);
         })
-        ->with(['client', 'projectManager', 'tasks' => function($q) use ($user) {
-            $q->where('assignee_id', $user->id);
-        }])
-        ->latest()
-        ->get();
+            ->with(['client', 'projectManager', 'tasks' => function ($q) use ($user) {
+                $q->where('assignee_id', $user->id);
+            }])
+            ->latest()
+            ->get();
 
         // جلب جميع المهام المسندة للمستخدم
         $assignedTasks = Task::where('assignee_id', $user->id)
@@ -164,10 +172,10 @@ class UsersController extends Controller
             ->get();
 
         // جلب المهام المتأخرة
-        $overdueTasks = $assignedTasks->filter(function($task) {
-            return $task->due_date && 
-                   $task->due_date < now() && 
-                   !in_array($task->status, ['done', 'rejected']);
+        $overdueTasks = $assignedTasks->filter(function ($task) {
+            return $task->due_date &&
+                   $task->due_date < now() &&
+                   ! in_array($task->status, ['done', 'rejected']);
         });
 
         // جلب المهام التي أنشأها المستخدم
@@ -191,7 +199,7 @@ class UsersController extends Controller
             ->orderBy('last_activity', 'desc')
             ->limit(20)
             ->get()
-            ->map(function($session) {
+            ->map(function ($session) {
                 return [
                     'ip_address' => $session->ip_address,
                     'user_agent' => $session->user_agent,
@@ -248,7 +256,16 @@ class UsersController extends Controller
 
         $roles = Role::orderBy('display_name')->get();
 
-        return view('admin.users.edit', compact('user', 'roles'));
+        $jobTitles = Schema::hasTable('job_titles')
+            ? JobTitle::query()->ordered()->get()
+            : collect();
+
+        $legacyJobTitle = null;
+        if (filled($user->job_title) && $jobTitles->isNotEmpty() && ! $jobTitles->contains(fn (JobTitle $j) => $j->name === $user->job_title)) {
+            $legacyJobTitle = $user->job_title;
+        }
+
+        return view('admin.users.edit', compact('user', 'roles', 'jobTitles', 'legacyJobTitle'));
     }
 
     /**
@@ -261,6 +278,7 @@ class UsersController extends Controller
         DB::beginTransaction();
         try {
             $data = $request->validated();
+            $this->resolveJobTitleForUser($data);
 
             // تحديث كلمة المرور إذا تم تقديمها
             if ($request->filled('password')) {
@@ -299,7 +317,8 @@ class UsersController extends Controller
                 ->with('success', 'تم تحديث بيانات الموظف بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'حدث خطأ أثناء تحديث الموظف: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'حدث خطأ أثناء تحديث الموظف: '.$e->getMessage());
         }
     }
 
@@ -336,7 +355,8 @@ class UsersController extends Controller
                 ->with('success', 'تم حذف الموظف بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'حدث خطأ أثناء حذف الموظف: ' . $e->getMessage());
+
+            return back()->with('error', 'حدث خطأ أثناء حذف الموظف: '.$e->getMessage());
         }
     }
 
@@ -353,6 +373,7 @@ class UsersController extends Controller
         $user->save();
 
         $statusText = $user->status === 'active' ? 'تفعيل' : 'تعطيل';
+
         return back()->with('success', "تم {$statusText} الموظف بنجاح");
     }
 
@@ -450,5 +471,19 @@ class UsersController extends Controller
 
         // TODO: Implement CSV import
         return back()->with('success', 'تم استيراد البيانات بنجاح');
+    }
+
+    /**
+     * When job title select is "Other", use the free-text field as stored job_title.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function resolveJobTitleForUser(array &$data): void
+    {
+        if (($data['job_title'] ?? null) === '__other__') {
+            $other = trim((string) ($data['job_title_other'] ?? ''));
+            $data['job_title'] = $other !== '' ? $other : null;
+        }
+        unset($data['job_title_other']);
     }
 }

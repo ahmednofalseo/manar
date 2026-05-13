@@ -242,6 +242,16 @@ Route::prefix('settings')->name('settings.')->middleware('auth')->group(function
         'update' => 'cities.update',
         'destroy' => 'cities.destroy',
     ]);
+
+    // Job titles (user job / department list)
+    Route::resource('job-titles', App\Http\Controllers\JobTitlesController::class)->names([
+        'index' => 'job-titles.index',
+        'create' => 'job-titles.create',
+        'store' => 'job-titles.store',
+        'edit' => 'job-titles.edit',
+        'update' => 'job-titles.update',
+        'destroy' => 'job-titles.destroy',
+    ])->except(['show']);
     
     // Project Stages
     Route::resource('project-stages', App\Http\Controllers\ProjectStagesController::class)->names([
