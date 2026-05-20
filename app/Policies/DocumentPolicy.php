@@ -4,86 +4,62 @@ namespace App\Policies;
 
 use App\Models\Document;
 use App\Models\User;
+use App\Policies\Concerns\ChecksModulePermissions;
 
 class DocumentPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
+    use ChecksModulePermissions;
+
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('documents.view');
+        return $this->canViewModule($user, 'documents');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, Document $document): bool
     {
-        return $user->hasPermission('documents.view');
+        return $this->canViewModule($user, 'documents');
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return $user->hasPermission('documents.create');
+        return $this->canCreateModule($user, 'documents');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, Document $document): bool
     {
-        // لا يمكن تعديل المستندات المعتمدة
         if ($document->type === 'technical_report' && $document->status === 'approved') {
             return false;
         }
-        
-        return $user->hasPermission('documents.edit');
+
+        return $this->canUpdateModule($user, 'documents');
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, Document $document): bool
     {
-        // لا يمكن حذف المستندات المعتمدة أو المرسلة
-        if (!$document->canBeDeleted()) {
+        if (! $document->canBeDeleted()) {
             return false;
         }
-        
-        return $user->hasPermission('documents.delete');
+
+        return $this->canDeleteModule($user, 'documents');
     }
 
-    /**
-     * Determine whether the user can approve documents.
-     */
     public function approve(User $user, Document $document): bool
     {
-        // فقط الأدمن العام يمكنه اعتماد التقارير
-        return $user->hasRole('super_admin') && $document->type === 'technical_report';
+        return ($user->hasPermission('documents.approve') || $this->canManageModule($user, 'documents'))
+            && $document->type === 'technical_report';
     }
 
-    /**
-     * Determine whether the user can submit documents.
-     */
     public function submit(User $user, Document $document): bool
     {
-        // يمكن إرسال المستندات في حالة Draft فقط
         if ($document->status !== 'draft') {
             return false;
         }
-        
-        return $user->hasPermission('documents.submit');
+
+        return $user->hasPermission('documents.submit') || $this->canManageModule($user, 'documents');
     }
 
-    /**
-     * Determine whether the user can duplicate documents.
-     */
     public function duplicate(User $user, Document $document): bool
     {
-        return $user->hasPermission('documents.create');
+        return $this->canCreateModule($user, 'documents');
     }
 }

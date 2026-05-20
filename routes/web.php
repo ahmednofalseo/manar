@@ -1,9 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\UsersController;
-use App\Http\Controllers\ProjectsController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -56,7 +54,7 @@ Route::prefix('projects')->name('projects.')->group(function () {
     Route::put('/{id}', [App\Http\Controllers\ProjectsController::class, 'update'])->name('update');
     Route::delete('/{id}', [App\Http\Controllers\ProjectsController::class, 'destroy'])->name('destroy');
     Route::post('/{id}/toggle-hide', [App\Http\Controllers\ProjectsController::class, 'toggleHide'])->name('toggle-hide');
-    
+
     // Sub routes
     Route::post('/{id}/attachments', [App\Http\Controllers\ProjectsController::class, 'storeAttachment'])->name('attachments.store');
     Route::delete('/{id}/attachments/{attachmentId}', [App\Http\Controllers\ProjectsController::class, 'destroyAttachment'])->name('attachments.destroy');
@@ -66,7 +64,7 @@ Route::prefix('projects')->name('projects.')->group(function () {
     Route::post('/{id}/invoices', [App\Http\Controllers\ProjectsController::class, 'storeInvoice'])->name('invoices.store');
     Route::post('/{id}/thirdparty', [App\Http\Controllers\ProjectsController::class, 'storeThirdParty'])->name('thirdparty.store');
     Route::delete('/{id}/thirdparty/{thirdPartyId}', [App\Http\Controllers\ProjectsController::class, 'destroyThirdParty'])->name('thirdparty.destroy');
-    
+
     // Project Workflows Routes
     Route::prefix('{project}/workflows')->name('workflows.')->group(function () {
         Route::get('/', [App\Http\Controllers\ProjectWorkflowsController::class, 'index'])->name('index');
@@ -86,16 +84,16 @@ Route::prefix('chat')->name('chat.')->middleware('auth')->group(function () {
     Route::get('/project/{projectId}', [App\Http\Controllers\ChatController::class, 'getOrCreateProjectConversation'])->name('project');
     Route::post('/project/{projectId}/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('project.send');
     Route::get('/project/{projectId}/messages', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('project.messages');
-    
+
     // Private Chat
     Route::get('/private/{userId}', [App\Http\Controllers\ChatController::class, 'getOrCreatePrivateConversation'])->name('private');
     Route::get('/private', [App\Http\Controllers\ChatController::class, 'getPrivateConversations'])->name('private.list');
-    
+
     // Messages
     Route::post('/conversation/{conversationId}/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('send');
     Route::get('/conversation/{conversationId}/messages', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('messages');
     Route::delete('/message/{messageId}', [App\Http\Controllers\ChatController::class, 'deleteMessage'])->name('message.delete');
-    
+
     // Unread Messages Count
     Route::get('/unread-count', [App\Http\Controllers\ChatController::class, 'getUnreadMessagesCount'])->name('unread.count');
 });
@@ -187,13 +185,13 @@ Route::prefix('admin/settings')->name('admin.settings.')->middleware('auth')->gr
 });
 
 // Admin Users Routes
-Route::prefix('admin/users')->name('admin.users.')->group(function () {
+Route::prefix('admin/users')->name('admin.users.')->middleware('auth')->group(function () {
     Route::get('/', [App\Http\Controllers\UsersController::class, 'index'])->name('index');
     Route::get('/create', [App\Http\Controllers\UsersController::class, 'create'])->name('create');
     Route::post('/', [App\Http\Controllers\UsersController::class, 'store'])->name('store');
     Route::get('/export', [App\Http\Controllers\UsersController::class, 'export'])->name('export');
     Route::post('/import', [App\Http\Controllers\UsersController::class, 'import'])->name('import');
-    
+
     // Roles and Permissions Management (must be before /{id} route)
     Route::get('/roles-permissions', [App\Http\Controllers\Admin\RolesAndPermissionsController::class, 'index'])->name('roles-permissions.index');
     Route::post('/roles', [App\Http\Controllers\Admin\RolesAndPermissionsController::class, 'storeRole'])->name('roles.store');
@@ -203,7 +201,7 @@ Route::prefix('admin/users')->name('admin.users.')->group(function () {
     Route::put('/permissions/{id}', [App\Http\Controllers\Admin\RolesAndPermissionsController::class, 'updatePermission'])->name('permissions.update');
     Route::delete('/permissions/{id}', [App\Http\Controllers\Admin\RolesAndPermissionsController::class, 'deletePermission'])->name('permissions.delete');
     Route::post('/roles/{id}/permissions', [App\Http\Controllers\Admin\RolesAndPermissionsController::class, 'updateRolePermissions'])->name('roles.permissions.update');
-    
+
     // User-specific routes (must be after specific routes)
     Route::get('/{id}', [App\Http\Controllers\UsersController::class, 'show'])->name('show');
     Route::get('/{id}/edit', [App\Http\Controllers\UsersController::class, 'edit'])->name('edit');
@@ -231,7 +229,7 @@ Route::prefix('settings')->name('settings.')->middleware('auth')->group(function
         'update' => 'project-types.update',
         'destroy' => 'project-types.destroy',
     ]);
-    
+
     // Cities
     Route::resource('cities', App\Http\Controllers\CitiesController::class)->names([
         'index' => 'cities.index',
@@ -252,7 +250,7 @@ Route::prefix('settings')->name('settings.')->middleware('auth')->group(function
         'update' => 'job-titles.update',
         'destroy' => 'job-titles.destroy',
     ])->except(['show']);
-    
+
     // Project Stages
     Route::resource('project-stages', App\Http\Controllers\ProjectStagesController::class)->names([
         'index' => 'project-stages.index',
@@ -274,11 +272,13 @@ Route::prefix('api')->name('api.')->middleware('auth')->group(function () {
     Route::get('/convert-number-to-words', function (\Illuminate\Http\Request $request) {
         $number = (float) $request->get('number', 0);
         $words = \App\Helpers\NumberToWords::convert($number);
+
         return response()->json(['words' => $words]);
     })->name('convert-number-to-words');
-    
+
     Route::get('/clients/{id}', function ($id) {
         $client = \App\Models\Client::findOrFail($id);
+
         return response()->json([
             'id' => $client->id,
             'name' => $client->name,
@@ -287,9 +287,10 @@ Route::prefix('api')->name('api.')->middleware('auth')->group(function () {
             'address' => $client->address,
         ]);
     })->name('clients.show');
-    
+
     Route::get('/projects/{id}', function ($id) {
         $project = \App\Models\Project::findOrFail($id);
+
         return response()->json([
             'id' => $project->id,
             'name' => $project->name,

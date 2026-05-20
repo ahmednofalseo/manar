@@ -31,14 +31,17 @@ class Role extends Model
     }
 
     /**
-     * Check if role has a specific permission.
+     * Check if role has a specific permission (by name or Permission model).
      */
-    public function hasPermission($permission)
+    public function hasPermission(string|Permission $permission): bool
     {
+        $query = $this->permissions();
+
         if (is_string($permission)) {
-            return $this->permissions->contains('name', $permission);
+            return $query->where('name', $permission)->exists();
         }
-        return $this->permissions->contains('id', $permission->id);
+
+        return $query->where('permissions.id', $permission->id)->exists();
     }
 
     /**
@@ -49,7 +52,7 @@ class Role extends Model
         if (is_string($permission)) {
             $permission = Permission::where('name', $permission)->first();
         }
-        if ($permission && !$this->hasPermission($permission)) {
+        if ($permission && ! $this->hasPermission($permission)) {
             $this->permissions()->attach($permission);
         }
     }

@@ -1059,5 +1059,9 @@
     "No payments chart placeholder": "لا توجد دفعات بعد",
     "Collected amounts label": "المبالغ المحصلة",
     "Payment method": "طريقة الدفع",
-    "Failed": "فشل"
+    "Failed": "فشل",
+    "Role name must start with a letter and contain only lowercase letters, numbers, and underscores.": "اسم الدور (slug) يجب أن يبدأ بحرف ويحتوي على أحرف إنجليزية صغيرة وأرقام وشرطة سفلية فقط.",
+    "Cannot rename super admin role": "لا يمكن تغيير اسم دور الأدمن العام.",
+    "Cannot delete role assigned to users": "لا يمكن حذف دور مُسند لمستخدمين.",
+    "Role saved successfully": "تم حفظ الدور بنجاح."
 }

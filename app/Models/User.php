@@ -126,30 +126,33 @@ class User extends Authenticatable implements MustVerifyEmail
      * Check if user has a specific permission.
      * Checks: 1) Direct user permissions, 2) Permissions from roles.
      */
-    public function hasPermission($permission)
+    public function hasPermission(string|Permission $permission): bool
     {
-        // Super admin has all permissions
         if ($this->hasRole('super_admin')) {
             return true;
         }
-        // Direct user-specific permission
-        if (is_string($permission)) {
-            if ($this->directPermissions->contains('name', $permission)) {
+
+        $permissionName = is_string($permission) ? $permission : $permission->name;
+        $permissionId = is_string($permission) ? null : $permission->id;
+
+        $directQuery = $this->directPermissions();
+        if ($permissionName) {
+            if ($directQuery->where('name', $permissionName)->exists()) {
                 return true;
             }
-        } else {
-            if ($this->directPermissions->contains('id', $permission->id)) {
-                return true;
-            }
-        }
-        // Permission from roles
-        foreach ($this->roles as $role) {
-            if ($role->hasPermission($permission)) {
-                return true;
-            }
+        } elseif ($directQuery->where('permissions.id', $permissionId)->exists()) {
+            return true;
         }
 
-        return false;
+        return $this->roles()
+            ->whereHas('permissions', function ($query) use ($permissionName, $permissionId) {
+                if ($permissionName) {
+                    $query->where('name', $permissionName);
+                } else {
+                    $query->where('permissions.id', $permissionId);
+                }
+            })
+            ->exists();
     }
 
     /**

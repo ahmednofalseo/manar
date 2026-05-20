@@ -64,13 +64,24 @@ class TasksController extends Controller
     /**
      * Display a listing of tasks.
      */
+    /**
+     * Users with module-wide task permissions see all tasks; others see scoped tasks.
+     */
+    protected function userCanViewAllTasks(User $user): bool
+    {
+        return $user->hasPermission('tasks.manage')
+            || $user->hasPermission('tasks.view');
+    }
+
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Task::class);
+
         $user = Auth::user();
         $query = Task::with(['project', 'projectStage', 'assignee'])->whereNotNull('project_id');
 
-        // تطبيق فلاتر الصلاحيات - المستخدم يرى المهام المخصصة له فقط
-        if (! $user->hasRole('super_admin')) {
+        // Scoped listing only when the user lacks module-wide task view/manage permissions
+        if (! $user->hasRole('super_admin') && ! $this->userCanViewAllTasks($user)) {
             // للمستخدمين العاديين: يروا المهام المسندة إليهم أو المهام في المشاريع التي هم مديرين عليها أو أعضاء في فريقها
             $projectIds = Project::where('is_hidden', false) // إخفاء المشاريع المخفية للمستخدمين العاديين فقط
                 ->where(function ($q) use ($user) {
@@ -134,7 +145,7 @@ class TasksController extends Controller
         $baseQuery = Task::query()->whereNotNull('project_id');
 
         // تطبيق نفس فلاتر الصلاحيات على KPIs
-        if (! $user->hasRole('super_admin')) {
+        if (! $user->hasRole('super_admin') && ! $this->userCanViewAllTasks($user)) {
             $projectIds = Project::where('is_hidden', false) // إخفاء المشاريع المخفية للمستخدمين العاديين فقط
                 ->where(function ($q) use ($user) {
                     $q->where('project_manager_id', $user->id)

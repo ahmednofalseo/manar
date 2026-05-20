@@ -139,8 +139,8 @@
                                 <label class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer transition-all">
                                     <input 
                                         type="checkbox" 
-                                        :value="{{ $permission->id }}" 
-                                        x-model="roleForm.permissions" 
+                                        value="{{ $permission->id }}"
+                                        x-model.number="roleForm.permissions"
                                         class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500"
                                     >
                                     <div class="flex-1">
@@ -191,16 +191,21 @@ function rolesPermissionsData() {
         },
         roles: @json($rolesArray ?? []),
         permissionsByGroup: @json($permissionsArray ?? []),
+        routes: {
+            store: @json(route('admin.users.roles.store')),
+            update: @json(route('admin.users.roles.update', ['id' => '__ID__'])),
+            destroy: @json(route('admin.users.roles.delete', ['id' => '__ID__'])),
+        },
         openRoleModal(roleId = null) {
             this.editingRoleId = roleId;
             if (roleId) {
-                const role = this.roles.find(r => r.id === roleId);
+                const role = this.roles.find(r => Number(r.id) === Number(roleId));
                 if (role) {
                     this.roleForm = {
                         name: role.name,
                         display_name: role.display_name,
                         description: role.description || '',
-                        permissions: [...role.permissions]
+                        permissions: (role.permissions || []).map(id => Number(id))
                     };
                 }
             } else {
@@ -223,50 +228,52 @@ function rolesPermissionsData() {
                 permissions: []
             };
         },
+        roleUrl(template, id) {
+            return template.replace('__ID__', String(id));
+        },
+        normalizePermissions(ids) {
+            return [...new Set((ids || []).map(id => parseInt(id, 10)).filter(id => id > 0))];
+        },
         async saveRole() {
-            const url = this.editingRoleId 
-                ? `/admin/users/roles/${this.editingRoleId}`
-                : '/admin/users/roles';
-            const method = this.editingRoleId ? 'PUT' : 'POST';
-            
+            const isEdit = Boolean(this.editingRoleId);
+            const url = isEdit
+                ? this.roleUrl(this.routes.update, this.editingRoleId)
+                : this.routes.store;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const payload = {
+                name: this.roleForm.name.trim(),
+                display_name: this.roleForm.display_name.trim(),
+                description: this.roleForm.description || null,
+                permissions: this.normalizePermissions(this.roleForm.permissions),
+            };
+
             try {
-                // First save role info
-                const roleResponse = await fetch(url, {
-                    method: method,
+                const response = await fetch(url, {
+                    method,
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     },
-                    body: JSON.stringify({
-                        name: this.roleForm.name,
-                        display_name: this.roleForm.display_name,
-                        description: this.roleForm.description
-                    })
+                    body: JSON.stringify(payload),
                 });
-                
-                const roleData = await roleResponse.json();
-                if (!roleData.success) {
-                    this.showToast('error', roleData.message || '{{ __('An error occurred') }}');
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const message = data.message
+                        || (data.errors ? Object.values(data.errors).flat().join(' ') : null)
+                        || '{{ __('An error occurred') }}';
+                    this.showToast('error', message);
                     return;
                 }
 
-                // Then save permissions
-                const roleId = this.editingRoleId || roleData.role.id;
-                const permissionsResponse = await fetch(`/admin/users/roles/${roleId}/permissions`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({ permissions: this.roleForm.permissions })
-                });
-                
-                const permissionsData = await permissionsResponse.json();
-                if (permissionsData.success) {
-                    this.showToast('success', '{{ __('Role saved successfully') }}');
-                    setTimeout(() => location.reload(), 1000);
+                if (data.success) {
+                    this.showToast('success', data.message || '{{ __('Role saved successfully') }}');
+                    setTimeout(() => location.reload(), 800);
                 } else {
-                    this.showToast('error', permissionsData.message || '{{ __('An error occurred') }}');
+                    this.showToast('error', data.message || '{{ __('An error occurred') }}');
                 }
             } catch (error) {
                 this.showToast('error', '{{ __('An error occurred') }}');
@@ -274,19 +281,21 @@ function rolesPermissionsData() {
         },
         async deleteRole(roleId) {
             if (!confirm('{{ __('Are you sure you want to delete this role?') }}')) return;
-            
+
             try {
-                const response = await fetch(`/admin/users/roles/${roleId}`, {
+                const response = await fetch(this.roleUrl(this.routes.destroy, roleId), {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    }
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
                 });
-                
+
                 const data = await response.json();
+
                 if (data.success) {
                     this.showToast('success', data.message);
-                    setTimeout(() => location.reload(), 1000);
+                    setTimeout(() => location.reload(), 800);
                 } else {
                     this.showToast('error', data.message || '{{ __('An error occurred') }}');
                 }

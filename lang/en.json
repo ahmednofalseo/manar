@@ -1061,5 +1061,9 @@
     "No payments chart placeholder": "No payments yet",
     "Collected amounts label": "Collected amounts",
     "Payment method": "Payment method",
-    "Failed": "Failed"
+    "Failed": "Failed",
+    "Role name must start with a letter and contain only lowercase letters, numbers, and underscores.": "Role slug must start with a letter and use only lowercase letters, numbers, and underscores.",
+    "Cannot rename super admin role": "The super admin role cannot be renamed.",
+    "Cannot delete role assigned to users": "This role is assigned to users and cannot be deleted.",
+    "Role saved successfully": "Role saved successfully."
 }

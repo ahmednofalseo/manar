@@ -103,10 +103,38 @@ class ProjectsController extends Controller
     }
 
     /**
+     * Users with module-wide project permissions see all projects.
+     */
+    protected function userCanViewAllProjects(User $user): bool
+    {
+        return $user->hasPermission('projects.manage')
+            || $user->hasPermission('projects.view');
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<Project>  $query
+     */
+    protected function scopeProjectsForUser($query, User $user): void
+    {
+        if ($user->hasRole('super_admin') || $this->userCanViewAllProjects($user)) {
+            return;
+        }
+
+        $query->where('is_hidden', false);
+        $query->where(function ($q) use ($user) {
+            $q->where('project_manager_id', $user->id)
+                ->orWhereJsonContains('team_members', (string) $user->id)
+                ->orWhereJsonContains('team_members', $user->id);
+        });
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Project::class);
+
         $user = Auth::user();
         $query = Project::with([
             'projectManager',
@@ -120,17 +148,7 @@ class ProjectsController extends Controller
             },
         ]);
 
-        // تطبيق فلاتر الصلاحيات - المستخدم يرى المشاريع المخصصة له فقط
-        if (! $user->hasRole('super_admin')) {
-            // للمستخدمين العاديين: إخفاء المشاريع المخفية + يروا المشاريع التي هم مديرين عليها أو أعضاء في فريقها
-            $query->where('is_hidden', false); // إخفاء المشاريع المخفية للمستخدمين العاديين فقط
-            $query->where(function ($q) use ($user) {
-                $q->where('project_manager_id', $user->id)
-                    ->orWhereJsonContains('team_members', (string) $user->id)
-                    ->orWhereJsonContains('team_members', $user->id);
-            });
-        }
-        // Super Admin يرى الكل (بما في ذلك المشاريع المخفية - لا فلاتر)
+        $this->scopeProjectsForUser($query, $user);
 
         // الفلاتر
         if ($request->filled('search')) {
@@ -186,16 +204,7 @@ class ProjectsController extends Controller
         // Note: Using 'delayed_count' instead of 'delayed' as it's a MySQL reserved word
         // تطبيق نفس فلاتر الصلاحيات على KPIs
         $kpisQuery = Project::query();
-        if (! $user->hasRole('super_admin')) {
-            // للمستخدمين العاديين: إخفاء المشاريع المخفية
-            $kpisQuery->where('is_hidden', false);
-            $kpisQuery->where(function ($q) use ($user) {
-                $q->where('project_manager_id', $user->id)
-                    ->orWhereJsonContains('team_members', (string) $user->id)
-                    ->orWhereJsonContains('team_members', $user->id);
-            });
-        }
-        // Super Admin يرى الكل (بما في ذلك المشاريع المخفية)
+        $this->scopeProjectsForUser($kpisQuery, $user);
         $kpis = $kpisQuery->selectRaw('
             COUNT(*) as total,
             SUM(CASE WHEN status = "قيد التنفيذ" THEN 1 ELSE 0 END) as active,
@@ -225,18 +234,8 @@ class ProjectsController extends Controller
 
         $districtsQuery = Project::query();
         $ownersQuery = Project::query();
-        if (! $user->hasRole('super_admin')) {
-            $districtsQuery->where('is_hidden', false)->where(function ($q) use ($user) {
-                $q->where('project_manager_id', $user->id)
-                    ->orWhereJsonContains('team_members', (string) $user->id)
-                    ->orWhereJsonContains('team_members', $user->id);
-            });
-            $ownersQuery->where('is_hidden', false)->where(function ($q) use ($user) {
-                $q->where('project_manager_id', $user->id)
-                    ->orWhereJsonContains('team_members', (string) $user->id)
-                    ->orWhereJsonContains('team_members', $user->id);
-            });
-        }
+        $this->scopeProjectsForUser($districtsQuery, $user);
+        $this->scopeProjectsForUser($ownersQuery, $user);
         $districts = $districtsQuery->whereNotNull('district')->where('district', '!=', '')->distinct()->orderBy('district')->pluck('district');
         $owners = $ownersQuery->whereNotNull('owner')->where('owner', '!=', '')->distinct()->orderBy('owner')->pluck('owner');
 
