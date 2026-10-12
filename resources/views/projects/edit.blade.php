@@ -421,31 +421,7 @@
             </div>
         </div>
 
-        <!-- Stages -->
-        <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
-            <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <i class="fas fa-diagram-project text-primary-400"></i>
-                {{ __('Stages') }}
-            </h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($stages as $stage)
-                <label class="flex items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 cursor-pointer">
-                    <input 
-                        type="checkbox" 
-                        name="stages[]" 
-                        value="{{ $stage->name }}" 
-                        {{ in_array($stage->name, old('stages', $project->stages ?? [])) ? 'checked' : '' }}
-                        class="rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500"
-                    >
-                    @if($stage->icon)
-                    <i class="{{ $stage->icon }} {{ $stage->color ? '' : 'text-primary-400' }}" style="{{ $stage->color ? 'color: ' . $stage->color : '' }}"></i>
-                    @endif
-                    <span class="text-white">{{ $stage->name }}</span>
-                </label>
-                @endforeach
-            </div>
-        </div>
+        @include('projects.partials.stage-planner')
 
         <!-- Project Status & Dates -->
         <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">

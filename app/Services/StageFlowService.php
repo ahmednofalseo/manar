@@ -2,9 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Project;
 use App\Models\Approval;
-use App\Enums\ProjectStageKey;
+use App\Models\Project;
 
 class StageFlowService
 {
@@ -39,25 +38,25 @@ class StageFlowService
     public function checkAndAdvanceStage(Project $project, string $stageKey): void
     {
         // التحقق من أن جميع الموافقات المطلوبة للمرحلة الحالية تمت الموافقة عليها
-        if (!$this->canAdvanceToNextStage($project, $stageKey)) {
+        if (! $this->canAdvanceToNextStage($project, $stageKey)) {
             return;
         }
 
         // الحصول على المرحلة التالية
         $nextStage = $this->getNextStage($project, $stageKey);
-        
+
         if ($nextStage) {
             // تحديث المرحلة الحالية
             $project->update(['current_stage' => $nextStage]);
-            
+
             // تحديث حالة المرحلة في project_stages
             $projectStage = $project->projectStages()
                 ->where('stage_name', $this->getStageName($nextStage))
                 ->first();
-            
-            if ($projectStage && $projectStage->status === 'جديد') {
+
+            if ($projectStage && $projectStage->status === \App\Enums\ProjectStageStatus::Locked) {
                 $projectStage->update([
-                    'status' => 'جارٍ',
+                    'status' => \App\Enums\ProjectStageStatus::Active,
                     'start_date' => now(),
                 ]);
             }
@@ -69,7 +68,7 @@ class StageFlowService
      */
     protected function getNextStage(Project $project, string $currentStageKey): ?string
     {
-        if (!$project->stages || empty($project->stages)) {
+        if (! $project->stages || empty($project->stages)) {
             return null;
         }
 
@@ -84,7 +83,7 @@ class StageFlowService
         ];
 
         $currentStageName = $stageOrder[$currentStageKey] ?? null;
-        if (!$currentStageName) {
+        if (! $currentStageName) {
             return null;
         }
 
@@ -124,9 +123,3 @@ class StageFlowService
         return $this->canAdvanceToNextStage($project, $stageKey);
     }
 }
-
-
-
-
-
-

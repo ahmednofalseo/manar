@@ -9,7 +9,7 @@ Route::get('/', function () {
 
 // Authentication Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login'])->middleware('web');
+Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 // Password Reset Routes
@@ -59,6 +59,7 @@ Route::prefix('projects')->name('projects.')->group(function () {
     Route::post('/{id}/attachments', [App\Http\Controllers\ProjectsController::class, 'storeAttachment'])->name('attachments.store');
     Route::delete('/{id}/attachments/{attachmentId}', [App\Http\Controllers\ProjectsController::class, 'destroyAttachment'])->name('attachments.destroy');
     Route::put('/{id}/stage', [App\Http\Controllers\ProjectsController::class, 'updateStage'])->name('stage.update');
+    Route::post('/{id}/stages/{stageId}/invoice', [App\Http\Controllers\ProjectsController::class, 'issueStageInvoice'])->name('stages.invoice');
     Route::get('/{id}/tasks', [App\Http\Controllers\ProjectsController::class, 'tasksIndex'])->name('tasks.index');
     Route::get('/{id}/financials', [App\Http\Controllers\ProjectsController::class, 'financialsIndex'])->name('financials.index');
     Route::post('/{id}/invoices', [App\Http\Controllers\ProjectsController::class, 'storeInvoice'])->name('invoices.store');

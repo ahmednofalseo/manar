@@ -1065,5 +1065,19 @@
     "Role name must start with a letter and contain only lowercase letters, numbers, and underscores.": "Role slug must start with a letter and use only lowercase letters, numbers, and underscores.",
     "Cannot rename super admin role": "The super admin role cannot be renamed.",
     "Cannot delete role assigned to users": "This role is assigned to users and cannot be deleted.",
-    "Role saved successfully": "Role saved successfully."
+    "Role saved successfully": "Role saved successfully.",
+    "Stage planner hint": "Drag stages to set their order. The first stage opens immediately. The next stage opens after its invoice is paid.",
+    "Stage invoice amount": "Stage invoice amount",
+    "Drag to reorder": "Drag to reorder",
+    "Project stage status locked": "Locked",
+    "Project stage status active": "Open",
+    "Project stage status awaiting payment": "Awaiting payment",
+    "Cannot remove a stage that already has tasks or an invoice.": "A stage that already has tasks or an invoice cannot be removed.",
+    "Only the active stage can be closed.": "Only the open stage can be closed.",
+    "Finish the stage tasks before issuing its invoice.": "Finish the stage tasks before issuing its invoice.",
+    "Stage invoice note": "Invoice for stage :stage",
+    "Stage notes updated": "Stage notes saved.",
+    "Stage invoice issued": "Stage invoice issued.",
+    "Issue stage invoice": "Issue stage invoice",
+    "Task stage is not open yet": "This stage is not open yet."
 }

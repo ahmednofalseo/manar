@@ -1,13 +1,9 @@
 @php
     $stageStatusConfigKeys = [
-        'جديد' => ['bg' => 'bg-gray-600', 'icon' => 'circle', 'badge' => 'bg-gray-500/20 text-gray-400'],
-        'جارٍ' => ['bg' => 'bg-yellow-500', 'icon' => 'clock', 'badge' => 'bg-yellow-500/20 text-yellow-400'],
-        'مكتمل' => ['bg' => 'bg-green-500', 'icon' => 'check', 'badge' => 'bg-green-500/20 text-green-400'],
-    ];
-    $stageStatusLabels = [
-        'جديد' => __('Project stage status new'),
-        'جارٍ' => __('Project stage status running'),
-        'مكتمل' => __('Project stage status completed'),
+        'locked' => ['bg' => 'bg-gray-600', 'icon' => 'lock', 'badge' => 'bg-gray-500/20 text-gray-400'],
+        'active' => ['bg' => 'bg-yellow-500', 'icon' => 'clock', 'badge' => 'bg-yellow-500/20 text-yellow-400'],
+        'awaiting_payment' => ['bg' => 'bg-orange-500', 'icon' => 'file-invoice-dollar', 'badge' => 'bg-orange-500/20 text-orange-400'],
+        'completed' => ['bg' => 'bg-green-500', 'icon' => 'check', 'badge' => 'bg-green-500/20 text-green-400'],
     ];
 @endphp
 <div class="glass-card rounded-xl md:rounded-2xl p-4 md:p-6">
@@ -25,8 +21,10 @@
     <div class="space-y-6">
         @foreach($project->projectStages as $index => $stage)
             @php
+                $statusValue = $stage->status instanceof \App\Enums\ProjectStageStatus ? $stage->status->value : (string) $stage->status;
+                $statusLabel = $stage->status instanceof \App\Enums\ProjectStageStatus ? $stage->status->label() : $statusValue;
                 $isLast = $loop->last;
-                $config = $stageStatusConfigKeys[$stage->status] ?? $stageStatusConfigKeys['جديد'];
+                $config = $stageStatusConfigKeys[$statusValue] ?? $stageStatusConfigKeys['locked'];
             @endphp
             <div class="flex gap-4">
                 <div class="flex flex-col items-center">
@@ -41,7 +39,7 @@
                     <div class="bg-white/5 rounded-lg p-4">
                         <div class="flex items-center justify-between mb-2">
                             <h3 class="text-white font-semibold">{{ $stageLabelMap[$stage->stage_name] ?? $stage->stage_name }}</h3>
-                            <span class="{{ $config['badge'] }} px-2 py-1 rounded text-xs">{{ $stageStatusLabels[$stage->status] ?? $stage->status }}</span>
+                            <span class="{{ $config['badge'] }} px-2 py-1 rounded text-xs">{{ $statusLabel }}</span>
                         </div>
 
                         @if($stage->start_date)
@@ -50,7 +48,7 @@
 
                         @if($stage->end_date)
                         <p class="text-gray-400 text-sm mb-2">
-                            @if($stage->status === 'مكتمل')
+                            @if($statusValue === 'completed')
                                 {{ __('End Date') }}: {{ $stage->end_date->format('Y-m-d') }}
                             @else
                                 {{ __('Expected end date') }}: {{ $stage->end_date->format('Y-m-d') }}
@@ -68,6 +66,22 @@
                                 <div class="bg-primary-400 h-2 rounded-full" style="width: {{ $stage->progress }}%"></div>
                             </div>
                         </div>
+                        @endif
+
+                        <p class="text-gray-300 text-sm mb-3">{{ number_format((float) $stage->invoice_amount, 2) }} {{ __('Currency SAR') }}</p>
+
+                        @if($stage->invoice)
+                        <a href="{{ route('financials.show', $stage->invoice->id) }}" class="inline-flex items-center gap-2 text-sm text-primary-400 mb-3">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            {{ $stage->invoice->number }} — {{ $stage->invoice->status_label }}
+                        </a>
+                        @elseif($statusValue === 'active' && $stage->tasks->whereNotIn('status', ['done', 'rejected'])->isEmpty())
+                        <form method="POST" action="{{ route('projects.stages.invoice', [$project->id, $stage->id]) }}" class="mb-3">
+                            @csrf
+                            <button type="submit" class="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm">
+                                {{ __('Issue stage invoice') }}
+                            </button>
+                        </form>
                         @endif
 
                         @if($stage->notes)
@@ -204,30 +218,13 @@
                 </div>
 
                 <div>
-                    <label class="block text-gray-300 text-sm mb-2">{{ __('Status') }}</label>
-                    <select name="status" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                        <option value="جديد">{{ __('Project stage status new') }}</option>
-                        <option value="جارٍ">{{ __('Project stage status running') }}</option>
-                        <option value="مكتمل">{{ __('Project stage status completed') }}</option>
-                    </select>
+                    <label class="block text-gray-300 text-sm mb-2">{{ __('Start Date') }}</label>
+                    <input type="date" name="start_date" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                 </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-gray-300 text-sm mb-2">{{ __('Start Date') }}</label>
-                        <input type="date" name="start_date" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    </div>
-                    <div>
-                        <label class="block text-gray-300 text-sm mb-2">{{ __('End Date') }}</label>
-                        <input type="date" name="end_date" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
-                    </div>
-                </div>
-
                 <div>
-                    <label class="block text-gray-300 text-sm mb-2">{{ __('Progress percent label') }}</label>
-                    <input type="number" name="progress" min="0" max="100" value="0" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
+                    <label class="block text-gray-300 text-sm mb-2">{{ __('End Date') }}</label>
+                    <input type="date" name="end_date" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40">
                 </div>
-
                 <div>
                     <label class="block text-gray-300 text-sm mb-2">{{ __('Internal Notes') }}</label>
                     <textarea name="notes" rows="3" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"></textarea>

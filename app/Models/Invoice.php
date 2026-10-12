@@ -14,6 +14,7 @@ class Invoice extends Model
 
     protected $fillable = [
         'project_id',
+        'project_stage_id',
         'client_id',
         'number',
         'issue_date',
@@ -40,6 +41,11 @@ class Invoice extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function projectStage()
+    {
+        return $this->belongsTo(ProjectStage::class, 'project_stage_id');
     }
 
     /**
@@ -84,6 +90,10 @@ class Invoice extends Model
         }
 
         $this->save();
+
+        if ($this->status === InvoiceStatus::PAID && $this->project_stage_id) {
+            app(\App\Services\ProjectStageGateService::class)->handleInvoicePaid($this);
+        }
     }
 
     /**
@@ -95,10 +105,10 @@ class Invoice extends Model
         $lastInvoice = self::whereYear('created_at', $year)
             ->orderBy('id', 'desc')
             ->first();
-        
+
         $number = $lastInvoice ? ((int) substr($lastInvoice->number ?? '0', -4)) + 1 : 1;
-        
-        return 'INV-' . $year . '-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+
+        return 'INV-'.$year.'-'.str_pad($number, 4, '0', STR_PAD_LEFT);
     }
 
     /**

@@ -96,7 +96,7 @@ class Project extends Model
      */
     public function projectStages()
     {
-        return $this->hasMany(ProjectStage::class);
+        return $this->hasMany(ProjectStage::class)->orderBy('sort_order')->orderBy('id');
     }
 
     /**
@@ -182,7 +182,7 @@ class Project extends Model
         // إذا لم توجد مهام، احسب من المراحل
         $totalStages = count($this->stages);
         $completedStages = $this->projectStages()
-            ->where('status', 'مكتمل')
+            ->where('status', \App\Enums\ProjectStageStatus::Completed)
             ->count();
 
         return $totalStages > 0 ? round(($completedStages / $totalStages) * 100) : 0;

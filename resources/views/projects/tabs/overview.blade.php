@@ -110,16 +110,19 @@
             <div class="space-y-2">
                 @foreach($project->projectStages->take(5) as $stage)
                     @php
-                        $stageLine = match ($stage->status) {
-                            'جديد' => ['text' => $stageStatusLabels['جديد'], 'color' => 'text-gray-400'],
-                            'جارٍ' => ['text' => $stageStatusLabels['جارٍ'], 'color' => 'text-yellow-400'],
-                            'مكتمل' => ['text' => '✓ ' . $stageStatusLabels['مكتمل'], 'color' => 'text-green-400'],
-                            default => ['text' => $stageStatusLabels[$stage->status] ?? $stage->status, 'color' => 'text-gray-400'],
+                        $stageLineText = $stage->status instanceof \App\Enums\ProjectStageStatus
+                            ? $stage->status->label()
+                            : (string) $stage->status;
+                        $stageLineColor = match ($stage->status instanceof \App\Enums\ProjectStageStatus ? $stage->status->value : (string) $stage->status) {
+                            'active' => 'text-yellow-400',
+                            'awaiting_payment' => 'text-orange-400',
+                            'completed' => 'text-green-400',
+                            default => 'text-gray-400',
                         };
                     @endphp
                     <div class="flex items-center justify-between">
                         <span class="text-gray-300 text-sm">{{ $stageLabelMap[$stage->stage_name] ?? $stage->stage_name }}</span>
-                        <span class="{{ $stageLine['color'] }} text-sm">{{ $stageLine['text'] }}</span>
+                        <span class="{{ $stageLineColor }} text-sm">{{ $stageLineText }}</span>
                     </div>
                 @endforeach
             </div>

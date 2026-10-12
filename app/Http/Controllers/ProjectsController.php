@@ -8,11 +8,12 @@ use App\Models\Invoice;
 use App\Models\JobTitle;
 use App\Models\Project;
 use App\Models\ProjectAttachment;
-use App\Models\ProjectStage;
 use App\Models\ProjectThirdParty;
 use App\Models\ProjectType;
 use App\Models\StageSetting;
 use App\Models\User;
+use App\Services\ProjectStageGateService;
+use App\Services\ProjectStagePlanner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -303,8 +304,10 @@ class ProjectsController extends Controller
             'land_code' => 'nullable|string',
             'plan_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,dwg|max:10240',
             'baladi_request_number' => 'nullable|string',
-            'stages' => 'nullable|array',
-            'stages.*' => 'string',
+            'stage_plan' => 'nullable|array',
+            'stage_plan.*.id' => 'nullable|integer',
+            'stage_plan.*.name' => 'required|string|max:255',
+            'stage_plan.*.amount' => 'nullable|numeric|min:0',
             'project_manager_id' => 'nullable|exists:users,id',
             'team_members' => 'nullable|array',
             'team_members.*' => 'exists:users,id',
@@ -353,21 +356,13 @@ class ProjectsController extends Controller
                 $validated['installments_count'] = 1;
             }
 
+            unset($validated['stage_plan']);
+
             // إنشاء المشروع
             $project = Project::create($validated);
 
-            // إضافة المراحل
-            if ($request->filled('stages')) {
-                foreach ($request->stages as $stageName) {
-                    ProjectStage::create([
-                        'project_id' => $project->id,
-                        'stage_name' => $stageName,
-                        'status' => 'جديد',
-                        'progress' => 0,
-                    ]);
-                }
-                // تحديد المرحلة الحالية الأولى
-                $project->update(['current_stage' => $request->stages[0] ?? null]);
+            if ($request->filled('stage_plan')) {
+                app(ProjectStagePlanner::class)->sync($project, $request->input('stage_plan', []));
             }
 
             // إضافة أعضاء الفريق
@@ -420,6 +415,7 @@ class ProjectsController extends Controller
                 $query->orderBy('created_at');
             },
             'projectStages.tasks.assignee',
+            'projectStages.invoice',
             'attachments' => function ($query) {
                 $query->with('uploader')->latest();
             },
@@ -517,8 +513,10 @@ class ProjectsController extends Controller
             'land_code' => 'nullable|string',
             'plan_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,dwg|max:10240',
             'baladi_request_number' => 'nullable|string',
-            'stages' => 'nullable|array',
-            'stages.*' => 'string',
+            'stage_plan' => 'nullable|array',
+            'stage_plan.*.id' => 'nullable|integer',
+            'stage_plan.*.name' => 'required|string|max:255',
+            'stage_plan.*.amount' => 'nullable|numeric|min:0',
             'status' => 'required|string',
             'progress' => 'nullable|integer|min:0|max:100',
             'current_stage' => 'nullable|string',
@@ -558,6 +556,8 @@ class ProjectsController extends Controller
                 $validated['plan_file'] = $request->file('plan_file')->store('plans', 'public');
             }
 
+            unset($validated['stage_plan']);
+
             // تحديث المشروع
             $oldStatus = $project->status;
             $project->update($validated);
@@ -573,24 +573,8 @@ class ProjectsController extends Controller
                 }
             }
 
-            // تحديث المراحل
-            if ($request->filled('stages')) {
-                // حذف المراحل القديمة غير المحددة
-                $project->projectStages()->whereNotIn('stage_name', $request->stages)->delete();
-
-                // إضافة المراحل الجديدة
-                foreach ($request->stages as $stageName) {
-                    ProjectStage::firstOrCreate(
-                        [
-                            'project_id' => $project->id,
-                            'stage_name' => $stageName,
-                        ],
-                        [
-                            'status' => 'جديد',
-                            'progress' => 0,
-                        ]
-                    );
-                }
+            if ($request->has('stage_plan')) {
+                app(ProjectStagePlanner::class)->sync($project, $request->input('stage_plan', []));
             }
 
             // تحديث أعضاء الفريق
@@ -602,6 +586,10 @@ class ProjectsController extends Controller
 
             return redirect()->route('projects.show', $project->id)
                 ->with('success', 'تم تحديث المشروع بنجاح');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+
+            return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -723,7 +711,26 @@ class ProjectsController extends Controller
     }
 
     /**
-     * تحديث مرحلة المشروع
+     * إصدار فاتورة المرحلة الحالية بعد اكتمال مهامها.
+     */
+    public function issueStageInvoice(string $id, string $stageId)
+    {
+        $project = Project::findOrFail($id);
+        Gate::authorize('update', $project);
+
+        $stage = $project->projectStages()->whereKey($stageId)->firstOrFail();
+
+        try {
+            app(ProjectStageGateService::class)->closeActiveStage($stage);
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', __('Stage invoice issued'));
+    }
+
+    /**
+     * تحديث ملاحظات مرحلة المشروع. حالة المرحلة تتغير فقط عبر المهام وسداد الفاتورة.
      */
     public function updateStage(Request $request, string $id)
     {
@@ -731,29 +738,22 @@ class ProjectsController extends Controller
 
         $validated = $request->validate([
             'stage_name' => 'required|string',
-            'status' => 'required|in:جديد,جارٍ,مكتمل',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
-            'progress' => 'nullable|integer|min:0|max:100',
             'notes' => 'nullable|string',
         ]);
 
         $stage = $project->projectStages()->where('stage_name', $validated['stage_name'])->first();
 
         if ($stage) {
-            $stage->update($validated);
-
-            // تحديث المرحلة الحالية
-            if ($validated['status'] == 'جارٍ') {
-                $project->update(['current_stage' => $validated['stage_name']]);
-            }
-
-            // إعادة حساب التقدم
-            $project->progress = $project->calculateProgress();
-            $project->save();
+            $stage->update([
+                'start_date' => $validated['start_date'] ?? $stage->start_date,
+                'end_date' => $validated['end_date'] ?? $stage->end_date,
+                'notes' => $validated['notes'] ?? $stage->notes,
+            ]);
         }
 
-        return back()->with('success', 'تم تحديث المرحلة بنجاح');
+        return back()->with('success', __('Stage notes updated'));
     }
 
     /**

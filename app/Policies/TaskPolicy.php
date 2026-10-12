@@ -27,7 +27,7 @@ class TaskPolicy
 
     public function update(User $user, Task $task): bool
     {
-        return $this->canUpdateModule($user, 'tasks');
+        return $this->canUpdateModule($user, 'tasks') && $this->stageAllowsWork($task);
     }
 
     public function delete(User $user, Task $task): bool
@@ -37,7 +37,7 @@ class TaskPolicy
 
     public function changeStatus(User $user, Task $task): bool
     {
-        return $this->canUpdateModule($user, 'tasks');
+        return $this->canUpdateModule($user, 'tasks') && $this->stageAllowsWork($task);
     }
 
     public function reject(User $user, Task $task): bool
@@ -48,5 +48,12 @@ class TaskPolicy
     public function addNote(User $user, Task $task): bool
     {
         return $this->view($user, $task);
+    }
+
+    protected function stageAllowsWork(Task $task): bool
+    {
+        $task->loadMissing('projectStage');
+
+        return ! $task->projectStage || $task->projectStage->isWorkable();
     }
 }

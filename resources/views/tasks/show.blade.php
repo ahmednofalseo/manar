@@ -375,11 +375,13 @@
         @php
             $stage = $task->projectStage;
             $statusConfig = [
-                'جديد' => ['bg' => 'bg-gray-600', 'icon' => 'circle', 'badge' => 'bg-gray-500/20 text-gray-400'],
-                'جارٍ' => ['bg' => 'bg-yellow-500', 'icon' => 'clock', 'badge' => 'bg-yellow-500/20 text-yellow-400'],
-                'مكتمل' => ['bg' => 'bg-green-500', 'icon' => 'check', 'badge' => 'bg-green-500/20 text-green-400'],
+                'locked' => ['bg' => 'bg-gray-600', 'icon' => 'lock', 'badge' => 'bg-gray-500/20 text-gray-400'],
+                'active' => ['bg' => 'bg-yellow-500', 'icon' => 'clock', 'badge' => 'bg-yellow-500/20 text-yellow-400'],
+                'awaiting_payment' => ['bg' => 'bg-orange-500', 'icon' => 'file-invoice-dollar', 'badge' => 'bg-orange-500/20 text-orange-400'],
+                'completed' => ['bg' => 'bg-green-500', 'icon' => 'check', 'badge' => 'bg-green-500/20 text-green-400'],
             ];
-            $config = $statusConfig[$stage->status] ?? $statusConfig['جديد'];
+            $stageStatusValue = $stage->status instanceof \App\Enums\ProjectStageStatus ? $stage->status->value : (string) $stage->status;
+            $config = $statusConfig[$stageStatusValue] ?? $statusConfig['locked'];
         @endphp
             <div class="flex gap-4">
                 <div class="flex flex-col items-center">

@@ -49,6 +49,10 @@ class StoreTaskRequest extends FormRequest
                         if ($project && ! $project->projectStages()->where('id', $value)->exists()) {
                             $fail(__('Task validation stage not belongs project'));
                         }
+                        $stage = \App\Models\ProjectStage::find($value);
+                        if ($stage && ! $stage->isWorkable()) {
+                            $fail(__('Task stage is not open yet'));
+                        }
                     }
                 },
             ],

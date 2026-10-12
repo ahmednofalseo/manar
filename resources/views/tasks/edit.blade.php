@@ -356,7 +356,8 @@ function taskForm(initialProjects, initialProjectId, initialStageId, i18n) {
                 const stagesData = selectedOption.getAttribute('data-stages');
                 if (stagesData) {
                     try {
-                        this.projectStages = JSON.parse(stagesData);
+                        const parsed = JSON.parse(stagesData);
+                        this.projectStages = parsed.filter(stage => stage.status === 'active' || String(stage.id) === String(@json($task->project_stage_id)));
                         if (!this.projectStages.some(stage => stage.id == this.selectedStageId)) {
                             this.selectedStageId = null;
                         }

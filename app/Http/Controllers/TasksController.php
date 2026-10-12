@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\TaskCommented;
+use App\Enums\ProjectStageStatus;
 use App\Events\TaskCreated;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
@@ -13,6 +13,7 @@ use App\Models\StageSetting;
 use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Models\User;
+use App\Services\ProjectStageGateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -78,7 +79,11 @@ class TasksController extends Controller
         Gate::authorize('viewAny', Task::class);
 
         $user = Auth::user();
-        $query = Task::with(['project', 'projectStage', 'assignee'])->whereNotNull('project_id');
+        $query = Task::with(['project', 'projectStage', 'assignee'])->whereNotNull('project_id')
+            ->where(function ($q) {
+                $q->whereNull('project_stage_id')
+                    ->orWhereHas('projectStage', fn ($stage) => $stage->where('status', '!=', ProjectStageStatus::Locked->value));
+            });
 
         // Scoped listing only when the user lacks module-wide task view/manage permissions
         if (! $user->hasRole('super_admin') && ! $this->userCanViewAllTasks($user)) {
@@ -438,6 +443,9 @@ class TasksController extends Controller
             if ($statusChanged) {
                 $task->logActivity('status_change', Auth::id(), $oldStatus, $task->status);
             }
+            if ($statusChanged && $task->status === 'done') {
+                app(ProjectStageGateService::class)->handleTaskCompleted($task);
+            }
 
             // لا نضيف تعليق تلقائي عند التحديث لتجنب التكرار
             // التعليقات يجب أن تكون فقط من المستخدمين
@@ -524,6 +532,10 @@ class TasksController extends Controller
 
             $task->save();
             $task->load(['project', 'assignee', 'projectStage']);
+
+            if ($task->status === 'done' && $oldStatus !== 'done') {
+                app(ProjectStageGateService::class)->handleTaskCompleted($task);
+            }
 
             DB::commit();
 

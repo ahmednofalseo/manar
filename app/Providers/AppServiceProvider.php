@@ -19,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (str_starts_with((string) config('app.url'), 'https://')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         // Register Policies
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Task::class, \App\Policies\TaskPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Setting::class, \App\Policies\SettingPolicy::class);
@@ -35,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Gate::policy(\App\Models\City::class, \App\Policies\CityPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\JobTitle::class, \App\Policies\JobTitlePolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\StageSetting::class, \App\Policies\StageSettingPolicy::class);
-        
+
         // Register Observers
         \App\Models\Project::observe(\App\Observers\ProjectObserver::class);
 
@@ -45,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
             if ($user->hasRole('super_admin')) {
                 return true;
             }
+
             return $user->hasPermission('manage-roles-permissions');
         });
 
@@ -53,12 +58,12 @@ class AppServiceProvider extends ServiceProvider
             \App\Events\PaymentCreated::class,
             \App\Listeners\UpdateInvoicePaidAmountAndStatus::class
         );
-        
+
         \Illuminate\Support\Facades\Event::listen(
             \App\Events\TaskCreated::class,
             \App\Listeners\SendTaskNotification::class
         );
-        
+
         \Illuminate\Support\Facades\Event::listen(
             \App\Events\TaskCommented::class,
             \App\Listeners\SendTaskCommentNotification::class
@@ -78,7 +83,7 @@ class AppServiceProvider extends ServiceProvider
 
             // إعدادات البريد
             $mailSettings = \App\Models\Setting::getByGroup('email');
-            if (!empty($mailSettings)) {
+            if (! empty($mailSettings)) {
                 config([
                     'mail.mailers.smtp.host' => $mailSettings['mail_host'] ?? config('mail.mailers.smtp.host'),
                     'mail.mailers.smtp.port' => $mailSettings['mail_port'] ?? config('mail.mailers.smtp.port'),

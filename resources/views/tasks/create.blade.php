@@ -402,7 +402,7 @@ function taskForm(i18n) {
                 const stagesData = selectedOption.getAttribute('data-stages');
                 if (stagesData) {
                     try {
-                        this.projectStages = JSON.parse(stagesData);
+                        this.projectStages = JSON.parse(stagesData).filter(stage => stage.status === 'active');
                         this.selectedStageId = null;
                     } catch (e) {
                         console.error('Error parsing stages data:', e);
