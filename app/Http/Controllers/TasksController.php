@@ -63,11 +63,13 @@ class TasksController extends Controller
     }
 
     /**
-     * Display a listing of tasks.
-     */
-    /**
      * Users with module-wide task permissions see all tasks; others see scoped tasks.
      */
+    protected function limitTasksToActiveStage($query)
+    {
+        $query->whereHas('projectStage', fn ($stage) => $stage->where('status', ProjectStageStatus::Active->value));
+    }
+
     protected function userCanViewAllTasks(User $user): bool
     {
         return $user->hasPermission('tasks.manage')
@@ -79,11 +81,8 @@ class TasksController extends Controller
         Gate::authorize('viewAny', Task::class);
 
         $user = Auth::user();
-        $query = Task::with(['project', 'projectStage', 'assignee'])->whereNotNull('project_id')
-            ->where(function ($q) {
-                $q->whereNull('project_stage_id')
-                    ->orWhereHas('projectStage', fn ($stage) => $stage->where('status', '!=', ProjectStageStatus::Locked->value));
-            });
+        $query = Task::with(['project', 'projectStage', 'assignee'])->whereNotNull('project_id');
+        $this->limitTasksToActiveStage($query);
 
         // Scoped listing only when the user lacks module-wide task view/manage permissions
         if (! $user->hasRole('super_admin') && ! $this->userCanViewAllTasks($user)) {
@@ -148,6 +147,7 @@ class TasksController extends Controller
 
         // KPIs - استخدام نفس قاعدة الاستعلام مع فلاتر الصلاحيات
         $baseQuery = Task::query()->whereNotNull('project_id');
+        $this->limitTasksToActiveStage($baseQuery);
 
         // تطبيق نفس فلاتر الصلاحيات على KPIs
         if (! $user->hasRole('super_admin') && ! $this->userCanViewAllTasks($user)) {
@@ -186,6 +186,7 @@ class TasksController extends Controller
         $engineers = $this->sortUsersForTasksUi($engineers);
 
         $stages = ProjectStage::query()
+            ->where('status', ProjectStageStatus::Active->value)
             ->select('stage_name')
             ->distinct()
             ->orderBy('stage_name')

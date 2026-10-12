@@ -760,6 +760,7 @@
     "Employee name English placeholder": "e.g. Mohammed Ahmed Al-Ali",
     "Project Settings": "Project settings",
     "Project stages tab": "Project stages",
+    "Active stage tasks only hint": "Only tasks from the open stage are shown",
     "Cities Management": "Cities management",
     "Cities management subtitle": "Manage cities used across the system.",
     "Add new city": "Add new city",

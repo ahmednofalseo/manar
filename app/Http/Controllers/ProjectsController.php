@@ -412,7 +412,7 @@ class ProjectsController extends Controller
             'projectManager',
             'teamUsers',
             'projectStages' => function ($query) {
-                $query->orderBy('created_at');
+                $query->orderBy('sort_order')->orderBy('id');
             },
             'projectStages.tasks.assignee',
             'projectStages.invoice',
