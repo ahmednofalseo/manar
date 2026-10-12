@@ -43,6 +43,7 @@
 </div>
 @endif
 
+@include('settings.partials.tabs')
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
     <div>
         <h1 class="text-2xl md:text-3xl font-bold text-white">{{ __('Job titles management') }}</h1>

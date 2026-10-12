@@ -88,7 +88,7 @@
         @endif
         
         @if(\App\Helpers\PermissionHelper::hasPermission('settings.view') || \App\Helpers\PermissionHelper::hasPermission('settings.manage'))
-        <a href="{{ route('admin.settings.index') }}" onclick="closeMobileSidebarOnClick()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-white/10 transition-all duration-200 {{ request()->routeIs('admin.settings.*') ? 'bg-white/10 ring-2 ring-primary-400/40' : '' }}">
+        <a href="{{ route('admin.settings.index') }}" onclick="closeMobileSidebarOnClick()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-white/10 transition-all duration-200 {{ request()->routeIs('admin.settings.*') || request()->routeIs('settings.*') ? 'bg-white/10 ring-2 ring-primary-400/40' : '' }}">
             <i class="fas fa-cog w-5"></i>
             <span>{{ __('Settings') }}</span>
         </a>

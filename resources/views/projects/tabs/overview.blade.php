@@ -120,9 +120,10 @@
                             default => 'text-gray-400',
                         };
                     @endphp
-                    <div class="flex items-center justify-between">
-                        <span class="text-gray-300 text-sm">{{ $stageLabelMap[$stage->stage_name] ?? $stage->stage_name }}</span>
-                        <span class="{{ $stageLineColor }} text-sm">{{ $stageLineText }}</span>
+                    <div class="flex items-center justify-between gap-3 min-w-0">
+                        <span class="text-gray-300 text-sm min-w-0 truncate">{{ $stageLabelMap[$stage->stage_name] ?? $stage->stage_name }}</span>
+                        <span class="text-white text-xs whitespace-nowrap">{{ number_format((float) $stage->invoice_amount, 2) }} {{ __('Currency SAR') }}</span>
+                        <span class="{{ $stageLineColor }} text-sm whitespace-nowrap">{{ $stageLineText }}</span>
                     </div>
                 @endforeach
             </div>

@@ -203,10 +203,17 @@
         </button>
         <a 
             href="{{ route('settings.project-types.index') }}"
-            class="tab-button px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-semibold {{ request()->routeIs('settings.project-types.*') || request()->routeIs('settings.project-stages.*') ? 'bg-primary-400/20 border-primary-500 text-primary-400' : 'bg-white/5 border-white/10 text-gray-300' }}"
+            class="tab-button px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-semibold {{ request()->routeIs('settings.project-types.*') ? 'bg-primary-400/20 border-primary-500 text-primary-400' : 'bg-white/5 border-white/10 text-gray-300' }}"
         >
             <i class="fas fa-list {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
             {{ __('Project Settings') }}
+        </a>
+        <a
+            href="{{ route('settings.project-stages.index') }}"
+            class="tab-button px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-semibold {{ request()->routeIs('settings.project-stages.*') ? 'bg-primary-400/20 border-primary-500 text-primary-400' : 'bg-white/5 border-white/10 text-gray-300' }}"
+        >
+            <i class="fas fa-diagram-project {{ app()->getLocale() === 'ar' ? 'ml-2' : 'mr-2' }}"></i>
+            {{ __('Project stages tab') }}
         </a>
         <a 
             href="{{ route('settings.cities.index') }}"

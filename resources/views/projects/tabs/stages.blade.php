@@ -37,9 +37,12 @@
                 </div>
                 <div class="flex-1 pb-6">
                     <div class="bg-white/5 rounded-lg p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <h3 class="text-white font-semibold">{{ $stageLabelMap[$stage->stage_name] ?? $stage->stage_name }}</h3>
-                            <span class="{{ $config['badge'] }} px-2 py-1 rounded text-xs">{{ $statusLabel }}</span>
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <h3 class="text-white font-semibold min-w-0">{{ $stageLabelMap[$stage->stage_name] ?? $stage->stage_name }}</h3>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <span class="text-sm text-white whitespace-nowrap">{{ number_format((float) $stage->invoice_amount, 2) }} {{ __('Currency SAR') }}</span>
+                                <span class="{{ $config['badge'] }} px-2 py-1 rounded text-xs whitespace-nowrap">{{ $statusLabel }}</span>
+                            </div>
                         </div>
 
                         @if($stage->start_date)
@@ -67,8 +70,6 @@
                             </div>
                         </div>
                         @endif
-
-                        <p class="text-gray-300 text-sm mb-3">{{ number_format((float) $stage->invoice_amount, 2) }} {{ __('Currency SAR') }}</p>
 
                         @if($stage->invoice)
                         <a href="{{ route('financials.show', $stage->invoice->id) }}" class="inline-flex items-center gap-2 text-sm text-primary-400 mb-3">

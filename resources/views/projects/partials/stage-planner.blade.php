@@ -34,8 +34,8 @@
             </h2>
             <p class="text-gray-400 text-sm mt-1">{{ __('Stage planner hint') }}</p>
         </div>
-        <div class="flex items-center gap-2">
-            <select x-model="catalogPick" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+            <select x-model="catalogPick" class="min-w-0 flex-1 sm:w-56 sm:flex-none bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm">
                 <option value="">{{ __('Choose stage') }}</option>
                 <template x-for="item in catalog" :key="item.name">
                     <option :value="item.name" x-text="item.label"></option>
@@ -50,26 +50,26 @@
     <div class="space-y-3" @dragover.prevent>
         <template x-for="(stage, index) in stages" :key="stage.key">
             <div
-                class="flex flex-col md:flex-row md:items-center gap-3 p-4 bg-white/5 rounded-lg border border-white/10"
+                class="stage-plan-row grid grid-cols-1 sm:grid-cols-[auto_auto_minmax(0,1fr)_9.5rem_auto] items-end gap-3 p-4 bg-white/5 rounded-lg border border-white/10"
                 draggable="true"
                 @dragstart="dragIndex = index"
                 @dragover.prevent
                 @drop="move(dragIndex, index)"
             >
                 <input type="hidden" :name="`stage_plan[${index}][id]`" :value="stage.id || ''">
-                <button type="button" class="text-gray-400 cursor-grab px-1" title="{{ __('Drag to reorder') }}">
+                <button type="button" class="hidden sm:inline-flex text-gray-400 cursor-grab px-1 h-10 items-center" title="{{ __('Drag to reorder') }}">
                     <i class="fas fa-grip-vertical"></i>
                 </button>
-                <div class="w-8 text-center text-primary-400 font-semibold" x-text="index + 1"></div>
-                <div class="flex-1">
+                <div class="hidden sm:flex w-8 h-10 items-center justify-center text-primary-400 font-semibold" x-text="index + 1"></div>
+                <div class="min-w-0">
                     <label class="block text-gray-400 text-xs mb-1">{{ __('Stage') }}</label>
-                    <input type="text" :name="`stage_plan[${index}][name]`" x-model="stage.name" required class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white">
+                    <input type="text" :name="`stage_plan[${index}][name]`" x-model="stage.name" required class="stage-plan-name w-full min-w-0 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white">
                 </div>
-                <div class="w-full md:w-48">
+                <div class="min-w-0 sm:w-[9.5rem]">
                     <label class="block text-gray-400 text-xs mb-1">{{ __('Stage invoice amount') }}</label>
-                    <input type="number" min="0" step="0.01" :name="`stage_plan[${index}][amount]`" x-model="stage.amount" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white">
+                    <input type="number" min="0" step="0.01" :name="`stage_plan[${index}][amount]`" x-model="stage.amount" class="stage-plan-amount w-full min-w-0 max-w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white">
                 </div>
-                <button type="button" @click="remove(index)" class="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg text-sm">
+                <button type="button" @click="remove(index)" class="h-10 px-3 bg-red-500/20 text-red-400 rounded-lg text-sm">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -83,6 +83,17 @@
         <p class="mt-3 text-sm text-red-400">{{ $message }}</p>
     @enderror
 </div>
+
+@push('styles')
+<style>
+    .stage-plan-row input.stage-plan-name,
+    .stage-plan-row input.stage-plan-amount {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>
